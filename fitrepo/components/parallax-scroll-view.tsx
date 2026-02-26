@@ -53,7 +53,7 @@ export default function ParallaxScrollView({
           { backgroundColor: headerBackgroundColor[colorScheme] },
           headerAnimatedStyle,
         ]}>
-          <Text style={styles.headerText}>FitRepo</Text>
+          <Text style={styles.headerText}>fitrepo</Text>
       </Animated.View>
       <ThemedView style={styles.content}>{children}</ThemedView>
     </Animated.ScrollView>
@@ -72,7 +72,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 30,
     textAlign: 'left',
-    padding: 20
+    paddingTop: 50,
+    paddingLeft: 20,
+    fontFamily: "normal"
   },
   content: {
     flex: 1,

@@ -1,50 +1,140 @@
-import { StyleSheet } from 'react-native';
-
-import { Collapsible } from '@/components/ui/collapsible';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Fonts } from '@/constants/theme';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 
-export default function TabTwoScreen() {
+export default function Home() {
+  const userName = "Je";
+
   return (
-    <ParallaxScrollView
+    <ParallaxScrollView 
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{fontFamily: Fonts.rounded,}}>
-          Hey there!
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>Let us begin!</ThemedText>
-      <Collapsible title="Exercise 1">
-        <ThemedText>
-          Jump
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Exercise 2">
-        <ThemedText>
-          Push ups
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Exercise 3">
-        <ThemedText>
-          Curling
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Exercise 4">
-        <ThemedText>
-          Squats
-        </ThemedText>
-      </Collapsible>
+      
+      {/* Greeting */}
+      <Text style={styles.greeting}>Hello, {userName}!</Text>
+
+      {/* Previous Workout */}
+      <TouchableOpacity style={styles.sessionCard}>
+        <Text style={styles.sessionLabel}>Previous Workout</Text>
+        <Text style={styles.sessionTitle}>Upper Body Strength</Text>
+        <Text style={styles.sessionDate}>February 25, 2026</Text>
+      </TouchableOpacity>
+
+      {/* Stats Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Personal Records</Text>
+
+        <View style={styles.grid}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>120kg</Text>
+            <Text style={styles.statLabel}>Bench Press</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>180kg</Text>
+            <Text style={styles.statLabel}>Deadlift</Text>
+          </View>
+
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>150kg</Text>
+            <Text style={styles.statLabel}>Squat</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* General Stats */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Stats Overview</Text>
+
+        <View style={styles.row}>
+          <View style={styles.wideCard}>
+            <Text style={styles.statValue}>48</Text>
+            <Text style={styles.statLabel}>Total Workouts</Text>
+          </View>
+
+          <View style={styles.wideCard}>
+            <Text style={styles.statValue}>6</Text>
+            <Text style={styles.statLabel}>Current Streak</Text>
+          </View>
+        </View>
+      </View>
+
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#0f0f0f',
+  },
+  content: {
+    padding: 20,
+  },
+  greeting: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 20,
+  },
+  sessionCard: {
+    backgroundColor: '#1a1a1a',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 30,
+  },
+  sessionLabel: {
+    color: '#888',
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  sessionTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  sessionDate: {
+    color: '#aaa',
+    marginTop: 5,
+  },
+  section: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 15,
+  },
+  grid: {
     flexDirection: 'row',
-    gap: 5,
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statCard: {
+    backgroundColor: '#1a1a1a',
+    width: '48%',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 15,
+  },
+  statValue: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  statLabel: {
+    color: '#888',
+    marginTop: 5,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  wideCard: {
+    backgroundColor: '#1a1a1a',
+    width: '48%',
+    padding: 25,
+    borderRadius: 16,
+    alignItems: 'center',
   },
 });
