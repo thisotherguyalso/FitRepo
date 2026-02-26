@@ -14,7 +14,7 @@ export default function TabTwoScreen() {
         <ThemedText
           type="title"
           style={{fontFamily: Fonts.rounded,}}>
-          Workouts For Today
+          Hey there!
         </ThemedText>
       </ThemedView>
       <ThemedText>Let us begin!</ThemedText>
@@ -45,6 +45,6 @@ export default function TabTwoScreen() {
 const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 5,
   },
 });

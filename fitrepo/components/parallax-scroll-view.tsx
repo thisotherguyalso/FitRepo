@@ -71,12 +71,13 @@ const styles = StyleSheet.create({
   headerText: {
     color: 'white',
     fontSize: 30,
-    textAlign: 'left'
+    textAlign: 'left',
+    padding: 20
   },
   content: {
     flex: 1,
     padding: 32,
-    gap: 16,
+    gap: 14,
     overflow: 'hidden',
   },
 });
