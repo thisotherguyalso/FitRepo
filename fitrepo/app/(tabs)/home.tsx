@@ -9,8 +9,7 @@ import { Fonts } from '@/constants/theme';
 export default function TabTwoScreen() {
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#000875' }}
-      headerImage={<></>}>
+      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
       <ThemedView style={styles.titleContainer}>
         <ThemedText
           type="title"
@@ -18,7 +17,7 @@ export default function TabTwoScreen() {
           Workouts For Today
         </ThemedText>
       </ThemedView>
-      <ThemedText>Workouts.</ThemedText>
+      <ThemedText>Let us begin!</ThemedText>
       <Collapsible title="Exercise 1">
         <ThemedText>
           Jump
@@ -46,6 +45,6 @@ export default function TabTwoScreen() {
 const styles = StyleSheet.create({
   titleContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
 });
