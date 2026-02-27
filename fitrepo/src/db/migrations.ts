@@ -11,6 +11,7 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS workouts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
 
+      name TEXT NOT NULL,
       performed_at TEXT NOT NULL,              -- ISO datetime string
       is_finished INTEGER NOT NULL DEFAULT 0,  -- 0 = false, 1 = true
 
@@ -53,4 +54,12 @@ export function initDatabase() {
         REFERENCES exercises(id)
     );
   `)
+
+  db.execAsync(`
+    CREATE TABLE IF NOT EXISTS profile (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL,
+      workout_streak INTEGER 
+    );
+    `)
 }
