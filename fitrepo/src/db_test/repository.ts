@@ -1,14 +1,14 @@
-import { db } from './database'
+import { db } from '@test_db'
 
 /* =========================
    WORKOUTS
 ========================= */
 
 // Create new workout session
-export function createWorkout(performedAtISO: string) {
+export function createWorkout(name: string, performedAtISO: string) {
   const result = db.runSync(
-    `INSERT INTO workouts (performed_at) VALUES (?)`,
-    [performedAtISO]
+    `INSERT INTO workouts (name, performed_at) VALUES (?, ?)`,
+    [name, performedAtISO]
   )
 
   return result.lastInsertRowId
@@ -55,7 +55,7 @@ export function createExercise(
   imageUri?: string
 ) {
   const result = db.runSync(
-    `INSERT INTO exercises (name, type, image_uri)
+    `INSERT INTO exercises (name, type, image_url)
      VALUES (?, ?, ?)`,
     [name, type, imageUri ?? null]
   )

@@ -1,10 +1,30 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+    "module": "commonjs",
+    "target": "es2020",
     "strict": true,
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@db": [
+        "./src/db/database"
+      ],
+      "@db_repo": [
+        "./src/db/repository"
+      ],
+      "@db_migrations": [
+        "./src/db/migrations"
+      ],
+      "@test_db": [
+        "./src/db_test/database"
+      ],
+      "@test_db_repo": [
+        "./src/db_test/repository"
+      ],
+      "@test_db_migrations": [
+        "./src/db_test/migrations"
       ]
     }
   },

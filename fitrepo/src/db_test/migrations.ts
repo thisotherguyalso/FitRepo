@@ -1,4 +1,4 @@
-import { db } from '@db'
+import { db } from '@test_db'
 
 export function initDatabase() {
   // Enable foreign key constraints (important in SQLite)
