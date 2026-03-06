@@ -1,13 +1,13 @@
-import { db } from '@test_db'
+import { test_db } from '@test_db'
 
 export function initDatabase() {
   // Enable foreign key constraints (important in SQLite)
-  db.execSync(`
+  test_db.execSync(`
     PRAGMA foreign_keys = ON;
   `)
 
   // WORKOUTS TABLE
-  db.execSync(`
+  test_db.execSync(`
     CREATE TABLE IF NOT EXISTS workouts (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -20,7 +20,7 @@ export function initDatabase() {
   `)
 
   // EXERCISES TABLE (reusable master list)
-  db.execSync(`
+  test_db.execSync(`
     CREATE TABLE IF NOT EXISTS exercises (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -34,7 +34,7 @@ export function initDatabase() {
   `)
 
   // WORKOUT_EXERCISES TABLE
-  db.execSync(`
+  test_db.execSync(`
     CREATE TABLE IF NOT EXISTS workout_exercises (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -55,7 +55,7 @@ export function initDatabase() {
     );
   `)
 
-  db.execAsync(`
+  test_db.execAsync(`
     CREATE TABLE IF NOT EXISTS profile (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT NOT NULL,

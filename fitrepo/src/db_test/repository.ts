@@ -1,4 +1,4 @@
-import { db } from '@test_db'
+import { test_db } from '@test_db'
 
 /* =========================
    WORKOUTS
@@ -6,7 +6,7 @@ import { db } from '@test_db'
 
 // Create new workout session
 export function createWorkout(name: string, performedAtISO: string) {
-  const result = db.runSync(
+  const result = test_db.runSync(
     `INSERT INTO workouts (name, performed_at) VALUES (?, ?)`,
     [name, performedAtISO]
   )
@@ -16,7 +16,7 @@ export function createWorkout(name: string, performedAtISO: string) {
 
 // Mark workout as finished
 export function finishWorkout(workoutId: number) {
-  db.runSync(
+  test_db.runSync(
     `UPDATE workouts
      SET is_finished = 1
      WHERE id = ?`,
@@ -26,7 +26,7 @@ export function finishWorkout(workoutId: number) {
 
 // Get all workouts
 export function getAllWorkouts() {
-  return db.getAllSync(`
+  return test_db.getAllSync(`
     SELECT *
     FROM workouts
     ORDER BY performed_at DESC
@@ -35,7 +35,7 @@ export function getAllWorkouts() {
 
 // Get single workout
 export function getWorkoutById(workoutId: number) {
-  return db.getFirstSync(
+  return test_db.getFirstSync(
     `SELECT *
      FROM workouts
      WHERE id = ?`,
@@ -54,7 +54,7 @@ export function createExercise(
   type: 'timed' | 'reps',
   imageUri?: string
 ) {
-  const result = db.runSync(
+  const result = test_db.runSync(
     `INSERT INTO exercises (name, type, image_url)
      VALUES (?, ?, ?)`,
     [name, type, imageUri ?? null]
@@ -65,7 +65,7 @@ export function createExercise(
 
 // Get all exercises
 export function getAllExercises() {
-  return db.getAllSync(`
+  return test_db.getAllSync(`
     SELECT *
     FROM exercises
     ORDER BY name ASC
@@ -93,7 +93,7 @@ export function addExerciseToWorkout(params: {
     timePerSetSeconds
   } = params
 
-  db.runSync(
+  test_db.runSync(
     `INSERT INTO workout_exercises (
       workout_id,
       exercise_id,
@@ -115,7 +115,7 @@ export function addExerciseToWorkout(params: {
 
 // Get full workout with exercises
 export function getWorkoutWithExercises(workoutId: number) {
-  return db.getAllSync(
+  return test_db.getAllSync(
     `
     SELECT
       we.id as workout_exercise_id,
