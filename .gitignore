@@ -35,3 +35,6 @@ google-services.json
 
 # Miscellaneous
 .dist/
+
+# Environment files
+.env
