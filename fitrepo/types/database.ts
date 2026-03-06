@@ -1,61 +1,56 @@
 import { Timestamp } from "react-native-reanimated/lib/typescript/commonTypes"
 
-enum ExerciseType {
-    Timed = "timed",
-    Repbased = "rep-based"
+export enum ExerciseType {
+    timed = "timed",
+    reps = "reps"
 }
 
-type Workout = {
+export type Workout = {
     id: number
-    created_at: string
+    user_id: string
     name: string
     performed_at: string
     is_finished: boolean
-    user_id: string
+    created_at: string
 }
 
-type Exercise = {
+export type Exercise = {
     id: number
-    created_at: string
     name: string
     image_url: string
-    user_id: number
     type: ExerciseType
+    description: string
 }
 
-type WorkoutExercise = {
+export type WorkoutExercise = {
     id: number
-    created_at: string
-    set_count: number
-    rep_count: number
-    time_per_set_seconds: number
+    sets: number
+    reps: number
+    time_seconds: number
     workout_id: number 
     exercise_id: number
-    user_id: number
 }
 
-type Profile = {
-    user_id: number
-    created_at: string
+export type Profile = {
+    id: number
     username: string
+    started_at: string
     goal: string
     current_streak: number
 }
 
-type WorkoutPreset = {
+export type WorkoutPreset = {
     id: number
-    created_at: string
-    name: string
     user_id: number
+    name: string
+    created_at: string
 }
 
-type PresetExercise = {
+export type PresetExercise = {
     id: number
-    created_at: string
-    set_count: number
-    rep_count: number
-    time_per_set_seconds: number
+    sets: number
+    reps: number
+    time_seconds: number
     preset_id: number 
     exercise_id: number
-    user_id: number
 }
