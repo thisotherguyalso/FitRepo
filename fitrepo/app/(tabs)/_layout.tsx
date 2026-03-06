@@ -64,9 +64,9 @@ export default function TabLayout() {
     />
 
     <Tabs.Screen
-      name="TestScreen"
+      name="DBTest"
       options={{
-        title: 'TESTS',
+        title: 'DB TESTS',
         tabBarIcon: ({ color, size }) => (
           <Ionicons name="bug" size={size} color={color} />
         ),
