@@ -3,30 +3,29 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { supabase } from '@/lib/supabase';
+import { getWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from '@/lib/api/workouts'
+import { getExercises, getExercise } from '@/lib/api/exercises'
+import { getExercisesInWorkout, getExerciseInWorkout, addExerciseToWorkout, updateWorkoutExercise, removeExerciseFromWorkout } from '@/lib/api/workoutExercises'
+import { getWorkoutPresets, getWorkoutPreset, createWorkoutPreset, updateWorkoutPreset, deleteWorkoutPreset } from '@/lib/api/workoutPresets'
+import { getExercisesInPreset, getExerciseInPreset, addExerciseToPreset, updatePresetExercise, removeExerciseFromPreset } from '@/lib/api/presetExercises'
+import { getProfile, updateProfile } from '@/lib/api/profiles'
 
 export default function Home() {
   const [userName, setUserName] = useState('');
   const [currentStreak, setcurrentStreak] = useState('');
   const [totalWorkouts, setTotalWorkouts] = useState<number | null>(0);
+  const [previousWorkoutDate, setPreviousWorkoutDate] = useState<Date | null>();
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
-        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-        console.log('raw profile data:', data)
-        console.log('error:', error)
-        setUserName(data?.username ?? user.email ?? 'there')
-        setcurrentStreak(data?.current_streak ?? user.email ?? 'there')
-      }
-    })
-  }, [])
-
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) {
-        const { data, count, error } = await supabase.from('workouts').select('*', {count: 'exact'}).eq('id', user.id)
-        console.log('raw workouts data:', data)
-        console.log('error:', error)
+        const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        const { data: workout, count, error:workoutError } = await supabase.from('workouts').select('*', {count: 'exact'}).eq('id', user.id)
+        console.log('raw profile data:', profile)
+        console.log('raw workouts data:', workout)
+        console.log('error:', profileError)
+        setUserName(profile?.username ?? user.email ?? 'there')
+        setcurrentStreak(profile?.current_streak ?? '0')
         setTotalWorkouts(count)
       }
     })
@@ -43,7 +42,7 @@ export default function Home() {
       <TouchableOpacity style={styles.sessionCard}>
         <Text style={styles.sessionLabel}>Previous Workout</Text>
         <Text style={styles.sessionTitle}>Upper Body Strength</Text>
-        <Text style={styles.sessionDate}>February 25, 2026</Text>
+        <Text style={styles.sessionDate}>today</Text>
       </TouchableOpacity>
 
       {/* Stats Section */}
