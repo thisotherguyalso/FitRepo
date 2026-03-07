@@ -1,10 +1,27 @@
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { supabase } from '@/lib/supabase';
+import { getProfile } from '@/lib/api/profiles';
+
+// add this function
+async function handleSignOut() {
+  await supabase.auth.signOut()
+}
 
 export default function Home() {
-  const userName = "Je";
+  const [userName, setUserName] = useState('');
 
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        console.log('raw profile data:', data)
+        console.log('error:', error)
+        setUserName(data?.username ?? user.email ?? 'there')
+      }
+    })
+  }, [])
   return (
     <ParallaxScrollView 
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
@@ -57,6 +74,10 @@ export default function Home() {
           </View>
         </View>
       </View>
+
+    <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+    <Text style={styles.signOutText}>Sign Out</Text>
+    </TouchableOpacity>
 
     </ParallaxScrollView>
   );
@@ -136,5 +157,17 @@ const styles = StyleSheet.create({
     padding: 25,
     borderRadius: 16,
     alignItems: 'center',
+  },
+  signOutButton: {
+    backgroundColor: '#1a1a1a',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  signOutText: {
+    color: '#ff4444',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
