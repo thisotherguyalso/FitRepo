@@ -41,7 +41,7 @@ export type Profile = {
 
 export type WorkoutPreset = {
     id: string
-    user_id: number
+    user_id: string
     name: string
     created_at: string
 }
