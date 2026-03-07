@@ -6,7 +6,7 @@ export enum ExerciseType {
 }
 
 export type Workout = {
-    id: number
+    id: string
     user_id: string
     name: string
     performed_at: string
@@ -15,7 +15,7 @@ export type Workout = {
 }
 
 export type Exercise = {
-    id: number
+    id: string
     name: string
     image_url: string
     type: ExerciseType
@@ -23,7 +23,7 @@ export type Exercise = {
 }
 
 export type WorkoutExercise = {
-    id: number
+    id: string
     sets: number
     reps: number
     time_seconds: number
@@ -32,7 +32,7 @@ export type WorkoutExercise = {
 }
 
 export type Profile = {
-    id: number
+    id: string
     username: string
     started_at: string
     goal: string
@@ -40,14 +40,14 @@ export type Profile = {
 }
 
 export type WorkoutPreset = {
-    id: number
+    id: string
     user_id: number
     name: string
     created_at: string
 }
 
 export type PresetExercise = {
-    id: number
+    id: string
     sets: number
     reps: number
     time_seconds: number
