@@ -1,9 +1,36 @@
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import React from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { supabase } from '@/lib/supabase';
 
 export default function Home() {
-  const userName = "Je";
+  const [userName, setUserName] = useState('');
+  const [currentStreak, setcurrentStreak] = useState('');
+  const [totalWorkouts, setTotalWorkouts] = useState<number | null>(0);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        console.log('raw profile data:', data)
+        console.log('error:', error)
+        setUserName(data?.username ?? user.email ?? 'there')
+        setcurrentStreak(data?.current_streak ?? user.email ?? 'there')
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        const { data, count, error } = await supabase.from('workouts').select('*', {count: 'exact'}).eq('id', user.id)
+        console.log('raw workouts data:', data)
+        console.log('error:', error)
+        setTotalWorkouts(count)
+      }
+    })
+  }, [])
 
   return (
     <ParallaxScrollView 
@@ -47,12 +74,12 @@ export default function Home() {
 
         <View style={styles.row}>
           <View style={styles.wideCard}>
-            <Text style={styles.statValue}>48</Text>
+            <Text style={styles.statValue}>{totalWorkouts}</Text>
             <Text style={styles.statLabel}>Total Workouts</Text>
           </View>
 
           <View style={styles.wideCard}>
-            <Text style={styles.statValue}>6</Text>
+            <Text style={styles.statValue}>{currentStreak}</Text>
             <Text style={styles.statLabel}>Current Streak</Text>
           </View>
         </View>
