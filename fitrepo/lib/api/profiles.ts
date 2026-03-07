@@ -1,6 +1,7 @@
 import { supabase } from '../supabase'
 import { Profile } from '@/types/database'
 
+// Gets a user's profile based on id
 export async function getProfile(
     id: string
 ) {
@@ -12,6 +13,7 @@ export async function getProfile(
     return data
 }
 
+// Updates a user's profile
 export async function updateProfile(
     id: string,
     profile: Partial<Profile>

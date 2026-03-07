@@ -1,6 +1,7 @@
 import { supabase } from '../supabase'
 import { PresetExercise } from '@/types/database'
 
+// Gets all exercises in a specific preset
 export async function getExercisesInPreset(
     preset_id: string
 ) {
@@ -11,6 +12,7 @@ export async function getExercisesInPreset(
     return data
 }
 
+// Gets a specific exercise in a specific preset
 export async function getExerciseInPreset(
     exercise_id: string,
     preset_id: string
@@ -24,6 +26,7 @@ export async function getExerciseInPreset(
     return data
 }
 
+// Adds an exercise to a preset with sets, reps, or time
 export async function addExerciseToPreset(
     preset_id: string,
     exercise_id: string,
@@ -41,6 +44,7 @@ export async function addExerciseToPreset(
     return data
 }
 
+// Updates the sets, reps, or time of an exercise in a preset
 export async function updatePresetExercise(
     preset_id: string,
     exercise_id: string,
@@ -55,6 +59,7 @@ export async function updatePresetExercise(
     return data
 }
 
+// Removes an exercise from a preset
 export async function removeExerciseFromPreset(
     exercise_id: string,
     preset_id: string

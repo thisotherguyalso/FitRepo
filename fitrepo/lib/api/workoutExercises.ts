@@ -1,6 +1,7 @@
 import { supabase } from '../supabase'
 import { Exercise, WorkoutExercise } from '@/types/database'
 
+// Gets all exercises in a specific workout
 export async function getExercisesInWorkout(
     workout_id: string
 ) {
@@ -11,6 +12,7 @@ export async function getExercisesInWorkout(
     return data
 }
 
+// Gets a specific exercise in a specific workout
 export async function getExerciseInWorkout(
     exercise_id: string,
     workout_id: string
@@ -24,6 +26,7 @@ export async function getExerciseInWorkout(
     return data
 }
 
+// Adds an exercise to a workout with sets, reps, or time
 export async function addExerciseToWorkout(
     workout_id: string,
     exercise_id: string,
@@ -41,6 +44,7 @@ export async function addExerciseToWorkout(
     return data
 }
 
+// Updates the sets, reps, or time of an exercise in a workout
 export async function updateWorkoutExercise(
     workout_id: string,
     exercise_id: string,
@@ -55,6 +59,7 @@ export async function updateWorkoutExercise(
     return data
 }
 
+// Removes an exercise from a workout
 export async function removeExerciseFromWorkout(
     exercise_id: string,
     workout_id: string
