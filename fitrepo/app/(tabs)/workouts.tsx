@@ -2,12 +2,12 @@ import { StyleSheet } from 'react-native';
 
 import { Collapsible } from '@/components/ui/collapsible';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Fonts } from '@/constants/theme';
-import { Calendar, Agenda } from 'react-native-calendars';
+import { Calendar } from 'react-native-calendars';
+import { useWorkouts } from '@/hooks/use-workouts';
 
 export default function TabTwoScreen() {
+  const {workouts, markedDates} = useWorkouts()
+  
   return (
     <>
       <ParallaxScrollView
