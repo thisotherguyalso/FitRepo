@@ -27,6 +27,7 @@ export type WorkoutExercise = {
     sets: number | null
     reps: number | null
     time_seconds: number | null
+    weight: number | null
     workout_id: number 
     exercise_id: number
 }
@@ -51,6 +52,7 @@ export type PresetExercise = {
     sets: number | null
     reps: number | null
     time_seconds: number | null
+    weight: number | null
     preset_id: number 
     exercise_id: number
 }

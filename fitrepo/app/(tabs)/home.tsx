@@ -4,7 +4,6 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { getProfile } from '@/lib/api/profiles';
 
-// add this function
 async function handleSignOut() {
   await supabase.auth.signOut()
 }

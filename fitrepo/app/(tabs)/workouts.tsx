@@ -10,14 +10,15 @@ import { Calendar, Agenda } from 'react-native-calendars';
 export default function TabTwoScreen() {
   return (
     <>
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-    </ParallaxScrollView>
-    <Calendar
-    options: {{
-      CalendarBackgroundColor: '#01252cfa';
-    }}
-    />
+      <ParallaxScrollView
+        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+        <Calendar
+          theme={{
+            backgroundColor: '#01252cfa',
+            calendarBackground: '#01252cfa',
+          }}
+        />
+      </ParallaxScrollView>
     </>
   );
 }
