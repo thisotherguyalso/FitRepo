@@ -25,3 +25,17 @@ export async function updateProfile(
     if (error) throw error
     return data
 }
+
+// Creates a profile
+export async function createProfile(
+    user_id: string,
+    profile: Omit<Profile, 'id' | 'started_at'>
+) {
+  const { data, error } = await supabase.from('profiles')
+    .insert({
+        id: user_id,
+        ...profile
+    }).select().single()
+  if (error) throw error
+  return data
+}

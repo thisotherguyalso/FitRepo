@@ -3,59 +3,17 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { supabase } from '@/lib/supabase'
 import { router } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
-import * as AuthSession from 'expo-auth-session'
+import { useAuth } from '@/hooks/use-auth'
 
 WebBrowser.maybeCompleteAuthSession()
 
 export default function Login() {
+  // sets the states that triggers re-rendering of the screen
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
-  const [loading, setLoading] = useState(false)
 
-  async function handleAuth() {
-    setLoading(true)
-    if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({ email, password })
-      if (error) Alert.alert('Error', error.message)
-      else {
-        if (data.user) {
-          await supabase.from('profiles').insert({
-            id: data.user.id,
-            username: email.split('@')[0],
-            started_at: new Date().toISOString(),
-          })
-        }
-        Alert.alert('Check your email to confirm your account!')
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) Alert.alert('Error', error.message)
-      else router.replace('/(tabs)/home' as any)
-    }
-    setLoading(false)
-  }
-
-async function handleGoogleSignIn() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: 'https://jxuvpkwfpejflxlcopww.supabase.co/auth/v1/callback',
-      skipBrowserRedirect: true,
-    },
-  })
-
-  if (error) return Alert.alert('Error', error.message)
-
-  const result = await WebBrowser.openAuthSessionAsync(
-    data.url ?? '',
-    'fitrepo://'
-  )
-
-  if (result.type === 'success') {
-    await supabase.auth.exchangeCodeForSession(result.url)
-  }
-}
+  const { loading, signUp, signIn, googleSignIn } = useAuth()
 
   return (
     <View style={styles.container}>
@@ -80,11 +38,13 @@ async function handleGoogleSignIn() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleAuth} disabled={loading}>
+      <TouchableOpacity style={styles.button}
+      onPress={() => isSignUp ? signUp(email, password) : signIn(email, password)}
+      disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
+      <TouchableOpacity style={styles.googleButton} onPress={googleSignIn}>
         <Text style={styles.googleButtonText}>Continue with Google</Text>
       </TouchableOpacity>
 
