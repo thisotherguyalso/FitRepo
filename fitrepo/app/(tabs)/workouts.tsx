@@ -4,27 +4,11 @@ import { Workout } from '@/types/database';
 import { getWorkouts } from '@/lib/api/workouts';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { Calendar } from 'react-native-calendars';
+import { useWorkouts } from '@/hooks/use-workouts';
 
 export default function TabTwoScreen() {
-  const [workouts, setWorkouts] = useState<Workout[]>([])
-
-  useEffect(() => {
-    loadWorkouts()
-  }, [])
-
-  async function loadWorkouts() {
-    const data = await getWorkouts()
-    setWorkouts(data ?? [])
-  }
-
-  const markedDates = workouts.reduce((acc, workout) => {
-    acc[workout.performed_at] = {
-      marked: true,
-      dotColor: workout.is_finished ? '#f5c842' : '#3b82f6'
-    }
-    return acc
-  }, {} as Record<string, any>)
-
+  const {workouts, markedDates} = useWorkouts()
+  
   return (
     <>
       <ParallaxScrollView
