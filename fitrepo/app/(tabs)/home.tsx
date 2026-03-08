@@ -1,14 +1,7 @@
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import React from 'react';
-import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { getWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from '@/lib/api/workouts'
-import { getExercises, getExercise } from '@/lib/api/exercises'
-import { getExercisesInWorkout, getExerciseInWorkout, addExerciseToWorkout, updateWorkoutExercise, removeExerciseFromWorkout } from '@/lib/api/workoutExercises'
-import { getWorkoutPresets, getWorkoutPreset, createWorkoutPreset, updateWorkoutPreset, deleteWorkoutPreset } from '@/lib/api/workoutPresets'
-import { getExercisesInPreset, getExerciseInPreset, addExerciseToPreset, updatePresetExercise, removeExerciseFromPreset } from '@/lib/api/presetExercises'
-import { getProfile, updateProfile } from '@/lib/api/profiles'
 
 export default function Home() {
   const [userName, setUserName] = useState('');
@@ -21,12 +14,17 @@ export default function Home() {
       if (user) {
         const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single()
         const { data: workout, count, error:workoutError } = await supabase.from('workouts').select('*', {count: 'exact'}).eq('id', user.id)
+        const { data:previous, error:previousDateError } = await supabase.from('workouts').select('*').order('performed_at', {ascending:false}).eq('id', user.id).lt('performed_at', new Date().toString()).single()
         console.log('raw profile data:', profile)
         console.log('raw workouts data:', workout)
+        console.log('raw previous data:', previous)
         console.log('error:', profileError)
+        console.log('error:', workoutError)
+        console.log('error:', previousDateError)
         setUserName(profile?.username ?? user.email ?? 'there')
         setcurrentStreak(profile?.current_streak ?? '0')
         setTotalWorkouts(count)
+        setPreviousWorkoutDate(previous)
       }
     })
   }, [])
@@ -42,7 +40,7 @@ export default function Home() {
       <TouchableOpacity style={styles.sessionCard}>
         <Text style={styles.sessionLabel}>Previous Workout</Text>
         <Text style={styles.sessionTitle}>Upper Body Strength</Text>
-        <Text style={styles.sessionDate}>today</Text>
+        <Text style={styles.sessionDate}>{previousWorkoutDate?.toString()}</Text>
       </TouchableOpacity>
 
       {/* Stats Section */}
