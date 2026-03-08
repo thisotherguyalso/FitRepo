@@ -30,6 +30,7 @@ export type WorkoutExercise = {
     weight: number | null
     workout_id: number 
     exercise_id: number
+    order_index: number
 }
 
 export type Profile = {
@@ -55,4 +56,5 @@ export type PresetExercise = {
     weight: number | null
     preset_id: number 
     exercise_id: number
+    order_index: number
 }

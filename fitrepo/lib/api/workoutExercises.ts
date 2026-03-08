@@ -8,6 +8,7 @@ export async function getExercisesInWorkout(
     const { data, error } = await supabase.from('workout_exercises')
         .select('*, exercises ( name, type, image_url ) ')
         .eq('workout_id', workout_id)
+        .order('order_index', { ascending: true })
     if (error) throw error
     return data
 }

@@ -8,6 +8,7 @@ export async function getExercisesInPreset(
     const { data, error } = await supabase.from('preset_exercises')
         .select('*, exercises ( name, type, image_url ) ')
         .eq('preset_id', preset_id)
+        .order('order_index', { ascending: true })
     if (error) throw error
     return data
 }
