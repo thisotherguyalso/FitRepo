@@ -6,25 +6,24 @@ import { supabase } from '@/lib/supabase';
 export default function Home() {
   const [userName, setUserName] = useState('');
   const [currentStreak, setcurrentStreak] = useState('');
-  const [totalWorkouts, setTotalWorkouts] = useState<number | null>(0);
+  const [totalWorkouts, setTotalWorkouts] = useState<number | null>(null);
   const [previousWorkoutDate, setPreviousWorkoutDate] = useState<Date | null>();
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
         const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-        const { data: workout, count, error:workoutError } = await supabase.from('workouts').select('*', {count: 'exact'}).eq('id', user.id)
-        const { data:previous, error:previousDateError } = await supabase.from('workouts').select('*').order('performed_at', {ascending:false}).eq('id', user.id).lt('performed_at', new Date().toString()).single()
+        const { data: workouts } = await supabase.from('workouts').select('*').eq('user_id', user.id)
+        const { data: previous, error:previousDateError } = await supabase.from('workouts').select('*').order('performed_at', {ascending:false}).eq('id', user.id).lt('performed_at', new Date().toString()).single()
         console.log('raw profile data:', profile)
-        console.log('raw workouts data:', workout)
         console.log('raw previous data:', previous)
         console.log('error:', profileError)
-        console.log('error:', workoutError)
         console.log('error:', previousDateError)
         setUserName(profile?.username ?? user.email ?? 'there')
         setcurrentStreak(profile?.current_streak ?? '0')
-        setTotalWorkouts(count)
+        setTotalWorkouts(workouts?.length ?? 0)
         setPreviousWorkoutDate(previous)
+
       }
     })
   }, [])
