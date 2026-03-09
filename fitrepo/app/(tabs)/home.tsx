@@ -8,21 +8,30 @@ export default function Home() {
   const [currentStreak, setcurrentStreak] = useState('');
   const [totalWorkouts, setTotalWorkouts] = useState<number | null>(null);
   const [previousWorkoutDate, setPreviousWorkoutDate] = useState<Date | null>();
+  const [previousWorkout, setPreviousWorkout] = useState('');
 
   useEffect(() => {
+    const today = new Date()
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (user) {
         const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single()
         const { data: workouts } = await supabase.from('workouts').select('*').eq('user_id', user.id)
-        const { data: previous, error:previousDateError } = await supabase.from('workouts').select('*').order('performed_at', {ascending:false}).eq('id', user.id).lt('performed_at', new Date().toString()).single()
+        const { data: previous } = await supabase
+        .from('workouts')
+        .select('*')
+        .eq('user_id', user.id)
+        .lt('performed_at', today.toISOString())
+        .order('performed_at', {ascending : false})
+        .limit(1)
+        .maybeSingle()
         console.log('raw profile data:', profile)
         console.log('raw previous data:', previous)
         console.log('error:', profileError)
-        console.log('error:', previousDateError)
         setUserName(profile?.username ?? user.email ?? 'there')
         setcurrentStreak(profile?.current_streak ?? '0')
         setTotalWorkouts(workouts?.length ?? 0)
-        setPreviousWorkoutDate(previous)
+        setPreviousWorkoutDate(previous?.performed_at ? new Date(previous.performed_at) : null)
+        setPreviousWorkout(previous?.name ?? 'None')
 
       }
     })
@@ -38,8 +47,8 @@ export default function Home() {
       {/* Previous Workout */}
       <TouchableOpacity style={styles.sessionCard}>
         <Text style={styles.sessionLabel}>Previous Workout</Text>
-        <Text style={styles.sessionTitle}>Upper Body Strength</Text>
-        <Text style={styles.sessionDate}>{previousWorkoutDate?.toString()}</Text>
+        <Text style={styles.sessionTitle}>{previousWorkout}</Text>
+        <Text style={styles.sessionDate}>{previousWorkoutDate ? previousWorkoutDate.toLocaleDateString() : "No previous workout"}</Text>
       </TouchableOpacity>
 
       {/* Stats Section */}
