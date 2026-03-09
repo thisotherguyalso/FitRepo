@@ -1,16 +1,21 @@
 import { StyleSheet, TouchableOpacity, Text, View, Dimensions} from 'react-native';
-import { Route } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { Calendar, CalendarList } from 'react-native-calendars';
+import { CalendarList } from 'react-native-calendars';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import BottomSheet from '@gorhom/bottom-sheet'
+import BottomSheetView from '@gorhom/bottom-sheet';
+import { useRef } from 'react'
 
 export default function TabTwoScreen() {
   const {workouts, markedDates} = useWorkouts()
   const screenWidth = Dimensions.get('window').width
+  const bottomSheetRef = useRef<BottomSheet>(null)
+  const calendarBG = useThemeColor({}, 'background')
   
   return (
     <>
+    <View style={{ flex: 1 }}>
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
         
@@ -35,7 +40,7 @@ export default function TabTwoScreen() {
             markedDates={markedDates}
             current={new Date().toISOString().split('T')[0]}
             theme={{
-              calendarBackground: useThemeColor({}, 'background'),
+              calendarBackground: calendarBG,
               dayTextColor: '#FFFFFF',
               monthTextColor: '#FFFFFF',
               textDisabledColor: '#504b4b',
@@ -44,6 +49,8 @@ export default function TabTwoScreen() {
             }}
             onDayPress={(day) => {
               console.log('pressed:', day.dateString)
+              bottomSheetRef.current?.expand()
+              console.log('bottomSheetRef:', bottomSheetRef.current)
             }}
           />
         </View>
@@ -55,8 +62,19 @@ export default function TabTwoScreen() {
         }>
           <Text style={styles.createButtonText}>Plan a Workout!</Text>
         </TouchableOpacity>
-
       </ParallaxScrollView>
+
+      <BottomSheet 
+        ref={bottomSheetRef} 
+        index={-1} 
+        snapPoints={['40%']}
+        enablePanDownToClose={true}
+        backgroundStyle={{ backgroundColor: '#1a1a1a' }}>
+        <BottomSheetView style={{ padding: 24 }}>
+          <Text style={{ color: 'white' }}>Hi</Text>
+        </BottomSheetView>
+      </BottomSheet>
+    </View>
     </>
   );
 }

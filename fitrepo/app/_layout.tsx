@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Stack, useRouter } from 'expo-router'
 import { supabase } from '@/lib/supabase'
 import * as Linking from 'expo-linking'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 export default function RootLayout() {
   const router = useRouter()
@@ -31,5 +32,9 @@ export default function RootLayout() {
     else router.replace('/(tabs)/home' as any)
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </GestureHandlerRootView>
+  )
 }

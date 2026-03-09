@@ -66,7 +66,6 @@ const styles = StyleSheet.create({
   },
   header: {
     height: HEADER_HEIGHT,
-    overflow: 'hidden',
   },
   headerText: {
     color: 'white',
@@ -80,6 +79,5 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 32,
     gap: 14,
-    overflow: 'hidden',
   },
 });
