@@ -10,6 +10,37 @@ async function handleSignOut() {
 
 export default function Home() {
   const [userName, setUserName] = useState('');
+  const [currentStreak, setcurrentStreak] = useState('');
+  const [totalWorkouts, setTotalWorkouts] = useState<number | null>(null);
+  const [previousWorkoutDate, setPreviousWorkoutDate] = useState<Date | null>();
+  const [previousWorkout, setPreviousWorkout] = useState('');
+
+  useEffect(() => {
+    const today = new Date()
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        const { data: workouts } = await supabase.from('workouts').select('*').eq('user_id', user.id)
+        const { data: previous } = await supabase
+        .from('workouts')
+        .select('*')
+        .eq('user_id', user.id)
+        .lt('performed_at', today.toISOString())
+        .order('performed_at', {ascending : false})
+        .limit(1)
+        .maybeSingle()
+        console.log('raw profile data:', profile)
+        console.log('raw previous data:', previous)
+        console.log('error:', profileError)
+        setUserName(profile?.username ?? user.email ?? 'there')
+        setcurrentStreak(profile?.current_streak ?? '0')
+        setTotalWorkouts(workouts?.length ?? 0)
+        setPreviousWorkoutDate(previous?.performed_at ? new Date(previous.performed_at) : null)
+        setPreviousWorkout(previous?.name ?? 'None')
+
+      }
+    })
+  }, [])
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -31,8 +62,8 @@ export default function Home() {
       {/* Previous Workout */}
       <TouchableOpacity style={styles.sessionCard}>
         <Text style={styles.sessionLabel}>Previous Workout</Text>
-        <Text style={styles.sessionTitle}>Upper Body Strength</Text>
-        <Text style={styles.sessionDate}>February 25, 2026</Text>
+        <Text style={styles.sessionTitle}>{previousWorkout}</Text>
+        <Text style={styles.sessionDate}>{previousWorkoutDate ? previousWorkoutDate.toLocaleDateString() : "No previous workout"}</Text>
       </TouchableOpacity>
 
       {/* Stats Section */}
@@ -63,12 +94,12 @@ export default function Home() {
 
         <View style={styles.row}>
           <View style={styles.wideCard}>
-            <Text style={styles.statValue}>48</Text>
+            <Text style={styles.statValue}>{totalWorkouts}</Text>
             <Text style={styles.statLabel}>Total Workouts</Text>
           </View>
 
           <View style={styles.wideCard}>
-            <Text style={styles.statValue}>6</Text>
+            <Text style={styles.statValue}>{currentStreak}</Text>
             <Text style={styles.statLabel}>Current Streak</Text>
           </View>
         </View>
