@@ -2,7 +2,6 @@ import ParallaxScrollView from '@/components/parallax-scroll-view';
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import { getProfile } from '@/lib/api/profiles';
 
 async function handleSignOut() {
   await supabase.auth.signOut()
@@ -52,6 +51,7 @@ export default function Home() {
       }
     })
   }, [])
+
   return (
     <ParallaxScrollView 
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
@@ -65,28 +65,6 @@ export default function Home() {
         <Text style={styles.sessionTitle}>{previousWorkout}</Text>
         <Text style={styles.sessionDate}>{previousWorkoutDate ? previousWorkoutDate.toLocaleDateString() : "No previous workout"}</Text>
       </TouchableOpacity>
-
-      {/* Stats Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Personal Records</Text>
-
-        <View style={styles.grid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>120kg</Text>
-            <Text style={styles.statLabel}>Bench Press</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>180kg</Text>
-            <Text style={styles.statLabel}>Deadlift</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>150kg</Text>
-            <Text style={styles.statLabel}>Squat</Text>
-          </View>
-        </View>
-      </View>
 
       {/* General Stats */}
       <View style={styles.section}>
