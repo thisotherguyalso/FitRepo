@@ -34,6 +34,11 @@ jest.mock('react-native', () => ({
 }))
 
 describe('useAuth', () => {
+    // clear the data before each test
+    beforeEach(() => {
+        jest.clearAllMocks()
+    })
+
     it ('should start with loading as false', () => {
         const { result } = renderHook(() => useAuth());
         expect(result.current.loading).toBe(false);
@@ -84,8 +89,6 @@ describe('useAuth', () => {
             await result.current.signUp('test2@test.com', 'test')
         })
 
-        
-
         expect(supabase.auth.signUp as jest.Mock).toHaveBeenCalledWith({
             email: 'test2@test.com', 
             password: 'test'
@@ -104,10 +107,50 @@ describe('useAuth', () => {
             await result.current.signUp('test2@test.com', 'test')
         })
 
-        expect(supabase.auth.signUp as jest.Mock).toHaveBeenCalledWith({
-            email: 'test2@test.com',
-            password: 'test'
-        })
+        expect(createProfile).toHaveBeenCalled()
     });
 
+    it('should NOT call createProfile after failed signup', async () => {
+        const { result } = renderHook(() => useAuth());
+
+        (supabase.auth.signUp as jest.Mock).mockResolvedValue({
+            data: { user: null },
+            error: { message: 'User already exists' }
+        })
+
+        await act(async () => {
+            await result.current.signUp('test2@test.com', 'wrongpassword')
+        })
+
+        expect(createProfile).not.toHaveBeenCalled()
+    });
+
+    it('should end with loading as false', async () => {
+        const { result } = renderHook(() => useAuth());
+
+        (supabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
+            data: { user: { id: '123' } },
+            error: null
+        })
+
+        await act(async () => {
+            await result.current.signIn('test@test.com', 'test')
+        })
+
+        expect(result.current.loading).toBe(false);
+    });
+
+    it('should set loading to true during signUp', async () => {
+        const { result } = renderHook(() => useAuth());
+
+        (supabase.auth.signInWithPassword as jest.Mock).mockImplementation(() =>
+            new Promise(resolve => setTimeout(resolve, 100))
+        )
+
+        act(() => {
+            result.current.signIn('test@test.com', 'test')
+        })
+
+        expect(result.current.loading).toBe(true);
+    });
 });
