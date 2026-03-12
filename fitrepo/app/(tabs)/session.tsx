@@ -11,7 +11,10 @@ export default function SessionTab() {
               <Text style={styles.sessionLabel}>Exercise Plan</Text>
       
         <Link href="/session-screens/timer" asChild>
-          <Button title="Start Workout"/>
+          <Button title="Start Timer"/>
+        </Link>
+        <Link href="/session-screens/reps" asChild>
+          <Button title="Start Reps"/>
         </Link>
       </TouchableOpacity>
     </ParallaxScrollView>
