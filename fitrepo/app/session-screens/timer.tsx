@@ -1,20 +1,46 @@
-import { Text, TouchableOpacity, StyleSheet, Button } from 'react-native';
-import { Link } from 'expo-router';
+import { Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { useState, useEffect } from 'react';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 
+const duration = 20;
 
 export default function Timer() {
+  const [ timeRemaining, setTimeRemaining ] = useState(duration)
+  const router = useRouter()
+
+  useEffect(() => {
+    if (timeRemaining === 0) {
+      router.push('/session-screens/breathe')
+    }
+    const interval = setInterval(() => {
+      setTimeRemaining(previous => previous - 1)
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [timeRemaining, router])
+  
+  const doubleTap = Gesture.Tap().numberOfTaps(2).onEnd(() => {
+    router.navigate('/session-screens/breathe')
+  }).runOnJS(true)
+
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-        <TouchableOpacity style={styles.sessionCard}>
-                      <Text style={styles.sessionLabel}>Timer</Text>
-              
-                <Link href="/session-screens/breathe" asChild>
-                  <Button title="Skip Timer"/>
-                </Link>
-              </TouchableOpacity>
-    </ParallaxScrollView>
+    <GestureHandlerRootView style={{ flex:1 }}>
+      <GestureDetector gesture={doubleTap}>
+        <ParallaxScrollView
+          headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+            <TouchableOpacity style={styles.sessionCard}>
+              <Text style={styles.sessionLabel}>
+                {timeRemaining}
+              </Text>
+              <Text style={styles.sessionLabel}>
+                Double tap screen to skip
+              </Text>
+            </TouchableOpacity>
+        </ParallaxScrollView>
+      </GestureDetector>
+    </GestureHandlerRootView>
   );
 }
 

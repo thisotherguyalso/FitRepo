@@ -1,20 +1,31 @@
-import { TouchableOpacity, Text, StyleSheet, Button } from 'react-native';
-import { Link } from 'expo-router';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function Reps() {
+  const router = useRouter()
+
+  const doubleTap = Gesture.Tap().numberOfTaps(2).onEnd(() => {
+    router.navigate('/session-screens/breathe')
+  }).runOnJS(true)
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-        <TouchableOpacity style={styles.sessionCard}>
-                      <Text style={styles.sessionLabel}>Reps</Text>
-              
-                <Link href="/session-screens/breathe" asChild>
-                  <Button title="Skip Reps"/>
-                </Link>
-              </TouchableOpacity>
-    </ParallaxScrollView>
+    <GestureHandlerRootView style={{ flex:1 }}>
+          <GestureDetector gesture={doubleTap}>
+            <ParallaxScrollView
+              headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+                <TouchableOpacity style={styles.sessionCard}>
+                  <Text style={styles.sessionLabel}>
+                    10
+                  </Text>
+                  <Text style={styles.sessionLabel}>
+                    Double tap screen to skip
+                  </Text>
+                </TouchableOpacity>
+            </ParallaxScrollView>
+          </GestureDetector>
+        </GestureHandlerRootView>
   );
 }
 
