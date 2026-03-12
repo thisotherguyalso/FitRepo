@@ -8,12 +8,11 @@ export default function Summary() {
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
         <TouchableOpacity style={styles.sessionCard}>
-                      <Text style={styles.sessionLabel}>Summary</Text>
-              
-                <Link href="/(tabs)/session" asChild>
-                  <Button title="Go Back"/>
-                </Link>
-              </TouchableOpacity>
+          <Text style={styles.sessionLabel}>Summary</Text>
+          <Link href="/(tabs)/session" asChild>
+          <Button title="Go Back"/>
+          </Link>
+        </TouchableOpacity>
     </ParallaxScrollView>
   );
 }

@@ -1,4 +1,4 @@
-import { Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Text, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useState, useEffect } from 'react';
@@ -7,37 +7,43 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 const duration = 20;
 
 export default function Timer() {
-  const [ timeRemaining, setTimeRemaining ] = useState(duration)
-  const router = useRouter()
+  const [timeRemaining, setTimeRemaining] = useState(duration);
+  const router = useRouter();
 
   useEffect(() => {
-    if (timeRemaining === 0) {
-      router.push('/session-screens/breathe')
-    }
+    console.log("Time Screen Mounted");
     const interval = setInterval(() => {
-      setTimeRemaining(previous => previous - 1)
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [timeRemaining, router])
-  
-  const doubleTap = Gesture.Tap().numberOfTaps(2).onEnd(() => {
-    router.navigate('/session-screens/breathe')
-  }).runOnJS(true)
+      setTimeRemaining((previous) => {
+        if (previous <= 1) {
+          clearInterval(interval);
+          router.replace('/session-screens/breathe');
+          return 0;
+        }
+        return previous - 1;
+      });
+    }, 1000);
 
+    return () => clearInterval(interval);
+  }, [router]);
+
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd(() => {
+      router.replace('/session-screens/breathe');
+    })
+    .runOnJS(true);
 
   return (
-    <GestureHandlerRootView style={{ flex:1 }}>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <GestureDetector gesture={doubleTap}>
         <ParallaxScrollView
-          headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-            <TouchableOpacity style={styles.sessionCard}>
-              <Text style={styles.sessionLabel}>
-                {timeRemaining}
-              </Text>
-              <Text style={styles.sessionLabel}>
-                Double tap screen to skip
-              </Text>
-            </TouchableOpacity>
+          headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}
+        >
+          <View style={styles.sessionCard}>
+            <Text style={styles.sessionTitle}>TIMER SCREEN</Text>
+            <Text style={styles.sessionLabel}>{timeRemaining}</Text>
+            <Text style={styles.sessionLabel}>Double tap screen to skip to Breathe</Text>
+          </View>
         </ParallaxScrollView>
       </GestureDetector>
     </GestureHandlerRootView>
@@ -45,23 +51,21 @@ export default function Timer() {
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 5,
-  },
   sessionCard: {
     backgroundColor: '#1a1a1a',
     padding: 20,
     borderRadius: 16,
     marginBottom: 30,
   },
-  button: {
-    backgroundColor: 'blue',
-    alignItems: 'center',
-  },
   sessionLabel: {
     color: '#888',
     fontSize: 14,
     marginBottom: 5,
+  },
+  sessionTitle: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
 });

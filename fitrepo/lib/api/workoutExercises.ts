@@ -38,6 +38,8 @@ export async function addExerciseToWorkout(
             sets: workout_exercise.sets,
             reps: workout_exercise.reps,
             time_seconds: workout_exercise.time_seconds,
+            weight: workout_exercise.weight,
+            order_index: workout_exercise.order_index,
             workout_id: workout_id,
             exercise_id: exercise_id
         }).select().single()

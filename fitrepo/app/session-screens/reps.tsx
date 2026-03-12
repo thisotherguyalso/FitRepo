@@ -13,49 +13,46 @@ export default function Reps() {
   }).runOnJS(true)
 
   return (
-    <GestureHandlerRootView>
+    // flex 1 = Take up the entire available screen space
+    <GestureHandlerRootView style={{ flex: 1 }}> 
+      <ParallaxScrollView
+        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
           <GestureDetector gesture={doubleTap}>
-            <ParallaxScrollView
-              headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-                <TouchableOpacity style={styles.sessionCard}>
-                  <Text style={styles.sessionLabel}>
-                    {repAmount}
-                  </Text>
-                  <Text style={styles.sessionLabel}>
-                    Double tap screen to skip
-                  </Text>
-                </TouchableOpacity>
-                <Button title='Add Reps' onPress={() => {
-                  setRepAmount(repAmount + 1)
-                }}/>
-                <Button title='Remove Reps' onPress={() => {
-                  setRepAmount(repAmount - 1)
-                }}/>
-            </ParallaxScrollView>
+            <TouchableOpacity style={styles.sessionCard}>
+              <Text style={styles.sessionTitle}>REPS SCREEN</Text>
+              <Text style={styles.sessionLabel}>{repAmount}</Text>
+              <Text style={styles.sessionLabel}>Double tap this card to skip</Text>
+            </TouchableOpacity>
           </GestureDetector>
-        </GestureHandlerRootView>
+          
+          <Button title='Add Reps' onPress={() => {
+            setRepAmount((repAmount) => repAmount + 1)
+          }}/>
+          <Button title='Remove Reps' onPress={() => {
+            setRepAmount((repAmount) => Math.max(repAmount - 1, 0))
+          }}/>
+      </ParallaxScrollView>
+    </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 5,
-  },
   sessionCard: {
     backgroundColor: '#1a1a1a',
     padding: 20,
     borderRadius: 16,
     marginBottom: 30,
   },
-  button: {
-    backgroundColor: 'blue',
-    alignItems: 'center',
-  },
   sessionLabel: {
     color: '#888',
     fontSize: 14,
     marginBottom: 5,
+  },
+  sessionTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
   },
 });
 

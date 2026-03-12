@@ -1,4 +1,4 @@
-import { StyleSheet, TouchableOpacity, Text, Button } from 'react-native';
+import { StyleSheet, TouchableOpacity, Text, Button, View } from 'react-native';
 import { Link } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 
@@ -7,16 +7,16 @@ export default function SessionTab() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-      <TouchableOpacity style={styles.sessionCard}>
-              <Text style={styles.sessionLabel}>Exercise Plan</Text>
+      <View style={styles.sessionCard}>
+        <Text style={styles.sessionLabel}>Exercise Plan</Text>
       
         <Link href="/session-screens/timer" asChild>
           <Button title="Start Timer"/>
-        </Link>
+        </Link> 
         <Link href="/session-screens/reps" asChild>
           <Button title="Start Reps"/>
         </Link>
-      </TouchableOpacity>
+      </View>
     </ParallaxScrollView>
   );
 }

@@ -48,12 +48,12 @@ export function useAuth() {
             const {data, error} = await supabase.auth.signInWithPassword(
                 { email, password }
             )
-            if (error) throw error
-            router.replace('/(tabs)/home' as any)
+            if (error) throw error;
+            router.replace('/(tabs)/home' as any);
         } catch (error: any) {
-            Alert.alert('Error', error.message)
+            Alert.alert('Error', error.message);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
     }
 
@@ -65,22 +65,23 @@ export function useAuth() {
             redirectTo: 'https://jxuvpkwfpejflxlcopww.supabase.co/auth/v1/callback',
             skipBrowserRedirect: true,
           },
-        })
+        });
     
         if (error) return Alert.alert('Error', error.message)
     
         const result = await WebBrowser.openAuthSessionAsync(
           data.url ?? '',
           'fitrepo://'
-        )
+        );
     
         if (result.type === 'success') {
-          await supabase.auth.exchangeCodeForSession(result.url)
+          await supabase.auth.exchangeCodeForSession(result.url);
         }
     }
     
     async function signOut() {
-        await supabase.auth.signOut()
+        await supabase.auth.signOut();
+        router.replace('/login');
     }
 
     return { loading, signIn, signUp, googleSignIn, signOut}
