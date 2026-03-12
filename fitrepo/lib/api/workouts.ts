@@ -8,6 +8,18 @@ export async function getWorkouts() {
     return data
 }
 
+// Gets the most recent workout before today
+export async function getPreviousWorkout() {
+    const today = new Date().toISOString()
+    const { data, error } = await supabase.from('workouts').select('*')
+        .lt('performed_at', today)
+        .order('performed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+    if (error) throw error
+    return data
+}
+
 // Gets a specific workout based on id.
 export async function getWorkout(id: string) {
     const { data, error } = await supabase.from('workouts').select('*').eq('id', id).single()

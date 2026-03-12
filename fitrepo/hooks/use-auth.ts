@@ -79,6 +79,9 @@ export function useAuth() {
         }
     }
     
+    async function signOut() {
+        await supabase.auth.signOut()
+    }
 
-    return { loading, signIn, signUp, googleSignIn}
+    return { loading, signIn, signUp, googleSignIn, signOut}
 }

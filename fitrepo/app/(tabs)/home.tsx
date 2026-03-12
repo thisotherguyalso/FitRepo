@@ -1,56 +1,12 @@
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { supabase } from '@/lib/supabase';
-
-async function handleSignOut() {
-  await supabase.auth.signOut()
-}
+import { useHomeStats } from '@/hooks/use-home-stats';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function Home() {
-  const [userName, setUserName] = useState('');
-  const [currentStreak, setcurrentStreak] = useState('');
-  const [totalWorkouts, setTotalWorkouts] = useState<number | null>(null);
-  const [previousWorkoutDate, setPreviousWorkoutDate] = useState<Date | null>();
-  const [previousWorkout, setPreviousWorkout] = useState('');
-
-  useEffect(() => {
-    const today = new Date()
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) {
-        const { data: profile, error: profileError } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-        const { data: workouts } = await supabase.from('workouts').select('*').eq('user_id', user.id)
-        const { data: previous } = await supabase
-        .from('workouts')
-        .select('*')
-        .eq('user_id', user.id)
-        .lt('performed_at', today.toISOString())
-        .order('performed_at', {ascending : false})
-        .limit(1)
-        .maybeSingle()
-        console.log('raw profile data:', profile)
-        console.log('raw previous data:', previous)
-        console.log('error:', profileError)
-        setUserName(profile?.username ?? user.email ?? 'there')
-        setcurrentStreak(profile?.current_streak ?? '0')
-        setTotalWorkouts(workouts?.length ?? 0)
-        setPreviousWorkoutDate(previous?.performed_at ? new Date(previous.performed_at) : null)
-        setPreviousWorkout(previous?.name ?? 'None')
-
-      }
-    })
-  }, [])
-
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (user) {
-        const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-        console.log('raw profile data:', data)
-        console.log('error:', error)
-        setUserName(data?.username ?? user.email ?? 'there')
-      }
-    })
-  }, [])
+  const { userName, currentStreak, totalWorkouts, previousWorkout, previousWorkoutDate, loading } = useHomeStats()
+  const { signOut } = useAuth()
 
   return (
     <ParallaxScrollView 
@@ -83,7 +39,7 @@ export default function Home() {
         </View>
       </View>
 
-    <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
+    <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
     <Text style={styles.signOutText}>Sign Out</Text>
     </TouchableOpacity>
 
