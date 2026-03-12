@@ -1,17 +1,19 @@
-import { StyleSheet, TouchableOpacity, Text, View, Dimensions} from 'react-native';
+import { StyleSheet, TouchableOpacity, Text, View, Dimensions, Button} from 'react-native';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { CalendarList } from 'react-native-calendars';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import BottomSheet from '@gorhom/bottom-sheet'
+import { Link } from 'expo-router';
 import BottomSheetView from '@gorhom/bottom-sheet';
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 
 export default function TabTwoScreen() {
   const {workouts, markedDates} = useWorkouts()
   const screenWidth = Dimensions.get('window').width
   const bottomSheetRef = useRef<BottomSheet>(null)
   const calendarBG = useThemeColor({}, 'background')
+  const [selected, setSelected] = useState('');
   
   return (
     <>
@@ -37,7 +39,6 @@ export default function TabTwoScreen() {
             horizontal={true}
             pagingEnabled={true}
             calendarWidth={screenWidth}
-            markedDates={markedDates}
             current={new Date().toISOString().split('T')[0]}
             theme={{
               calendarBackground: calendarBG,
@@ -48,9 +49,13 @@ export default function TabTwoScreen() {
               todayBackgroundColor: '#242431',
             }}
             onDayPress={(day) => {
-              console.log('pressed:', day.dateString)
+              console.log('selected day:', day.dateString)
+              setSelected(day.dateString);
               bottomSheetRef.current?.expand()
               console.log('bottomSheetRef:', bottomSheetRef.current)
+            }}
+            markedDates={{
+              [selected]: {selected: true, disableTouchEvent: true, selectedColor: 'blue'}, workouts: markedDates
             }}
           />
         </View>
@@ -64,16 +69,11 @@ export default function TabTwoScreen() {
         </TouchableOpacity>
       </ParallaxScrollView>
 
-      <BottomSheet 
-        ref={bottomSheetRef} 
-        index={-1} 
-        snapPoints={['40%']}
-        enablePanDownToClose={true}
-        backgroundStyle={{ backgroundColor: '#1a1a1a' }}>
-        <BottomSheetView style={{ padding: 24 }}>
-          <Text style={{ color: 'white' }}>Hi</Text>
-        </BottomSheetView>
-      </BottomSheet>
+      <TouchableOpacity style={styles}>
+              <Link href="create_workout" asChild>
+                <Button title="Plan a Workout"/>
+              </Link>
+            </TouchableOpacity>
     </View>
     </>
   );
