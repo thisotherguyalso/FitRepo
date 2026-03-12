@@ -38,6 +38,22 @@ export default function ChoiceButtons() {
     }
   }
 
+  // opens the global preset list and passes the chosen date
+  function handleLoadPreset() {
+    try {
+      if (!date) throw new Error('No workout date was provided.');
+
+      router.push({
+        pathname: '/preset_list',
+        params: {
+          date: date as string,
+        },
+      });
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    }
+  }
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
@@ -79,11 +95,18 @@ export default function ChoiceButtons() {
         {/* Continue button */}
         <TouchableOpacity
           style={styles.createButton}
-
           // moves the user to the exercise selection screen
           onPress={handleContinue}
         >
           <Text style={styles.buttonText}>Choose Exercises</Text>
+        </TouchableOpacity>
+
+        {/* Load Preset button */}
+        <TouchableOpacity
+          style={styles.presetButton}
+          onPress={handleLoadPreset}
+        >
+          <Text style={styles.buttonText}>Load from Preset</Text>
         </TouchableOpacity>
 
         {/* Back button */}
@@ -128,6 +151,13 @@ const styles = StyleSheet.create({
   },
   createButton: {
     backgroundColor: '#020975',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  presetButton: {
+    backgroundColor: '#0a7ea4',
     padding: 20,
     borderRadius: 16,
     marginBottom: 20,

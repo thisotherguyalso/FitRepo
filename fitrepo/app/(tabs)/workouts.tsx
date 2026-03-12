@@ -16,7 +16,7 @@ export default function WorkoutsTab() {
   useEffect(() => {
     const interval = setInterval(() => {
       void loadWorkouts();
-    }, 2000); // refresh every 2 seconds
+    }, 1000); // refresh every second
 
     return () => clearInterval(interval);
   }, [loadWorkouts]);
@@ -92,7 +92,7 @@ export default function WorkoutsTab() {
           selectedDateWorkouts.map((workout) => (
             <TouchableOpacity
               key={workout.id}
-              style={styles.workoutCard}
+              style={[styles.workoutCard, workout.is_finished && styles.finishedWorkoutCard]}
               onPress={() => {
                 router.push({
                   pathname: '/view_workout',
@@ -139,11 +139,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   sectionTitle: {
-  color: '#ffffff',
-  fontSize: 22,
-  fontWeight: '700',
-  marginTop: 24,
-  marginBottom: 12,
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: '700',
+    marginTop: 24,
+    marginBottom: 12,
   },
   emptyText: {
     color: '#9ca3af',
@@ -154,6 +154,11 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
+  },
+  finishedWorkoutCard: {
+    borderColor: '#22c55e',
+    backgroundColor: '#064e3b',
+    borderWidth: 2,
   },
   workoutCardTitle: {
     color: '#fff',

@@ -3,10 +3,20 @@ import { Workout } from '@/types/database'
 
 // Gets all workouts.
 export async function getWorkouts() {
+    const {
+        data: { user },
+        error: userError,
+    } = await supabase.auth.getUser()
+
+    if (userError) throw userError
+    if (!user) throw new Error('No authenticated user found.')
+
     const { data, error } = await supabase
         .from('workouts')
         .select('*')
+        .eq('user_id', user.id)
         .order('performed_at', { ascending: true })
+
     if (error) throw error
     return data
 }
@@ -21,14 +31,11 @@ export async function getPreviousWorkout() {
     if (userError) throw userError
     if (!user) throw new Error('No authenticated user found.')
 
-    // format today as YYYY-MM-DD so it matches performed_at
-    const today = new Date().toISOString().split('T')[0]
-
     const { data, error } = await supabase
         .from('workouts')
         .select('*')
         .eq('user_id', user.id)
-        .lt('performed_at', today)
+        .eq('is_finished', true)
         .order('performed_at', { ascending: false })
         .limit(1)
         .maybeSingle()
@@ -36,7 +43,6 @@ export async function getPreviousWorkout() {
     if (error) throw error
     return data
 }
-
 // Gets a specific workout based on id.
 export async function getWorkout(id: string) {
     const { data, error } = await supabase

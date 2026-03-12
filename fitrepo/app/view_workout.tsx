@@ -3,14 +3,12 @@ import { useLocalSearchParams, router } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useEffect, useMemo, useState } from 'react';
 import { getWorkout, updateWorkout } from '@/lib/api/workouts';
-import {
-  updateWorkoutExercise,
-  addExerciseToWorkout,
-  removeExerciseFromWorkout,
-} from '@/lib/api/workoutExercises';
+import { updateWorkoutExercise, addExerciseToWorkout, removeExerciseFromWorkout } from '@/lib/api/workoutExercises';
 import { useWorkoutExercises } from '@/hooks/use-workout-exercises';
 import { useExercises } from '@/hooks/use-exercises';
 import { Workout } from '@/types/database';
+import { createWorkoutPreset } from '@/lib/api/workoutPresets';
+import { addExerciseToPreset } from '@/lib/api/presetExercises';
 
 type EditableExercise = {
   id: string;
@@ -50,13 +48,23 @@ export default function ViewWorkout() {
   const [saving, setSaving] = useState(false);
 
   const [draftWorkoutName, setDraftWorkoutName] = useState('');
-  const [draftIsFinished, setDraftIsFinished] = useState(false);
 
   // local editable copy of the workout's current exercise rows
   const [editedExercises, setEditedExercises] = useState<EditableExercise[]>([]);
 
   // search bar for adding new exercises while editing
   const [search, setSearch] = useState('');
+
+  const [showPresetSave, setShowPresetSave] = useState(false);
+  const [presetName, setPresetName] = useState('');
+
+  const readableDate = workout?.performed_at
+  ? new Date(`${workout.performed_at}T00:00:00`).toLocaleDateString(undefined, {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  : '';
 
   useEffect(() => {
     if (!workout_id) return;
@@ -70,7 +78,6 @@ export default function ViewWorkout() {
   useEffect(() => {
     if (!workout) return;
     setDraftWorkoutName(workout.name);
-    setDraftIsFinished(workout.is_finished);
   }, [workout]);
 
   // Convert fetched workout_exercise rows into editable text inputs.
@@ -130,41 +137,46 @@ export default function ViewWorkout() {
     );
   }
 
+  // local save
   async function handleAddExercise(exercise: { id: string; name: string }) {
-    try {
-      if (!workout) throw new Error('Workout not found.');
-
-      // Add the selected exercise to the database with empty/default values first.
-      await addExerciseToWorkout(workout.id, exercise.id, {
-        sets: null,
-        reps: null,
-        time_seconds: null,
-        weight: null,
-        order_index: editedExercises.length,
-      });
-
-      await loadExercises();
-      setSearch('');
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+    if (!workout) {
+      Alert.alert('Error', 'Workout not found.');
+      return;
     }
+
+    const alreadyExists = editedExercises.some(
+      (item) => item.exercise_id === exercise.id
+    );
+
+    if (alreadyExists) return;
+
+    setEditedExercises((prev) => [
+      ...prev,
+      {
+        id: `new-${exercise.id}`,
+        workout_id: workout.id,
+        exercise_id: exercise.id,
+        name: exercise.name,
+        sets: '',
+        reps: '',
+        time_seconds: '',
+        weight: '',
+      },
+    ]);
+
+    setSearch('');
   }
 
-  async function handleRemoveExercise(exercise_id: string) {
-    try {
-      if (!workout) throw new Error('Workout not found.');
-
-      await removeExerciseFromWorkout(exercise_id, workout.id);
-      await loadExercises();
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
-    }
+  // local save
+  function handleRemoveExercise(exercise_id: string) {
+    setEditedExercises((prev) =>
+      prev.filter((exercise) => exercise.exercise_id !== exercise_id)
+    );
   }
 
   function handleCancelEdit() {
     setIsEditing(false);
     setDraftWorkoutName(workout?.name ?? '');
-    setDraftIsFinished(workout?.is_finished ?? false);
     setSearch('');
 
     // Reset edited exercise state back to whatever was last loaded from DB.
@@ -182,6 +194,7 @@ export default function ViewWorkout() {
     setEditedExercises(mapped);
   }
 
+  // update database from local save
   async function handleSaveChanges() {
     try {
       if (!workout) throw new Error('Workout not found.');
@@ -189,25 +202,58 @@ export default function ViewWorkout() {
 
       setSaving(true);
 
-      // Save parent workout fields first.
       await updateWorkout(workout.id, {
         name: draftWorkoutName.trim(),
-        is_finished: draftIsFinished,
       });
 
-      // Save each child workout_exercise row.
+      const originalExerciseIds = new Set(exercises.map((exercise: any) => exercise.exercise_id));
+      const editedExerciseIds = new Set(editedExercises.map((exercise) => exercise.exercise_id));
+
+      // remove exercises deleted locally
+      const removedExercises = exercises.filter(
+        (exercise: any) => !editedExerciseIds.has(exercise.exercise_id)
+      );
+
       await Promise.all(
-        editedExercises.map((exercise) =>
-          updateWorkoutExercise(
-            exercise.workout_id,
-            exercise.exercise_id,
-            {
-              sets: exercise.sets.trim() ? Number(exercise.sets) : null,
-              reps: exercise.reps.trim() ? Number(exercise.reps) : null,
-              time_seconds: exercise.time_seconds.trim() ? Number(exercise.time_seconds) : null,
-              weight: exercise.weight.trim() ? Number(exercise.weight) : null,
-            }
-          )
+        removedExercises.map((exercise: any) =>
+          removeExerciseFromWorkout(exercise.exercise_id, workout.id)
+        )
+      );
+
+      // add newly added exercises
+      const newExercises = editedExercises.filter(
+        (exercise) => !originalExerciseIds.has(exercise.exercise_id)
+      );
+
+      await Promise.all(
+        newExercises.map((exercise, index) =>
+          addExerciseToWorkout(workout.id, exercise.exercise_id, {
+            sets: exercise.sets.trim() ? Number(exercise.sets) : null,
+            reps: exercise.reps.trim() ? Number(exercise.reps) : null,
+            time_seconds: exercise.time_seconds.trim()
+              ? Number(exercise.time_seconds)
+              : null,
+            weight: exercise.weight.trim() ? Number(exercise.weight) : null,
+            order_index: index,
+          })
+        )
+      );
+
+      // update existing exercises
+      const existingExercises = editedExercises.filter(
+        (exercise) => originalExerciseIds.has(exercise.exercise_id)
+      );
+
+      await Promise.all(
+        existingExercises.map((exercise) =>
+          updateWorkoutExercise(exercise.workout_id, exercise.exercise_id, {
+            sets: exercise.sets.trim() ? Number(exercise.sets) : null,
+            reps: exercise.reps.trim() ? Number(exercise.reps) : null,
+            time_seconds: exercise.time_seconds.trim()
+              ? Number(exercise.time_seconds)
+              : null,
+            weight: exercise.weight.trim() ? Number(exercise.weight) : null,
+          })
         )
       );
 
@@ -242,15 +288,47 @@ export default function ViewWorkout() {
       setSaving(false);
     }
   }
-  
-  const readableDate = workout?.performed_at
-    ? new Date(`${workout.performed_at}T00:00:00`).toLocaleDateString(undefined, {
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : '';
 
+  async function handleSaveAsPreset() {
+    try {
+      if (!workout) throw new Error('Workout not found.');
+
+      const finalPresetName = presetName.trim() || workout.name;
+      if (!finalPresetName) throw new Error('Preset name cannot be empty.');
+
+      setSaving(true);
+
+      // Create the preset itself
+      const preset = await createWorkoutPreset({
+        name: finalPresetName,
+      });
+
+      // Copy current exercises into preset_exercises
+      await Promise.all(
+        editedExercises.map((exercise, index) =>
+          addExerciseToPreset(preset.id, exercise.exercise_id, {
+            sets: exercise.sets.trim() ? Number(exercise.sets) : null,
+            reps: exercise.reps.trim() ? Number(exercise.reps) : null,
+            time_seconds: exercise.time_seconds.trim()
+              ? Number(exercise.time_seconds)
+              : null,
+            weight: exercise.weight.trim() ? Number(exercise.weight) : null,
+            order_index: index,
+          })
+        )
+      );
+
+      setPresetName('');
+      setShowPresetSave(false);
+
+      Alert.alert('Success', 'Workout saved as a global preset.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+  
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
@@ -274,35 +352,6 @@ export default function ViewWorkout() {
             )}
 
             <Text style={styles.subHeaderText}>{readableDate}</Text>
-
-            {/* Planned / Finished status */}
-            {isEditing ? (
-              <View style={styles.statusRow}>
-                <TouchableOpacity
-                  style={[
-                    styles.statusButton,
-                    !draftIsFinished && styles.statusButtonSelected,
-                  ]}
-                  onPress={() => setDraftIsFinished(false)}
-                >
-                  <Text style={styles.buttonText}>Planned</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.statusButton,
-                    draftIsFinished && styles.statusButtonSelected,
-                  ]}
-                  onPress={() => setDraftIsFinished(true)}
-                >
-                  <Text style={styles.buttonText}>Finished</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <Text style={styles.statusText}>
-                {workout.is_finished ? 'Finished' : 'Planned'}
-              </Text>
-            )}
 
             <Text style={styles.sectionTitle}>Exercises</Text>
 
@@ -458,8 +507,46 @@ export default function ViewWorkout() {
               </TouchableOpacity>
             )}
 
+            {!isEditing && (
+              <>
+                <TouchableOpacity
+                  style={styles.presetButton}
+                  onPress={() => {
+                    setPresetName(workout.name);
+                    setShowPresetSave((prev) => !prev);
+                  }}
+                  disabled={saving}
+                >
+                  <Text style={styles.buttonText}>Save as Preset</Text>
+                </TouchableOpacity>
+
+                {showPresetSave && (
+                  <View style={styles.presetBox}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Preset name"
+                      placeholderTextColor="#888"
+                      value={presetName}
+                      onChangeText={setPresetName}
+                    />
+
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      onPress={handleSaveAsPreset}
+                      disabled={saving}
+                    >
+                      <Text style={styles.buttonText}>
+                        {saving ? 'Saving Preset...' : 'Confirm Save Preset'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </>
+            )}
+
             <TouchableOpacity
-              style={styles.finishButton}
+                style={[styles.statusButton, workout?.is_finished ? styles.markPlannedButton : styles.markFinishedButton
+                ]}
               onPress={handleToggleFinished}
               disabled={saving}
             >
@@ -532,11 +619,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1a1a1a',
     padding: 14,
+    marginBottom: 12,
     borderRadius: 14,
     alignItems: 'center',
-  },
-  statusButtonSelected: {
-    backgroundColor: '#0a7ea4',
   },
   sectionTitle: {
     color: '#ffffff',
@@ -647,12 +732,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
   },
-  finishButton: {
+  markFinishedButton: {
     backgroundColor: '#16a34a',
+  },
+  markPlannedButton: {
+    backgroundColor: '#f59e0b',
+  },
+  presetButton: {
+    backgroundColor: '#7c3aed',
     padding: 18,
     borderRadius: 16,
-    marginTop: 16,
+    marginTop: 4,
     marginBottom: 12,
     alignItems: 'center',
+  },
+  presetBox: {
+    backgroundColor: '#111827',
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 12,
   },
 });
