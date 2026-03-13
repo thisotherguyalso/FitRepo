@@ -7,12 +7,11 @@ import { getWorkoutPresets, getWorkoutPreset, createWorkoutPreset, updateWorkout
 import { getExercisesInPreset, getExerciseInPreset, addExerciseToPreset, updatePresetExercise, removeExerciseFromPreset } from '@/lib/api/presetExercises'
 import { getProfile, updateProfile } from '@/lib/api/profiles'
 
-// --- REPLACE THESE WITH YOUR ACTUAL IDS ---
 const TEST_WORKOUT_ID = '2ece9bc0-18a7-4ba1-9dc6-59754ce5e885'
 const TEST_PRESET_ID = '17610822-bab4-4faa-b263-9d8349667dde'
 const TEST_EXERCISE_ID = '28d35f25-2403-4549-87b4-5a40fbb10c6f'
 const TEST_USER_ID = '0ba26597-5479-4fe5-8eef-bb477bf0f6bc'
-// ------------------------------------------
+
 
 type TestResult = {
   name: string
