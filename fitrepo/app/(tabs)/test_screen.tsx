@@ -193,7 +193,7 @@ export default function TestScreen() {
     'addExerciseToWorkout()': async () => {
       loading('Workout Exercises', 'addExerciseToWorkout()')
       try {
-        const data = await addExerciseToWorkout(TEST_WORKOUT_ID, TEST_EXERCISE_ID, { sets: 3, reps: 10, time_seconds: null })
+        const data = await addExerciseToWorkout(TEST_WORKOUT_ID, TEST_EXERCISE_ID, { sets: 3, reps: 10, time_seconds: null, order_index: 1, weight: 20 })
         setAddedExerciseWorkoutId(data?.id)
         success('Workout Exercises', 'addExerciseToWorkout()', `Added exercise — 3 sets x 10 reps`)
       } catch (e) { fail('Workout Exercises', 'addExerciseToWorkout()', e) }
@@ -283,7 +283,7 @@ export default function TestScreen() {
     'addExerciseToPreset()': async () => {
       loading('Preset Exercises', 'addExerciseToPreset()')
       try {
-        const data = await addExerciseToPreset(TEST_PRESET_ID, TEST_EXERCISE_ID, { sets: 3, reps: 10, time_seconds: null })
+        const data = await addExerciseToPreset(TEST_PRESET_ID, TEST_EXERCISE_ID, { sets: 3, reps: 10, time_seconds: null, order_index: 1, weight: 50})
         setAddedExercisePresetId(data?.id)
         success('Preset Exercises', 'addExerciseToPreset()', `Added exercise — 3 sets x 10 reps`)
       } catch (e) { fail('Preset Exercises', 'addExerciseToPreset()', e) }
