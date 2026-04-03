@@ -41,7 +41,7 @@ export default function WorkoutsTab() {
   return (
     <View style={{ flex: 1 }}>
       <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+        headerBackgroundColor={{ light: '#00adccfa', dark: 'rgba(2, 9, 117, 0.98)' }}>
  
         <Text style={styles.headerText}>My Workouts</Text>
  
@@ -66,7 +66,7 @@ export default function WorkoutsTab() {
               bottomSheetRef.current?.expand();
             }}
             markedDates={{
-              [selected]: { selected: true, disableTouchEvent: true, selectedColor: '#0a7ea4' },
+              [selected]: { selected: true, disableTouchEvent: true, selectedColor: 'rgb(30,133,247)' },
               ...markedDates,
             }}
           />
@@ -120,12 +120,11 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   createButton: {
-    backgroundColor: '#020975',
-    paddingVertical: 24,
-    paddingHorizontal: 24,
-    borderRadius: 100,
+    backgroundColor: 'rgb(30,133,247)',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20,
     alignItems: 'center',
-    marginTop: 16,
   },
   createButtonText: {
     color: '#ffffff',
@@ -150,14 +149,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   workoutCard: {
-    backgroundColor: '#111827',
+    backgroundColor: 'rgb(0,65,90)',
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
   },
   finishedWorkoutCard: {
-    borderColor: '#22c55e',
-    backgroundColor: '#064e3b',
+    borderColor: 'rgb(85,161,148)',
+    backgroundColor: 'rgb(59,112,103)',
     borderWidth: 2,
   },
   workoutCardTitle: {

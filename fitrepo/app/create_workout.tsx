@@ -81,7 +81,7 @@ export default function ChoiceButtons() {
           style={[styles.button, selected === 'Rep based' && styles.selectedButton]}
           onPress={() => setSelected('Rep based')}
         >
-          <Text style={styles.buttonText}>Rep based</Text>
+          <Text style={[styles.buttonText, selected === 'Rep based' && styles.selectedButtonText]}>Rep based</Text>
         </TouchableOpacity>
 
         {/* Time-based selection button */}
@@ -89,7 +89,7 @@ export default function ChoiceButtons() {
           style={[styles.button, selected === 'Time based' && styles.selectedButton]}
           onPress={() => setSelected('Time based')}
         >
-          <Text style={styles.buttonText}>Time based</Text>
+          <Text style={[styles.buttonText, selected === 'Time based' && styles.selectedButtonText]}>Time based</Text>
         </TouchableOpacity>
 
         {/* Continue button */}
@@ -150,21 +150,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   createButton: {
-    backgroundColor: '#020975',
+    backgroundColor: 'rgb(0,65,90)',
     padding: 20,
     borderRadius: 16,
     marginBottom: 20,
     alignItems: 'center',
   },
   presetButton: {
-    backgroundColor: '#0a7ea4',
+    backgroundColor: 'rgb(30, 133, 247)',
     padding: 20,
     borderRadius: 16,
     marginBottom: 20,
     alignItems: 'center',
   },
   selectedButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: 'rgb(0,184,255)',
+  },
+  selectedButtonText: {
+    color: 'rgb(0,31,43)',
   },
   buttonText: {
     color: '#fff',
@@ -180,7 +183,7 @@ const styles = StyleSheet.create({
     lineHeight: 36,
   },
   backButton: {
-    backgroundColor: '#c62b2b',
+    backgroundColor: 'rgb(241, 106, 111)',
     padding: 18,
     borderRadius: 16,
     marginBottom: 24,

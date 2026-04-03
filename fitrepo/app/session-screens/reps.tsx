@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet, Button } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useState } from 'react';
@@ -25,12 +25,22 @@ export default function Reps() {
             </TouchableOpacity>
           </GestureDetector>
           
-          <Button title='Add Reps' onPress={() => {
-            setRepAmount((repAmount) => repAmount + 1)
-          }}/>
-          <Button title='Remove Reps' onPress={() => {
-            setRepAmount((repAmount) => Math.max(repAmount - 1, 0))
-          }}/>
+          <TouchableOpacity
+                    style={styles.buttonStyle}
+                    onPress={() => {
+                      setRepAmount((repAmount) => repAmount + 1)
+                    }}
+                  >
+                    <Text style={styles.buttonText}>Add Reps</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+                    style={styles.buttonStyle}
+                    onPress={() => {
+                      setRepAmount((repAmount) => Math.max(repAmount - 1, 0))
+                    }}
+                  >
+                    <Text style={styles.buttonText}>Remove Reps</Text>
+          </TouchableOpacity>
       </ParallaxScrollView>
     </GestureHandlerRootView>
   );
@@ -38,21 +48,34 @@ export default function Reps() {
 
 const styles = StyleSheet.create({
   sessionCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#313131',
     padding: 20,
     borderRadius: 16,
     marginBottom: 30,
   },
   sessionLabel: {
     color: '#888',
-    fontSize: 14,
+    fontSize: 20,
     marginBottom: 5,
   },
   sessionTitle: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 10,
   },
+  buttonStyle: {
+    backgroundColor: 'rgb(30,133,247)',
+    paddingVertical: 24,
+    paddingHorizontal: 24,
+    borderRadius: 100,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '700',
+  }
 });
 

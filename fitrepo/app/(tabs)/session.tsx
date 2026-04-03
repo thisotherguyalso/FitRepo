@@ -1,5 +1,5 @@
-import { StyleSheet, TouchableOpacity, Text, Button, View } from 'react-native';
-import { Link } from 'expo-router';
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 
 
@@ -8,14 +8,28 @@ export default function SessionTab() {
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
       <View style={styles.sessionCard}>
-        <Text style={styles.sessionLabel}>Exercise Plan</Text>
+        <Text style={styles.sessionLabel}>Exercise Session</Text>
       
-        <Link href="/session-screens/timer" asChild>
-          <Button title="Start Timer"/>
-        </Link> 
-        <Link href="/session-screens/reps" asChild>
-          <Button title="Start Reps"/>
-        </Link>
+        <TouchableOpacity
+          style={styles.buttonStyle}
+          onPress={() => {
+            router.push({
+              pathname: '/session-screens/reps', // https://docs.expo.dev/router/basics/navigation/
+            })
+          }}
+        >
+          <Text style={styles.buttonText}>Start Reps</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.buttonStyle}
+          onPress={() => {
+            router.push({
+              pathname: '/session-screens/timer', // https://docs.expo.dev/router/basics/navigation/
+            })
+          }}
+        >
+          <Text style={styles.buttonText}>Start Timer</Text>
+        </TouchableOpacity>
       </View>
     </ParallaxScrollView>
   );
@@ -32,13 +46,22 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 30,
   },
-  button: {
-    backgroundColor: 'blue',
+  sessionLabel: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 20,
+  },
+  buttonStyle: {
+    backgroundColor: 'rgb(30,133,247)',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20,
     alignItems: 'center',
   },
-  sessionLabel: {
-    color: '#888',
-    fontSize: 14,
-    marginBottom: 5,
-  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '600',
+  }
 });

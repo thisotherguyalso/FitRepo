@@ -16,14 +16,14 @@ export default function Home() {
       <Text style={styles.greeting}>Hello, {userName}!</Text>
 
       {/* Previous Workout */}
-      <TouchableOpacity style={styles.sessionCard}>
+      <View style={styles.sessionCard}>
         <Text style={styles.sessionLabel}>Previous Workout</Text>
         <Text style={styles.sessionTitle}>{previousWorkout}</Text>
         <Text style={styles.sessionDate}>{previousWorkoutDate ? previousWorkoutDate.toLocaleDateString() : "No previous workout"}</Text>
-      </TouchableOpacity>
+      </View>
 
       {/* General Stats */}
-      <View style={styles.section}>
+      <View className="mb-30">
         <Text style={styles.sectionTitle}>Stats Overview</Text>
 
         <View style={styles.row}>
@@ -40,7 +40,7 @@ export default function Home() {
       </View>
 
     <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
-    <Text style={styles.signOutText}>Sign Out</Text>
+      <Text style={styles.signOutText}>Sign Out</Text>
     </TouchableOpacity>
 
     </ParallaxScrollView>
@@ -48,13 +48,6 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f0f',
-  },
-  content: {
-    padding: 20,
-  },
   greeting: {
     fontSize: 28,
     fontWeight: '700',
@@ -68,7 +61,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   sessionLabel: {
-    color: '#888',
+    color: '#aaa',
     fontSize: 14,
     marginBottom: 5,
   },
@@ -81,9 +74,6 @@ const styles = StyleSheet.create({
     color: '#aaa',
     marginTop: 5,
   },
-  section: {
-    marginBottom: 30,
-  },
   sectionTitle: {
     color: '#fff',
     fontSize: 18,
@@ -94,13 +84,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-  },
-  statCard: {
-    backgroundColor: '#1a1a1a',
-    width: '48%',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 15,
   },
   statValue: {
     color: '#fff',
@@ -116,22 +99,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   wideCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#232323',
     width: '48%',
     padding: 25,
     borderRadius: 16,
     alignItems: 'center',
   },
   signOutButton: {
-    backgroundColor: '#1a1a1a',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: 'rgb(241,106,111)',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 20,
     alignItems: 'center',
-    marginTop: 10,
   },
   signOutText: {
-    color: '#ff4444',
+    color: '#ffffff',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 24,
   },
 });

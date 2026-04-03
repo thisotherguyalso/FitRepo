@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   sessionLabel: {
     color: '#888',
-    fontSize: 14,
+    fontSize: 20,
     marginBottom: 5,
   },
   sessionTitle: {

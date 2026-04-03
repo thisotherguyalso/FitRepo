@@ -635,7 +635,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   exerciseCard: {
-    backgroundColor: '#111827',
+    backgroundColor: 'rgb(0,65,90)',
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
@@ -661,7 +661,7 @@ const styles = StyleSheet.create({
   },
   addListContainer: {
     maxHeight: 220,
-    backgroundColor: '#0f172a',
+    backgroundColor: 'rgb(15, 23, 42)',
     borderRadius: 16,
     padding: 8,
     marginBottom: 16,
@@ -687,7 +687,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   editButton: {
-    backgroundColor: '#020975',
+    backgroundColor: 'rgb(241,106,111)',
     padding: 18,
     borderRadius: 16,
     marginTop: 16,
@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveButton: {
-    backgroundColor: '#0a7ea4',
+    backgroundColor: 'rgb(241,106,111)',
     padding: 18,
     borderRadius: 16,
     marginTop: 16,
@@ -703,14 +703,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#7f1d1d',
+    backgroundColor: 'rgb(30,133,247)',
     padding: 18,
     borderRadius: 16,
     marginBottom: 12,
     alignItems: 'center',
   },
   removeButton: {
-    backgroundColor: '#7f1d1d',
+    backgroundColor: 'rgb(241,106,111)',
     padding: 14,
     borderRadius: 12,
     marginTop: 4,
@@ -733,13 +733,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   markFinishedButton: {
-    backgroundColor: '#16a34a',
+    backgroundColor: 'rgb(0,65,90)',
   },
   markPlannedButton: {
     backgroundColor: '#f59e0b',
   },
   presetButton: {
-    backgroundColor: '#7c3aed',
+    backgroundColor: 'rgb(30,133,247)',
     padding: 18,
     borderRadius: 16,
     marginTop: 4,

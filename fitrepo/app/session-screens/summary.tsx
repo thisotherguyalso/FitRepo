@@ -1,5 +1,5 @@
-import { TouchableOpacity, Text, StyleSheet, Button } from 'react-native';
-import { Link } from 'expo-router';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 
 
@@ -9,9 +9,16 @@ export default function Summary() {
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
         <TouchableOpacity style={styles.sessionCard}>
           <Text style={styles.sessionLabel}>Summary</Text>
-          <Link href="/(tabs)/session" asChild>
-          <Button title="Go Back"/>
-          </Link>
+        <TouchableOpacity
+          style={styles.buttonStyle}
+          onPress={() => {
+            router.push({
+              pathname: '/(tabs)/session', // https://docs.expo.dev/router/basics/navigation/
+            })
+          }}
+        >
+          <Text style={styles.buttonText}>Go Back</Text>
+        </TouchableOpacity>
         </TouchableOpacity>
     </ParallaxScrollView>
   );
@@ -32,9 +39,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sessionLabel: {
-    color: '#888',
-    fontSize: 14,
-    marginBottom: 5,
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#ffffff',
+    marginBottom: 20,
   },
+  buttonStyle: {
+    backgroundColor: 'rgb(30,133,247)',
+    paddingVertical: 24,
+    paddingHorizontal: 24,
+    borderRadius: 100,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  buttonText: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '700',
+  }
 });
 

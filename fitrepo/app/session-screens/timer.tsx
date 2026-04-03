@@ -52,14 +52,14 @@ export default function Timer() {
 
 const styles = StyleSheet.create({
   sessionCard: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#313131',
     padding: 20,
     borderRadius: 16,
     marginBottom: 30,
   },
   sessionLabel: {
     color: '#888',
-    fontSize: 14,
+    fontSize: 20,
     marginBottom: 5,
   },
   sessionTitle: {
