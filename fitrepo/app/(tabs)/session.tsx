@@ -24,7 +24,7 @@ export default function SessionTab() {
           style={styles.buttonStyle}
           onPress={() => {
             router.push({
-              pathname: '/session-screens/timer', // https://docs.expo.dev/router/basics/navigation/
+              pathname: '/session-screens/timer',
             })
           }}
         >
