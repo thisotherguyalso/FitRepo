@@ -39,6 +39,7 @@ export default function Timer() {
         <ParallaxScrollView
           headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}
         >
+          {/* Timer Screen */}
           <View style={styles.sessionCard}>
             <Text style={styles.sessionTitle}>TIMER SCREEN</Text>
             <Text style={styles.sessionLabel}>{timeRemaining}</Text>

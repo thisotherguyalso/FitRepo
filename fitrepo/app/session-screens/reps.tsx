@@ -14,10 +14,14 @@ export default function Reps() {
 
   return (
     // flex 1 = Take up the entire available screen space
+    // reps screen allows the user to add or remove reps
+    // and also double tap the card to skip to the next screen
     <GestureHandlerRootView style={{ flex: 1 }}> 
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
           <GestureDetector gesture={doubleTap}>
+
+            {/* Reps Screen */}
             <TouchableOpacity style={styles.sessionCard}>
               <Text style={styles.sessionTitle}>REPS SCREEN</Text>
               <Text style={styles.sessionLabel}>{repAmount}</Text>
@@ -25,6 +29,7 @@ export default function Reps() {
             </TouchableOpacity>
           </GestureDetector>
           
+          {/* Add Reps Button */}
           <TouchableOpacity
                     style={styles.buttonStyle}
                     onPress={() => {
@@ -33,6 +38,8 @@ export default function Reps() {
                   >
                     <Text style={styles.buttonText}>Add Reps</Text>
           </TouchableOpacity>
+
+          {/* Remove Reps Button */}
           <TouchableOpacity
                     style={styles.buttonStyle}
                     onPress={() => {

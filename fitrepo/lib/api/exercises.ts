@@ -40,9 +40,7 @@ export async function createExercise(exercise: { id: string; name: string }) {
 }
 
 // Deletes an exercise
-export async function deleteExercise(
-    id: string
-) {
+export async function deleteExercise(id: string) {
     const { error } = await supabase
         .from('exercises')
         .delete()

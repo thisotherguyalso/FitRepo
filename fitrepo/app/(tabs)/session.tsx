@@ -7,9 +7,12 @@ export default function SessionTab() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+      
+      {/* Exercise Session */}
       <View style={styles.sessionCard}>
         <Text style={styles.sessionLabel}>Exercise Session</Text>
       
+        {/* Start Reps Button */}
         <TouchableOpacity
           style={styles.buttonStyle}
           onPress={() => {
@@ -20,6 +23,8 @@ export default function SessionTab() {
         >
           <Text style={styles.buttonText}>Start Reps</Text>
         </TouchableOpacity>
+        
+        {/* Start Timer Button */}
         <TouchableOpacity
           style={styles.buttonStyle}
           onPress={() => {

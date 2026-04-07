@@ -43,6 +43,7 @@ export default function WorkoutsTab() {
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#00adccfa', dark: 'rgba(2, 9, 117, 0.98)' }}>
  
+        {/* Workouts Displayed Through Calendar */}
         <Text style={styles.headerText}>My Workouts</Text>
  
         <View style={styles.divider} />
@@ -72,6 +73,7 @@ export default function WorkoutsTab() {
           />
         </View>
  
+        {/* Create Workout Button */}
         <TouchableOpacity
           style={styles.createButton}
           onPress={() => {
@@ -84,6 +86,7 @@ export default function WorkoutsTab() {
           <Text style={styles.createButtonText}>Plan a Workout!</Text>
         </TouchableOpacity>
         
+        {/* Listed Workouts For A Date */}
         <Text style={styles.sectionTitle}>Workouts for {readableDate}</Text>
 
         {selectedDateWorkouts.length === 0 ? (

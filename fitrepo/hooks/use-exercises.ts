@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Exercise } from '@/types/database'
-import { getExercises } from '@/lib/api/exercises'
+import { getExercises, createExercise, deleteExercise } from '@/lib/api/exercises'
 
 export function useExercises() {
     const [exercises, setExercises] = useState<Exercise[]>([])
@@ -23,4 +23,12 @@ export function useExercises() {
         }
     }
     return { exercises, loading, loadExercises }
+}
+
+export function addExercise(exercise: { id: string; name: string }) {
+    return createExercise(exercise)
+}
+
+export function removeExercise(id: string) {
+    return deleteExercise(id)
 }

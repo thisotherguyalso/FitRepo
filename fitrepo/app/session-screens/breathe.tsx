@@ -34,11 +34,14 @@ export default function Breathe() {
     .runOnJS(true);
 
   return (
+    // Break screen, gesture handler makes it so that you can double tap the screen
+    // to skip to the next page
     <GestureHandlerRootView style={{ flex: 1 }}>
       <GestureDetector gesture={doubleTap}>
         <ParallaxScrollView
           headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}
         >
+          {/* Break Screen */}
           <View style={styles.sessionCard}>
             <Text style={styles.sessionTitle}>BREATHE SCREEN</Text>
             <Text style={styles.sessionLabel}>{timeRemaining}</Text>

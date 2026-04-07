@@ -7,8 +7,12 @@ export default function Summary() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+        
+        {/* Summary Screen */}
         <TouchableOpacity style={styles.sessionCard}>
           <Text style={styles.sessionLabel}>Summary</Text>
+
+        {/* Return To Menu Button */}
         <TouchableOpacity
           style={styles.buttonStyle}
           onPress={() => {

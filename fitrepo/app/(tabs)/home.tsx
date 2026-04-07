@@ -39,6 +39,7 @@ export default function Home() {
         </View>
       </View>
 
+    {/* Sign Out Button */}
     <TouchableOpacity style={styles.signOutButton} onPress={signOut}>
       <Text style={styles.signOutText}>Sign Out</Text>
     </TouchableOpacity>
