@@ -11,6 +11,7 @@ import { createWorkoutPreset } from '@/lib/api/workoutPresets';
 import { addExerciseToPreset } from '@/lib/api/presetExercises';
 import { sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ButtonComponent } from '@/components/button-component';
 import {
   EditableExercise,
   mapWorkoutExercisesToEditable,
@@ -516,11 +517,7 @@ export default function ViewWorkout() {
               </Text>
           </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}>
-              <Text style={styles.backButtonText}>Back</Text>
-            </TouchableOpacity>
+          <ButtonComponent onPress = {() => router.back()} text="Back"/>
           </>
         )}
       </View>
