@@ -1,6 +1,7 @@
 import { TouchableOpacity, Text, StyleSheet, TextInput, Alert, View, ScrollView } from 'react-native';
 import { useState, useMemo } from 'react';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { ButtonComponent } from '@/components/button-component'
 import { useLocalSearchParams, router } from 'expo-router';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { useExercises } from '@/hooks/use-exercises';
@@ -250,12 +251,13 @@ export default function ExerciseSelection() {
                   onChangeText={(value) =>
                     updateExerciseField(exercise.exercise_id, 'weight', value)
                   }/>
-
-              <TouchableOpacity
+              
+              <ButtonComponent
+                onPress={() => removeExercise(exercise.exercise_id)}
+                text="Remove"
+                textStyle={styles.buttonText}
                 style={styles.removeButton}
-                onPress={() => removeExercise(exercise.exercise_id)}>
-                <Text style={styles.buttonText}>Remove</Text>
-              </TouchableOpacity>
+              />
             </View>
           ))
         )}
@@ -269,13 +271,12 @@ export default function ExerciseSelection() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        <ButtonComponent
           style={styles.backButton}
-          onPress={() => {
-            router.back();
-          }}>
-          <Text style={styles.buttonText}>Back</Text>
-        </TouchableOpacity>
+          onPress={() => {router.back()}}
+          text="Back"
+          textStyle={styles.buttonText}
+        />
       </View>
     </ParallaxScrollView>
   );

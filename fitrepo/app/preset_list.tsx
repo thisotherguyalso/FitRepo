@@ -1,6 +1,7 @@
 import { TouchableOpacity, Text, StyleSheet, TextInput, Alert, View, ScrollView } from 'react-native';
 import { useMemo, useState } from 'react';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { ButtonComponent } from '@/components/button-component';
 import { useLocalSearchParams, router } from 'expo-router';
 import { createWorkoutFromPreset } from '@/lib/api/createWorkoutFromPreset';
 import { usePresets } from '@/hooks/use-presets';
@@ -118,11 +119,12 @@ export default function PresetList() {
           )}
         </View>
 
-        <TouchableOpacity
+        <ButtonComponent
           style={[sharedStyles.button, styles.backButton]}
-          onPress={() => router.back()}>
-          <Text style={sharedStyles.buttonText}>Back</Text>
-        </TouchableOpacity>
+          text="Back"
+          textStyle={sharedStyles.buttonText}
+          onPress={() => router.back()}
+        />
       </View>
     </ParallaxScrollView>
   );

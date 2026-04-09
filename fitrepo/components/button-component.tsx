@@ -5,14 +5,26 @@ import { AppColors, sharedStyles } from '@/constants/styles';
 interface ButtonComponentProps {
   onPress: () => void;
   text: string;
+  
+  selected?: boolean;
+  disabled?: boolean;
+
+  style?: object;
+  textStyle?: object;
 }
 
-export function ButtonComponent({onPress, text}: ButtonComponentProps) {
+export function ButtonComponent({onPress, text, selected, disabled, style, textStyle}: ButtonComponentProps) {
   return (
     <TouchableOpacity
-      style={[sharedStyles.button, styles.presetButton]}
+      disabled={disabled}
+      style={style ? [style] : [sharedStyles.button, styles.presetButton]}
       onPress={onPress}>
-      <Text style={[sharedStyles.buttonText, styles.buttonText]}>{text}</Text>
+      <Text style={textStyle ?
+        [textStyle, selected && styles.selectedButtonText] :
+        [sharedStyles.buttonText, styles.buttonText, selected && styles.selectedButtonText]}
+      >
+        {text}
+      </Text>
     </TouchableOpacity>
   )
 }

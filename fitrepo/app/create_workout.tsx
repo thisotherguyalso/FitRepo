@@ -7,6 +7,7 @@ import { ButtonComponent } from '@/components/button-component'
 import { useLocalSearchParams, router } from 'expo-router';
 import { AppColors, sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Button } from '@react-navigation/elements';
 
 export default function ChoiceButtons() {
   // https://docs.expo.dev/router/reference/url-parameters/
@@ -79,28 +80,37 @@ export default function ChoiceButtons() {
         onChangeText={setWorkoutName}/>
 
       {/* Rep-based selection button */}
-      <TouchableOpacity
-        style={[sharedStyles.card, styles.button, selected === 'Rep based' && styles.selectedButton]}
-        onPress={() => setSelected('Rep based')}>
-        <Text style={[sharedStyles.buttonText, styles.buttonText, selected === 'Rep based' && styles.selectedButtonText]}>Rep based</Text>
-      </TouchableOpacity>
+      <ButtonComponent
+        text="Rep based"
+        selected={selected === 'Rep based'}
+        onPress={() => setSelected('Rep based')}
+      />
 
       {/* Time-based selection button */}
-      <TouchableOpacity
-        style={[sharedStyles.card, styles.button, selected === 'Time based' && styles.selectedButton]}
+      <ButtonComponent
+        text="Time based"
+        selected={selected === 'Time based'}
         onPress={() => setSelected('Time based')
-        }>
-        <Text style={[sharedStyles.buttonText, styles.buttonText, selected === 'Time based' && styles.selectedButtonText]}>Time based</Text>
-      </TouchableOpacity>
+        }
+      />
 
       {/* Continue button */}
-      <ButtonComponent onPress = {handleContinue} text = "Choose Exercises"/>
+      <ButtonComponent
+        text = "Choose Exercises"
+        onPress = {handleContinue}
+      />
 
       {/* Load Preset button */}
-      <ButtonComponent onPress = {handleLoadPreset} text = "Load from Preset"/>
+      <ButtonComponent
+        text = "Load from Preset"
+        onPress = {handleLoadPreset}
+      />
 
       {/* Back button */}
-      <ButtonComponent onPress = {() => {router.push('/(tabs)/workouts');}} text = "Back to Workouts"/>
+      <ButtonComponent
+        text = "Back to Workouts"
+        onPress = {() => {router.push('/(tabs)/workouts');}}
+      />
 
     </ThemedView>
   </ParallaxScrollView>
