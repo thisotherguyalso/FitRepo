@@ -59,71 +59,65 @@ export default function ChoiceButtons() {
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
       <LinearGradient
         colors={['#020975fb', '#151718']}
-        style={sharedStyles.background}
-      />
+        style={sharedStyles.background}/>
       <ThemedView style={styles.container}>
 
-        {/* Screen title */}
-        <ThemedText style={styles.headerText}>
-          Create Workout for {'\n'}{readableDate}
-        </ThemedText>
+      {/* Screen title */}
+      <ThemedText style={styles.headerText}>
+        Create Workout for {'\n'}{readableDate}
+      </ThemedText>
 
-        {/* Workout name input */}
-        <TextInput
-          style={[sharedStyles.input, styles.input]}
-          placeholder="Enter workout name"
-          placeholderTextColor="#888"
-          value={workoutName}
+      {/* Workout name input */}
+      <TextInput
+        style={[sharedStyles.input, styles.input]}
+        placeholder="Enter workout name"
+        placeholderTextColor="#888"
+        value={workoutName}
 
-          // Updates workoutName state whenever the user types
-          onChangeText={setWorkoutName}
-        />
+        // Updates workoutName state whenever the user types
+        onChangeText={setWorkoutName}/>
 
-        {/* Rep-based selection button */}
-        <TouchableOpacity
-          style={[sharedStyles.card, styles.button, selected === 'Rep based' && styles.selectedButton]}
-          onPress={() => setSelected('Rep based')}
-        >
-          <Text style={[sharedStyles.buttonText, styles.buttonText, selected === 'Rep based' && styles.selectedButtonText]}>Rep based</Text>
-        </TouchableOpacity>
+      {/* Rep-based selection button */}
+      <TouchableOpacity
+        style={[sharedStyles.card, styles.button, selected === 'Rep based' && styles.selectedButton]}
+        onPress={() => setSelected('Rep based')}>
+        <Text style={[sharedStyles.buttonText, styles.buttonText, selected === 'Rep based' && styles.selectedButtonText]}>Rep based</Text>
+      </TouchableOpacity>
 
-        {/* Time-based selection button */}
-        <TouchableOpacity
-          style={[sharedStyles.card, styles.button, selected === 'Time based' && styles.selectedButton]}
-          onPress={() => setSelected('Time based')}
-        >
-          <Text style={[sharedStyles.buttonText, styles.buttonText, selected === 'Time based' && styles.selectedButtonText]}>Time based</Text>
-        </TouchableOpacity>
+      {/* Time-based selection button */}
+      <TouchableOpacity
+        style={[sharedStyles.card, styles.button, selected === 'Time based' && styles.selectedButton]}
+        onPress={() => setSelected('Time based')
+        }>
+        <Text style={[sharedStyles.buttonText, styles.buttonText, selected === 'Time based' && styles.selectedButtonText]}>Time based</Text>
+      </TouchableOpacity>
 
-        {/* Continue button */}
-        <TouchableOpacity
-          style={[sharedStyles.button, styles.createButton]}
-          // moves the user to the exercise selection screen
-          onPress={handleContinue}
-        >
-          <Text style={[sharedStyles.buttonText, styles.buttonText]}>Choose Exercises</Text>
-        </TouchableOpacity>
+      {/* Continue button */}
+      <TouchableOpacity
+        style={[sharedStyles.button, styles.createButton]}
+        // moves the user to the exercise selection screen
+        onPress={handleContinue}>
+        <Text style={[sharedStyles.buttonText, styles.buttonText]}>Choose Exercises</Text>
+      </TouchableOpacity>
 
-        {/* Load Preset button */}
-        <TouchableOpacity
-          style={[sharedStyles.button, styles.presetButton]}
-          onPress={handleLoadPreset}
-        >
-          <Text style={[sharedStyles.buttonText, styles.buttonText]}>Load from Preset</Text>
-        </TouchableOpacity>
+      {/* Load Preset button */}
+      <TouchableOpacity
+        style={[sharedStyles.button, styles.presetButton]}
+        onPress={handleLoadPreset}>
+        <Text style={[sharedStyles.buttonText, styles.buttonText]}>Load from Preset</Text>
+      </TouchableOpacity>
 
-        {/* Back button */}
-        <TouchableOpacity
-          style={[sharedStyles.button, styles.backButton]}
-          onPress={() => {
-            router.push('/(tabs)/workouts');
-          }}
-        >
-          <Text style={[sharedStyles.buttonText, styles.buttonText]}>Back to Workouts</Text>
-        </TouchableOpacity>
+      {/* Back button */}
+      <TouchableOpacity
+        style={[sharedStyles.button, styles.backButton]}
+        onPress={() => {
+          router.push('/(tabs)/workouts');
+        }}>
+        <Text style={[sharedStyles.buttonText, styles.buttonText]}>Back to Workouts</Text>
+      </TouchableOpacity>
 
-      </ThemedView>
-    </ParallaxScrollView>
+    </ThemedView>
+  </ParallaxScrollView>
   );
 }
 

@@ -46,8 +46,8 @@ export default function WorkoutsTab() {
         headerBackgroundColor={{ light: '#00adccfa', dark: 'rgba(2, 9, 117, 0.98)' }}>
         <LinearGradient
           colors={['#020975fb', '#151718']}
-          style={sharedStyles.background}
-        />
+          style={sharedStyles.background}/>
+
         {/* Workouts Displayed Through Calendar */}
         <Text style={styles.headerText}>My Workouts</Text>
  
@@ -74,8 +74,7 @@ export default function WorkoutsTab() {
             markedDates={{
               [selected]: { selected: true, disableTouchEvent: true, selectedColor: 'rgb(30,133,247)' },
               ...markedDates,
-            }}
-          />
+            }}/>
         </View>
  
         {/* Create Workout Button */}
@@ -86,8 +85,7 @@ export default function WorkoutsTab() {
               pathname: '/create_workout',
               params: {date: selected}, // https://docs.expo.dev/router/basics/navigation/
             })
-          }}
-        >
+          }}>
           <Text style={styles.createButtonText}>Plan a Workout!</Text>
         </TouchableOpacity>
         
@@ -106,8 +104,7 @@ export default function WorkoutsTab() {
                   pathname: '/view_workout',
                   params: { workout_id: workout.id },
                 });
-              }}
-            >
+              }}>
               <Text style={styles.workoutCardTitle}>{workout.name}</Text>
               <Text style={styles.workoutCardSubtitle}>
                 {workout.is_finished ? 'Finished' : 'Planned'}
@@ -115,7 +112,6 @@ export default function WorkoutsTab() {
             </TouchableOpacity>
           ))
         )}
-
       </ParallaxScrollView>
     </View>
   );

@@ -25,8 +25,7 @@ export default function Login() {
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
-        keyboardType="email-address"
-      />
+        keyboardType="email-address"/>
 
       <TextInput
         style={[sharedStyles.input, styles.input]}
@@ -34,8 +33,7 @@ export default function Login() {
         placeholderTextColor="#666"
         value={password}
         onChangeText={setPassword}
-        secureTextEntry
-      />
+        secureTextEntry/>
 
       <TouchableOpacity style={[sharedStyles.button, styles.button]}
       onPress={() => isSignUp ? signUp(email, password) : signIn(email, password)}

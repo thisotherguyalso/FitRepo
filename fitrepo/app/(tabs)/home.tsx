@@ -15,8 +15,8 @@ export default function Home() {
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
       <LinearGradient
         colors={['#020975fb', '#151718']}
-        style={sharedStyles.background}
-      />
+        style={sharedStyles.background}/>
+
       {/* Greeting */}
       <Text style={[sharedStyles.title, styles.greeting]}>Hello, {userName}!</Text>
 
@@ -24,7 +24,8 @@ export default function Home() {
       <View style={[sharedStyles.card, styles.sessionCard]}>
         <Text style={[sharedStyles.mutedText, styles.sessionLabel]}>Previous Workout</Text>
         <Text style={styles.sessionTitle}>{previousWorkout}</Text>
-        <Text style={[sharedStyles.mutedText, styles.sessionDate]}>{previousWorkoutDate ? previousWorkoutDate.toLocaleDateString() : "No previous workout"}</Text>
+        <Text style={[sharedStyles.mutedText, styles.sessionDate]}>
+          {previousWorkoutDate ? previousWorkoutDate.toLocaleDateString() : "No previous workout"}</Text>
       </View>
 
       {/* General Stats */}

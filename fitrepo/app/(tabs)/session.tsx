@@ -11,8 +11,8 @@ export default function SessionTab() {
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
       <LinearGradient
         colors={['#020975fb', '#151718']}
-        style={sharedStyles.background}
-      />
+        style={sharedStyles.background}/>
+
       {/* Exercise Session */}
       <View style={styles.sessionCard}>
         <Text style={styles.sessionLabel}>Exercise Session</Text>
@@ -24,8 +24,7 @@ export default function SessionTab() {
             router.push({
               pathname: '/session-screens/reps', // https://docs.expo.dev/router/basics/navigation/
             })
-          }}
-        >
+          }}>
           <Text style={styles.buttonText}>Start Reps</Text>
         </TouchableOpacity>
         
@@ -36,8 +35,7 @@ export default function SessionTab() {
             router.push({
               pathname: '/session-screens/timer',
             })
-          }}
-        >
+          }}>
           <Text style={styles.buttonText}>Start Timer</Text>
         </TouchableOpacity>
       </View>

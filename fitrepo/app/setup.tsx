@@ -35,8 +35,7 @@ export default function Setup() {
         placeholderTextColor="#666"
         value={username}
         onChangeText={setUsername}
-        autoCapitalize="none"
-      />
+        autoCapitalize="none"/>
 
       <TouchableOpacity style={[sharedStyles.button, styles.button]} onPress={handleSave} disabled={loading}>
         <Text style={sharedStyles.buttonText}>{loading ? 'Saving...' : 'Continue'}</Text>

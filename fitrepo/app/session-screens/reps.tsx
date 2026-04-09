@@ -21,41 +21,38 @@ export default function Reps() {
     <GestureHandlerRootView style={{ flex: 1 }}> 
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-          <LinearGradient
-            colors={['#020975fb', '#151718']}
-            style={sharedStyles.background}
-          />
-          <GestureDetector gesture={doubleTap}>
+        <LinearGradient
+          colors={['#020975fb', '#151718']}
+          style={sharedStyles.background}/>
+        <GestureDetector gesture={doubleTap}>
 
-            {/* Reps Screen */}
-            <TouchableOpacity style={styles.sessionCard}>
-              <Text style={styles.sessionTitle}>REPS SCREEN</Text>
-              <Text style={styles.sessionLabel}>{repAmount}</Text>
-              <Text style={styles.sessionLabel}>Double tap this card to skip</Text>
-            </TouchableOpacity>
-          </GestureDetector>
+          {/* Reps Screen */}
+          <TouchableOpacity style={styles.sessionCard}>
+            <Text style={styles.sessionTitle}>REPS SCREEN</Text>
+            <Text style={styles.sessionLabel}>{repAmount}</Text>
+            <Text style={styles.sessionLabel}>Double tap this card to skip</Text>
+          </TouchableOpacity>
+        </GestureDetector>
           
-          {/* Add Reps Button */}
-          <TouchableOpacity
-                    style={styles.buttonStyle}
-                    onPress={() => {
-                      setRepAmount((repAmount) => repAmount + 1)
-                    }}
-                  >
-                    <Text style={styles.buttonText}>Add Reps</Text>
-          </TouchableOpacity>
+        {/* Add Reps Button */}
+        <TouchableOpacity
+          style={styles.buttonStyle}
+          onPress={() => {
+          setRepAmount((repAmount) => repAmount + 1)
+        }}>
+          <Text style={styles.buttonText}>Add Reps</Text>
+        </TouchableOpacity>
 
-          {/* Remove Reps Button */}
-          <TouchableOpacity
-                    style={styles.buttonStyle}
-                    onPress={() => {
-                      setRepAmount((repAmount) => Math.max(repAmount - 1, 0))
-                    }}
-                  >
-                    <Text style={styles.buttonText}>Remove Reps</Text>
-          </TouchableOpacity>
-      </ParallaxScrollView>
-    </GestureHandlerRootView>
+        {/* Remove Reps Button */}
+        <TouchableOpacity
+          style={styles.buttonStyle}
+          onPress={() => {
+          setRepAmount((repAmount) => Math.max(repAmount - 1, 0))
+        }}>
+          <Text style={styles.buttonText}>Remove Reps</Text>
+        </TouchableOpacity>
+    </ParallaxScrollView>
+  </GestureHandlerRootView>
   );
 }
 

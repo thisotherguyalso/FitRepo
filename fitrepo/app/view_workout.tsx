@@ -302,8 +302,7 @@ export default function ViewWorkout() {
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
       <LinearGradient
         colors={['#020975fb', '#151718']}
-        style={sharedStyles.background}
-      />
+        style={sharedStyles.background}/>
       <View style={styles.container}>
         {loadingWorkout ? (
           <Text style={styles.emptyText}>Loading workout...</Text>
@@ -317,8 +316,7 @@ export default function ViewWorkout() {
                 value={draftWorkoutName}
                 onChangeText={setDraftWorkoutName}
                 placeholder="Workout name"
-                placeholderTextColor="#888"
-              />
+                placeholderTextColor="#888"/>
             ) : (
               <Text style={styles.headerText}>{workout.name}</Text>
             )}
@@ -346,8 +344,7 @@ export default function ViewWorkout() {
                         value={exercise.sets}
                         onChangeText={(value) =>
                           updateExerciseField(exercise.id, 'sets', value)
-                        }
-                      />
+                        }/>
 
                       <TextInput
                         style={styles.input}
@@ -357,8 +354,7 @@ export default function ViewWorkout() {
                         value={exercise.reps}
                         onChangeText={(value) =>
                           updateExerciseField(exercise.id, 'reps', value)
-                        }
-                      />
+                        }/>
 
                       <TextInput
                         style={styles.input}
@@ -368,8 +364,7 @@ export default function ViewWorkout() {
                         value={exercise.time_seconds}
                         onChangeText={(value) =>
                           updateExerciseField(exercise.id, 'time_seconds', value)
-                        }
-                      />
+                        }/>
 
                       <TextInput
                         style={styles.input}
@@ -379,13 +374,11 @@ export default function ViewWorkout() {
                         value={exercise.weight}
                         onChangeText={(value) =>
                           updateExerciseField(exercise.id, 'weight', value)
-                        }
-                      />
+                        }/>
 
                       <TouchableOpacity
                         style={styles.removeButton}
-                        onPress={() => handleRemoveExercise(exercise.exercise_id)}
-                      >
+                        onPress={() => handleRemoveExercise(exercise.exercise_id)}>
                         <Text style={styles.buttonText}>Remove Exercise</Text>
                       </TouchableOpacity>
                     </>
@@ -424,8 +417,7 @@ export default function ViewWorkout() {
                   placeholder="Search exercises..."
                   placeholderTextColor="#888"
                   value={search}
-                  onChangeText={setSearch}
-                />
+                  onChangeText={setSearch}/>
 
                 <View style={styles.addListContainer}>
                   {loadingAllExercises ? (
@@ -438,8 +430,7 @@ export default function ViewWorkout() {
                         <TouchableOpacity
                           key={exercise.id}
                           style={styles.addExerciseRow}
-                          onPress={() => handleAddExercise(exercise)}
-                        >
+                          onPress={() => handleAddExercise(exercise)}>
                           <Text style={styles.exerciseRowText}>{exercise.name}</Text>
                           <Text style={styles.addText}>Add</Text>
                         </TouchableOpacity>
@@ -455,8 +446,7 @@ export default function ViewWorkout() {
                 <TouchableOpacity
                   style={styles.saveButton}
                   onPress={handleSaveChanges}
-                  disabled={saving}
-                >
+                  disabled={saving}>
                   <Text style={styles.buttonText}>
                     {saving ? 'Saving Changes...' : 'Save Changes'}
                   </Text>
@@ -465,8 +455,7 @@ export default function ViewWorkout() {
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={handleCancelEdit}
-                  disabled={saving}
-                >
+                  disabled={saving}>
                   <Text style={styles.buttonText}>Cancel</Text>
                 </TouchableOpacity>
               </>
@@ -487,8 +476,7 @@ export default function ViewWorkout() {
                     setPresetName(workout.name);
                     setShowPresetSave((prev) => !prev);
                   }}
-                  disabled={saving}
-                >
+                  disabled={saving}>
                   <Text style={styles.buttonText}>Save as Preset</Text>
                 </TouchableOpacity>
 
@@ -499,14 +487,12 @@ export default function ViewWorkout() {
                       placeholder="Preset name"
                       placeholderTextColor="#888"
                       value={presetName}
-                      onChangeText={setPresetName}
-                    />
+                      onChangeText={setPresetName}/>
 
                     <TouchableOpacity
                       style={styles.saveButton}
                       onPress={handleSaveAsPreset}
-                      disabled={saving}
-                    >
+                      disabled={saving}>
                       <Text style={styles.buttonText}>
                         {saving ? 'Saving Preset...' : 'Confirm Save Preset'}
                       </Text>
@@ -520,8 +506,7 @@ export default function ViewWorkout() {
                 style={[styles.statusButton, workout?.is_finished ? styles.markPlannedButton : styles.markFinishedButton
                 ]}
               onPress={handleToggleFinished}
-              disabled={saving}
-            >
+              disabled={saving}>
               <Text style={styles.buttonText}>
                 {saving
                   ? 'Updating...'
@@ -533,8 +518,7 @@ export default function ViewWorkout() {
 
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.back()}
-            >
+              onPress={() => router.back()}>
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
           </>

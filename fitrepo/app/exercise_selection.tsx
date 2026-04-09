@@ -151,8 +151,7 @@ export default function ExerciseSelection() {
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
       <LinearGradient
         colors={['#020975fb', '#151718']}
-        style={sharedStyles.background}
-      />
+        style={sharedStyles.background}/>
       <View style={styles.container}>
         <Text style={styles.headerText}>
           {name} for {'\n'}{readableDate}
@@ -165,8 +164,7 @@ export default function ExerciseSelection() {
           placeholder="Search exercises..."
           placeholderTextColor="#888"
           value={search}
-          onChangeText={setSearch}
-        />
+          onChangeText={setSearch}/>
 
         <Text style={styles.sectionTitle}>Available Exercises</Text>
 
@@ -178,20 +176,18 @@ export default function ExerciseSelection() {
           ) : (
             <ScrollView
               showsVerticalScrollIndicator={true}
-              nestedScrollEnabled={true}
-            >
+              nestedScrollEnabled={true}>
+
               {filteredExercises.map((exercise) => {
                 const alreadySelected = selectedExercises.some(
-                  (item) => item.exercise_id === exercise.id
-                );
+                  (item) => item.exercise_id === exercise.id);
 
                 return (
                   <TouchableOpacity
                     key={exercise.id}
                     style={[styles.listRow, alreadySelected && styles.listRowSelected]}
                     onPress={() => addExercise(exercise)}
-                    disabled={alreadySelected}
-                  >
+                    disabled={alreadySelected}>
                     <View>
                       <Text style={styles.listRowTitle}>{exercise.name}</Text>
                     </View>
@@ -223,8 +219,7 @@ export default function ExerciseSelection() {
                   value={exercise.sets}
                   onChangeText={(value) =>
                     updateExerciseField(exercise.exercise_id, 'sets', value)
-                  }
-                />
+                  }/>
 
                 <TextInput
                   style={styles.input}
@@ -234,8 +229,7 @@ export default function ExerciseSelection() {
                   value={exercise.reps}
                   onChangeText={(value) =>
                     updateExerciseField(exercise.exercise_id, 'reps', value)
-                  }
-                />
+                  }/>
 
                 <TextInput
                   style={styles.input}
@@ -245,8 +239,7 @@ export default function ExerciseSelection() {
                   value={exercise.time_seconds}
                   onChangeText={(value) =>
                     updateExerciseField(exercise.exercise_id, 'time_seconds', value)
-                  }
-                />
+                  }/>
 
                 <TextInput
                   style={styles.input}
@@ -256,13 +249,11 @@ export default function ExerciseSelection() {
                   value={exercise.weight}
                   onChangeText={(value) =>
                     updateExerciseField(exercise.exercise_id, 'weight', value)
-                  }
-                />
+                  }/>
 
               <TouchableOpacity
                 style={styles.removeButton}
-                onPress={() => removeExercise(exercise.exercise_id)}
-              >
+                onPress={() => removeExercise(exercise.exercise_id)}>
                 <Text style={styles.buttonText}>Remove</Text>
               </TouchableOpacity>
             </View>
@@ -272,8 +263,7 @@ export default function ExerciseSelection() {
         <TouchableOpacity
           style={styles.saveButton}
           onPress={handleSaveWorkout}
-          disabled={loading}
-        >
+          disabled={loading}>
           <Text style={styles.buttonText}>
             {loading ? 'Saving Workout...' : 'Save Workout'}
           </Text>
@@ -283,8 +273,7 @@ export default function ExerciseSelection() {
           style={styles.backButton}
           onPress={() => {
             router.back();
-          }}
-        >
+          }}>
           <Text style={styles.buttonText}>Back</Text>
         </TouchableOpacity>
       </View>

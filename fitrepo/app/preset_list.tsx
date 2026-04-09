@@ -59,8 +59,7 @@ export default function PresetList() {
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
       <LinearGradient
         colors={['#020975fb', '#151718']}
-        style={sharedStyles.background}
-      />
+        style={sharedStyles.background}/>
       <View style={styles.container}>
         <Text style={[sharedStyles.title, styles.headerText]}>
           Presets for {'\n'}{readableDate || 'Selected Date'}
@@ -73,8 +72,7 @@ export default function PresetList() {
           placeholder="Search presets..."
           placeholderTextColor="#888"
           value={search}
-          onChangeText={setSearch}
-        />
+          onChangeText={setSearch}/>
 
         <Text style={[sharedStyles.sectionTitle, styles.sectionTitle]}>Available Presets</Text>
 
@@ -90,8 +88,7 @@ export default function PresetList() {
           ) : (
             <ScrollView
               showsVerticalScrollIndicator={true}
-              nestedScrollEnabled={true}
-            >
+              nestedScrollEnabled={true}>
               {filteredPresets.map((preset) => {
                 const isCreating = creatingPresetWorkout === preset.id;
 
@@ -100,8 +97,7 @@ export default function PresetList() {
                     key={preset.id}
                     style={[sharedStyles.card, styles.listRow, isCreating && styles.listRowSelected]}
                     onPress={() => handleUsePreset(preset.id)}
-                    disabled={isCreating}
-                  >
+                    disabled={isCreating}>
                     <View>
                       <Text style={[sharedStyles.sectionTitle, styles.listRowTitle]}>{preset.name}</Text>
 
@@ -124,8 +120,7 @@ export default function PresetList() {
 
         <TouchableOpacity
           style={[sharedStyles.button, styles.backButton]}
-          onPress={() => router.back()}
-        >
+          onPress={() => router.back()}>
           <Text style={sharedStyles.buttonText}>Back</Text>
         </TouchableOpacity>
       </View>

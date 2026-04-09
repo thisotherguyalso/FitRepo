@@ -9,24 +9,23 @@ export default function Summary() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-        <LinearGradient
-          colors={['#020975fb', '#151718']}
-          style={sharedStyles.background}
-        />
-        <Text style={styles.sessionLabel}>Summary</Text>
-        {/* Go Back Button */}
-        <TouchableOpacity
-          style={styles.buttonStyle}
-          onPress={() => {
-          router.push({
-            pathname: '/(tabs)/session',
-          })
-          }}
-          >
-          <Text style={styles.buttonText}>Go Back</Text>
-        </TouchableOpacity>
-    </ParallaxScrollView>
-  );
+      <LinearGradient
+        colors={['#020975fb', '#151718']}
+        style={sharedStyles.background}/>
+      <Text style={styles.sessionLabel}>Summary</Text>
+      
+      {/* Go Back Button */}
+      <TouchableOpacity
+        style={styles.buttonStyle}
+        onPress={() => {
+        router.push({
+          pathname: '/(tabs)/session',
+        })
+        }}>
+        <Text style={styles.buttonText}>Go Back</Text>
+      </TouchableOpacity>
+  </ParallaxScrollView>
+);
 }
 const styles = StyleSheet.create({
   titleContainer: {
