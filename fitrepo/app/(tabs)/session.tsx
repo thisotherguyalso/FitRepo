@@ -60,8 +60,7 @@ export default function SessionTab() {
                 </View>
               </View>
             ))}
-
-
+            
             <ButtonComponent onPress={startSession} text="Start Session" />
 
           </>

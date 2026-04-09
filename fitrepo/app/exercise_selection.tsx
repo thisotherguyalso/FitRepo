@@ -262,14 +262,7 @@ export default function ExerciseSelection() {
           ))
         )}
 
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSaveWorkout}
-          disabled={loading}>
-          <Text style={styles.buttonText}>
-            {loading ? 'Saving Workout...' : 'Save Workout'}
-          </Text>
-        </TouchableOpacity>
+        <ButtonComponent onPress = {handleSaveWorkout} text="Save Workout" disabled = {loading}/>
 
         <ButtonComponent
           style={styles.backButton}

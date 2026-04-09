@@ -8,7 +8,8 @@ import { router } from 'expo-router';
 import { useRef, useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { sharedStyles } from '@/constants/styles';
- 
+import { ButtonComponent } from '@/components/button-component';
+
 export default function WorkoutsTab() {
   const { workouts, markedDates, loadWorkouts  } = useWorkouts();
   const screenWidth = Dimensions.get('window').width;
@@ -78,17 +79,14 @@ export default function WorkoutsTab() {
         </View>
  
         {/* Create Workout Button */}
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => {
+        <ButtonComponent onPress = {() => {
             router.push({
               pathname: '/create_workout',
               params: {date: selected}, // https://docs.expo.dev/router/basics/navigation/
             })
-          }}>
-          <Text style={styles.createButtonText}>Plan a Workout!</Text>
-        </TouchableOpacity>
-        
+          }}
+          text="Plan a Workout!"/>
+
         {/* Listed Workouts For A Date */}
         <Text style={styles.sectionTitle}>Workouts for {readableDate}</Text>
 

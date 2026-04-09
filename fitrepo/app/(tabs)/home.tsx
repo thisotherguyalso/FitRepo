@@ -5,6 +5,7 @@ import { useHomeStats } from '@/hooks/use-home-stats';
 import { useAuth } from '@/hooks/use-auth';
 import { AppColors, sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ButtonComponent } from '@/components/button-component';
 
 export default function Home() {
   const { userName, currentStreak, totalWorkouts, previousWorkout, previousWorkoutDate } = useHomeStats()
@@ -46,9 +47,7 @@ export default function Home() {
       </View>
 
     {/* Sign Out Button */}
-    <TouchableOpacity style={[sharedStyles.button, styles.signOutButton]} onPress={signOut}>
-      <Text style={[sharedStyles.buttonText, styles.signOutText]}>Sign Out</Text>
-    </TouchableOpacity>
+    <ButtonComponent onPress = { signOut } text = "Sign Out"/>
 
     </ParallaxScrollView>
   );
