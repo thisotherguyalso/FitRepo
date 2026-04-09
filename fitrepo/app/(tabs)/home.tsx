@@ -1,6 +1,6 @@
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useHomeStats } from '@/hooks/use-home-stats';
 import { useAuth } from '@/hooks/use-auth';
 import { AppColors, sharedStyles } from '@/constants/styles';
@@ -47,7 +47,7 @@ export default function Home() {
       </View>
 
     {/* Sign Out Button */}
-    <ButtonComponent onPress = { signOut } text = "Sign Out"/>
+    <ButtonComponent onPress = { signOut } text = "Sign Out" style = {styles.signOutButton}/>
 
     </ParallaxScrollView>
   );
@@ -103,8 +103,11 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surfaceAlt,
   },
   signOutButton: {
-    backgroundColor: AppColors.danger,
-    marginBottom: 20,
+    backgroundColor: '#c62b2b',
+    padding: 18,
+    borderRadius: 16,
+    marginBottom: 24,
+    alignItems: 'center',
   },
   signOutText: {
     fontSize: 24,
