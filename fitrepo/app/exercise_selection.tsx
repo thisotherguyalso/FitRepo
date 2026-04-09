@@ -11,6 +11,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 type SelectedExercise = {
   exercise_id: string;
   name: string;
+  type: 'reps' | 'timed';
   sets: string;
   reps: string;
   time_seconds: string;
@@ -19,10 +20,9 @@ type SelectedExercise = {
 };
 
 export default function ExerciseSelection() {
-  const { date, name, mode } = useLocalSearchParams<{
+  const { date, name } = useLocalSearchParams<{
     date?: string;
     name?: string;
-    mode?: string;
   }>();
 
   const { exercises, loading: exercisesLoading } = useExercises();
@@ -43,7 +43,7 @@ export default function ExerciseSelection() {
     );
   }, [search, exercises]);
 
-  function addExercise(exercise: { id: string; name: string }) {
+  function addExercise(exercise: { id: string; name: string; type: string }) {
     const exists = selectedExercises.some((item) => item.exercise_id === exercise.id);
     if (exists) {
       Alert.alert('Error', 'That exercise is already in the workout.');
@@ -55,6 +55,7 @@ export default function ExerciseSelection() {
       {
         exercise_id: exercise.id,
         name: exercise.name,
+        type: exercise.type === 'timed' ? 'timed' : 'reps',
         sets: '',
         reps: '',
         time_seconds: '',
@@ -98,9 +99,9 @@ export default function ExerciseSelection() {
         is_finished: false,
         exercises: selectedExercises.map((exercise, index) => ({
           exercise_id: exercise.exercise_id,
-          sets: mode === 'Rep based' ? Number(exercise.sets) || null : null,
-          reps: mode === 'Rep based' ? Number(exercise.reps) || null : null,
-          time_seconds: mode === 'Time based' ? Number(exercise.time_seconds) || null : null,
+          sets: exercise.type === 'reps' ? Number(exercise.sets) || null : null,
+          reps: exercise.type === 'reps' ? Number(exercise.reps) || null : null,
+          time_seconds: exercise.type === 'timed' ? Number(exercise.time_seconds) || null : null,
           weight: Number(exercise.weight) || null,
           order_index: index,
         })),
@@ -158,7 +159,12 @@ export default function ExerciseSelection() {
                     onPress={() => addExercise(exercise)}
                     disabled={alreadySelected}
                   >
-                    <Text style={styles.listRowTitle}>{exercise.name}</Text>
+                    <View style={styles.listRowContent}>
+                      <Text style={styles.listRowTitle}>{exercise.name}</Text>
+                      <Text style={styles.listRowType}>
+                        {exercise.type === 'timed' ? 'Timed' : 'Reps'}
+                      </Text>
+                    </View>
                     <Text style={styles.addText}>
                       {alreadySelected ? 'Added' : 'Add'}
                     </Text>
@@ -178,38 +184,51 @@ export default function ExerciseSelection() {
         ) : (
           selectedExercises.map((exercise) => (
             <View key={exercise.exercise_id} style={styles.card}>
-              <Text style={styles.cardTitle}>{exercise.name}</Text>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardTitle}>{exercise.name}</Text>
+                <View style={[styles.typeBadge, exercise.type === 'timed' && styles.typeBadgeTimed]}>
+                  <Text style={styles.typeBadgeText}>
+                    {exercise.type === 'timed' ? 'Timed' : 'Reps'}
+                  </Text>
+                </View>
+              </View>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Sets"
-                placeholderTextColor="#666"
-                keyboardType="numeric"
-                value={exercise.sets}
-                onChangeText={(value) =>
-                  updateExerciseField(exercise.exercise_id, 'sets', value)
-                }
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Reps"
-                placeholderTextColor="#666"
-                keyboardType="numeric"
-                value={exercise.reps}
-                onChangeText={(value) =>
-                  updateExerciseField(exercise.exercise_id, 'reps', value)
-                }
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Time in seconds"
-                placeholderTextColor="#666"
-                keyboardType="numeric"
-                value={exercise.time_seconds}
-                onChangeText={(value) =>
-                  updateExerciseField(exercise.exercise_id, 'time_seconds', value)
-                }
-              />
+              {exercise.type === 'reps' ? (
+                <>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Sets"
+                    placeholderTextColor="#666"
+                    keyboardType="numeric"
+                    value={exercise.sets}
+                    onChangeText={(value) =>
+                      updateExerciseField(exercise.exercise_id, 'sets', value)
+                    }
+                  />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Reps"
+                    placeholderTextColor="#666"
+                    keyboardType="numeric"
+                    value={exercise.reps}
+                    onChangeText={(value) =>
+                      updateExerciseField(exercise.exercise_id, 'reps', value)
+                    }
+                  />
+                </>
+              ) : (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Time in seconds"
+                  placeholderTextColor="#666"
+                  keyboardType="numeric"
+                  value={exercise.time_seconds}
+                  onChangeText={(value) =>
+                    updateExerciseField(exercise.exercise_id, 'time_seconds', value)
+                  }
+                />
+              )}
+
               <TextInput
                 style={styles.input}
                 placeholder="Weight (optional)"
@@ -301,10 +320,18 @@ const styles = StyleSheet.create({
   listRowSelected: {
     opacity: 0.5,
   },
+  listRowContent: {
+    flex: 1,
+  },
   listRowTitle: {
     color: AppColors.text,
     fontSize: 16,
     fontWeight: '600',
+  },
+  listRowType: {
+    color: '#93c5fd',
+    fontSize: 12,
+    marginTop: 2,
   },
   addText: {
     color: '#3b82f6',
@@ -329,11 +356,31 @@ const styles = StyleSheet.create({
     borderRadius: AppRadius.lg,
     marginBottom: 12,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
   cardTitle: {
     color: AppColors.text,
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: 12,
+    flex: 1,
+  },
+  typeBadge: {
+    backgroundColor: '#3b82f6',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: AppRadius.md,
+  },
+  typeBadgeTimed: {
+    backgroundColor: '#166534',
+  },
+  typeBadgeText: {
+    color: AppColors.text,
+    fontSize: 12,
+    fontWeight: '600',
   },
   input: {
     backgroundColor: '#141417',
