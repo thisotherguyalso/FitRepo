@@ -1,9 +1,10 @@
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
+import { ButtonComponent } from '@/components/button-component';
 import { supabase } from '@/lib/supabase';
 
 export default function Summary() {
@@ -28,11 +29,8 @@ export default function Summary() {
         <Text style={styles.subLabel}>{total} exercise{Number(total) !== 1 ? 's' : ''} done</Text>
       ) : null}
 
-      <TouchableOpacity
-        style={styles.buttonStyle}
-        onPress={() => router.replace('/(tabs)/session')}>
-        <Text style={styles.buttonText}>Back to Home</Text>
-      </TouchableOpacity>
+      <ButtonComponent onPress = {() => router.replace('/(tabs)/session')} text = "Back to Home"/>
+
     </ParallaxScrollView>
   );
 }

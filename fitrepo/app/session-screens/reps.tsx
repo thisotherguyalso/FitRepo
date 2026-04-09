@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useState } from 'react';
@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { sharedStyles } from '@/constants/styles';
 import { SessionExercise } from '@/hooks/use-today-session';
 import { goToNextExercise } from '@/utils/session-navigation';
+import { ButtonComponent } from '@/components/button-component';
 
 export default function Reps() {
   const { exercises: exercisesParam, currentIndex: indexParam, workout_id } = useLocalSearchParams<{
@@ -55,19 +56,10 @@ export default function Reps() {
           </TouchableOpacity>
         </GestureDetector>
 
-        <TouchableOpacity style={styles.buttonStyle} onPress={() => setRepAmount((r) => r + 1)}>
-          <Text style={styles.buttonText}>+ Rep</Text>
-        </TouchableOpacity>
+        <ButtonComponent onPress={() => setRepAmount((r) => r + 1)} text="+ Rep"/>
 
-        <TouchableOpacity style={styles.buttonStyle} onPress={() => setRepAmount((r) => Math.max(r - 1, 0))}>
-          <Text style={styles.buttonText}>− Rep</Text>
-        </TouchableOpacity>
+        <ButtonComponent onPress={() => setRepAmount((r) => Math.max(r - 1, 0))} text="− Rep" />
 
-        <TouchableOpacity style={[styles.buttonStyle, styles.finishButton]} onPress={handleFinishSet}>
-          <Text style={styles.buttonText}>
-            {currentSet < totalSets ? `Finish Set ${currentSet}` : 'Finish Exercise'}
-          </Text>
-        </TouchableOpacity>
       </ParallaxScrollView>
     </GestureHandlerRootView>
   );

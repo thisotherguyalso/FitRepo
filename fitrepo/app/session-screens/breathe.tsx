@@ -1,7 +1,6 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
 import { SessionCountdownScreen } from '@/components/session-countdown-screen';
 import { SessionExercise } from '@/hooks/use-today-session';
-import { router } from 'expo-router';
 
 export default function Breathe() {
   const { exercises: exercisesParam, currentIndex: indexParam, workout_id } = useLocalSearchParams<{

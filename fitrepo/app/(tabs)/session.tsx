@@ -1,10 +1,11 @@
 // app/(tabs)/session.tsx
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { sharedStyles } from '@/constants/styles';
 import { useTodaySession } from '@/hooks/use-today-session';
+import { ButtonComponent } from '@/components/button-component'
 
 export default function SessionTab() {
   const { session, loading } = useTodaySession();
@@ -60,9 +61,9 @@ export default function SessionTab() {
               </View>
             ))}
 
-            <TouchableOpacity style={styles.buttonStyle} onPress={startSession}>
-              <Text style={styles.buttonText}>Start Session</Text>
-            </TouchableOpacity>
+
+            <ButtonComponent onPress={startSession} text="Start Session" />
+
           </>
         )}
       </View>
