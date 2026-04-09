@@ -1,50 +1,70 @@
-# Welcome to your Expo app 👋
+# FitRepo
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+FitRepo is an Expo + Supabase workout app with workout planning, presets, auth, and a chat tab backed by a Supabase Edge Function.
 
-## Get started
+## App setup
 
 1. Install dependencies
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Create your `.env`
 
-## Learn more
+```env
+EXPO_PUBLIC_SUPABASE_URL=your-project-url
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-anon-key
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+3. Start the app
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npm start
+```
 
-## Join the community
+## Chat via Supabase Edge Functions
 
-Join our community of developers creating universal apps.
+The chat tab calls the `chat` edge function through `supabase.functions.invoke(...)`.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Function files
+
+- `supabase/functions/chat/index.ts`
+- `lib/api/chat.ts`
+- `app/(tabs)/chat.tsx`
+
+### Required function secrets
+
+Set these in Supabase:
+
+```bash
+supabase secrets set OPENROUTER_API_KEY=your_openrouter_key
+supabase secrets set OPENROUTER_MODEL=openrouter/free
+```
+
+`OPENROUTER_MODEL` is optional. If omitted, the function defaults to `openrouter/free`.
+
+### Deploy the function
+
+```bash
+supabase functions deploy chat
+```
+
+If you want to test locally:
+
+```bash
+supabase functions serve chat
+```
+
+### How auth works
+
+The mobile app sends the logged-in user's Supabase auth token automatically when invoking the function.
+The function validates the caller with `supabase.auth.getUser()` before forwarding the prompt to the model provider.
+
+## Validation
+
+```bash
+npm run lint
+npm test -- --runInBand
+```
