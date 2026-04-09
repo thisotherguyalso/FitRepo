@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase'; // adjust to your supabase client path
+import { supabase } from '@/lib/supabase';
 
 export type SessionExercise = {
   id: string;
   workout_exercise_id: string;
+  exercise_id: string;
   name: string;
   type: 'reps' | 'timed';
   sets: number;
@@ -32,7 +33,6 @@ export function useTodaySession() {
       '-' +
       String(today.getDate()).padStart(2, '0');
 
-    // Get today's first unfinished workout
     const { data: workout } = await supabase
       .from('workouts')
       .select('id, name')
@@ -48,11 +48,11 @@ export function useTodaySession() {
       return;
     }
 
-    // Get its exercises joined with exercise details
     const { data: rows } = await supabase
       .from('workout_exercises')
       .select(`
         id,
+        exercise_id,
         sets,
         reps,
         time_seconds,
@@ -69,6 +69,7 @@ export function useTodaySession() {
     const exercises: SessionExercise[] = (rows ?? []).map((row: any) => ({
       id: row.exercises.id ?? row.id,
       workout_exercise_id: row.id,
+      exercise_id: row.exercise_id,
       name: row.exercises.name,
       type: row.exercises.type === 'timed' ? 'timed' : 'reps',
       sets: row.sets ?? 1,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 import { LinearGradient } from 'expo-linear-gradient'
 
@@ -7,11 +7,12 @@ import { AppColors, AppRadius, AppSpacing } from '@/constants/styles'
 
 type SessionCountdownScreenProps = {
   mode: 'rest' | 'exercise'
-  title: string // Exercise name (shown in "Up Next" for rest, or as header for exercise)
+  title: string
   onComplete: () => void
   skipLabel: string
   duration?: number
-  autoStart?: boolean // For testing
+  autoStart?: boolean
+  onDurationChange?: (newDuration: number) => void
 }
 
 export function SessionCountdownScreen({
@@ -21,6 +22,7 @@ export function SessionCountdownScreen({
   skipLabel,
   duration = 20,
   autoStart = false,
+  onDurationChange,
 }: SessionCountdownScreenProps) {
   const [timeRemaining, setTimeRemaining] = useState(duration)
   const [isRunning, setIsRunning] = useState(autoStart)
@@ -47,6 +49,14 @@ export function SessionCountdownScreen({
     return () => clearInterval(interval)
   }, [isRunning, onComplete])
 
+  const adjustTime = (delta: number) => {
+    setTimeRemaining((prev) => {
+      const newTime = Math.max(5, prev + delta) // Minimum 5 seconds
+      onDurationChange?.(newTime)
+      return newTime
+    })
+  }
+
   const singleTap = Gesture.Tap()
     .maxDuration(250)
     .onEnd(() => {
@@ -59,7 +69,6 @@ export function SessionCountdownScreen({
     .onEnd(() => onComplete())
     .runOnJS(true)
 
-  // Double tap takes priority over single tap
   const composedGesture = Gesture.Exclusive(doubleTap, singleTap)
 
   const headerText = mode === 'rest' ? 'Breathe' : title
@@ -77,7 +86,26 @@ export function SessionCountdownScreen({
 
           {/* Centered Timer Section */}
           <View style={styles.timerSection}>
-            <Text style={styles.timer}>{timeRemaining}</Text>
+            <View style={styles.timerRow}>
+              <TouchableOpacity
+                style={styles.adjustButton}
+                onPress={() => adjustTime(-5)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.adjustButtonText}>−5</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.timer}>{timeRemaining}</Text>
+
+              <TouchableOpacity
+                style={styles.adjustButton}
+                onPress={() => adjustTime(5)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.adjustButtonText}>+5</Text>
+              </TouchableOpacity>
+            </View>
+
             <Text style={styles.timerLabel}>
               {!isRunning ? 'tap to start' : 'seconds'}
             </Text>
@@ -131,11 +159,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
   timer: {
     color: AppColors.text,
     fontSize: 120,
     fontWeight: '200',
     lineHeight: 130,
+    minWidth: 180,
+    textAlign: 'center',
   },
   timerLabel: {
     color: AppColors.text,
@@ -145,6 +180,17 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     textTransform: 'uppercase',
     marginTop: -10,
+  },
+  adjustButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: AppRadius.md,
+  },
+  adjustButtonText: {
+    color: AppColors.text,
+    fontSize: 18,
+    fontWeight: '600',
   },
   pausedBadge: {
     marginTop: 20,
