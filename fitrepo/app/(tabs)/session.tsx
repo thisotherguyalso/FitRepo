@@ -3,9 +3,12 @@ import { router } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { LinearGradient } from 'expo-linear-gradient';
 import { sharedStyles } from '@/constants/styles';
+import { useWorkouts } from '@/hooks/use-workouts';
 
 
 export default function SessionTab() {
+  const { workouts } = useWorkouts();
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
@@ -15,7 +18,8 @@ export default function SessionTab() {
 
       {/* Exercise Session */}
       <View style={styles.sessionCard}>
-        <Text style={styles.sessionLabel}>Exercise Session</Text>
+        <Text style={styles.sessionLabel}>Session for Today</Text>
+        
       
         {/* Start Reps Button */}
         <TouchableOpacity
