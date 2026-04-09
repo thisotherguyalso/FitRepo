@@ -9,17 +9,11 @@ import { useExercises } from '@/hooks/use-exercises';
 import { Workout } from '@/types/database';
 import { createWorkoutPreset } from '@/lib/api/workoutPresets';
 import { addExerciseToPreset } from '@/lib/api/presetExercises';
-
-type EditableExercise = {
-  id: string;
-  workout_id: string;
-  exercise_id: string;
-  name: string;
-  sets: string;
-  reps: string;
-  time_seconds: string;
-  weight: string;
-};
+import {
+  EditableExercise,
+  mapWorkoutExercisesToEditable,
+  toNullableNumber,
+} from '@/lib/workout-editor';
 
 export default function ViewWorkout() {
   const params = useLocalSearchParams<{
@@ -82,18 +76,7 @@ export default function ViewWorkout() {
 
   // Convert fetched workout_exercise rows into editable text inputs.
   useEffect(() => {
-    const mapped = exercises.map((exercise: any) => ({
-      id: exercise.id,
-      workout_id: exercise.workout_id,
-      exercise_id: exercise.exercise_id,
-      name: exercise.exercises?.name ?? 'Unnamed Exercise',
-      sets: exercise.sets != null ? String(exercise.sets) : '',
-      reps: exercise.reps != null ? String(exercise.reps) : '',
-      time_seconds: exercise.time_seconds != null ? String(exercise.time_seconds) : '',
-      weight: exercise.weight != null ? String(exercise.weight) : '',
-    }));
-
-    setEditedExercises(mapped);
+    setEditedExercises(mapWorkoutExercisesToEditable(exercises));
   }, [exercises]);
 
   async function loadWorkout() {
@@ -180,18 +163,7 @@ export default function ViewWorkout() {
     setSearch('');
 
     // Reset edited exercise state back to whatever was last loaded from DB.
-    const mapped = exercises.map((exercise: any) => ({
-      id: exercise.id,
-      workout_id: exercise.workout_id,
-      exercise_id: exercise.exercise_id,
-      name: exercise.exercises?.name ?? 'Unnamed Exercise',
-      sets: exercise.sets != null ? String(exercise.sets) : '',
-      reps: exercise.reps != null ? String(exercise.reps) : '',
-      time_seconds: exercise.time_seconds != null ? String(exercise.time_seconds) : '',
-      weight: exercise.weight != null ? String(exercise.weight) : '',
-    }));
-
-    setEditedExercises(mapped);
+    setEditedExercises(mapWorkoutExercisesToEditable(exercises));
   }
 
   // update database from local save
@@ -228,12 +200,10 @@ export default function ViewWorkout() {
       await Promise.all(
         newExercises.map((exercise, index) =>
           addExerciseToWorkout(workout.id, exercise.exercise_id, {
-            sets: exercise.sets.trim() ? Number(exercise.sets) : null,
-            reps: exercise.reps.trim() ? Number(exercise.reps) : null,
-            time_seconds: exercise.time_seconds.trim()
-              ? Number(exercise.time_seconds)
-              : null,
-            weight: exercise.weight.trim() ? Number(exercise.weight) : null,
+            sets: toNullableNumber(exercise.sets),
+            reps: toNullableNumber(exercise.reps),
+            time_seconds: toNullableNumber(exercise.time_seconds),
+            weight: toNullableNumber(exercise.weight),
             order_index: index,
           })
         )
@@ -247,12 +217,10 @@ export default function ViewWorkout() {
       await Promise.all(
         existingExercises.map((exercise) =>
           updateWorkoutExercise(exercise.workout_id, exercise.exercise_id, {
-            sets: exercise.sets.trim() ? Number(exercise.sets) : null,
-            reps: exercise.reps.trim() ? Number(exercise.reps) : null,
-            time_seconds: exercise.time_seconds.trim()
-              ? Number(exercise.time_seconds)
-              : null,
-            weight: exercise.weight.trim() ? Number(exercise.weight) : null,
+            sets: toNullableNumber(exercise.sets),
+            reps: toNullableNumber(exercise.reps),
+            time_seconds: toNullableNumber(exercise.time_seconds),
+            weight: toNullableNumber(exercise.weight),
           })
         )
       );
@@ -307,12 +275,10 @@ export default function ViewWorkout() {
       await Promise.all(
         editedExercises.map((exercise, index) =>
           addExerciseToPreset(preset.id, exercise.exercise_id, {
-            sets: exercise.sets.trim() ? Number(exercise.sets) : null,
-            reps: exercise.reps.trim() ? Number(exercise.reps) : null,
-            time_seconds: exercise.time_seconds.trim()
-              ? Number(exercise.time_seconds)
-              : null,
-            weight: exercise.weight.trim() ? Number(exercise.weight) : null,
+            sets: toNullableNumber(exercise.sets),
+            reps: toNullableNumber(exercise.reps),
+            time_seconds: toNullableNumber(exercise.time_seconds),
+            weight: toNullableNumber(exercise.weight),
             order_index: index,
           })
         )

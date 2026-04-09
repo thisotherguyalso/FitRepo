@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native'
-import { supabase } from '@/lib/supabase'
-import { router } from 'expo-router'
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import * as WebBrowser from 'expo-web-browser'
 import { useAuth } from '@/hooks/use-auth'
+import { AppColors, sharedStyles } from '@/constants/styles'
 
 WebBrowser.maybeCompleteAuthSession()
 
@@ -16,11 +15,11 @@ export default function Login() {
   const { loading, signUp, signIn, googleSignIn } = useAuth()
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>FitRepo</Text>
+    <View style={[sharedStyles.screen, sharedStyles.screenContent, styles.container]}>
+      <Text style={[sharedStyles.title, styles.title]}>FitRepo</Text>
 
       <TextInput
-        style={styles.input}
+        style={[sharedStyles.input, styles.input]}
         placeholder="Email"
         placeholderTextColor="#666"
         value={email}
@@ -30,7 +29,7 @@ export default function Login() {
       />
 
       <TextInput
-        style={styles.input}
+        style={[sharedStyles.input, styles.input]}
         placeholder="Password"
         placeholderTextColor="#666"
         value={password}
@@ -38,13 +37,13 @@ export default function Login() {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button}
+      <TouchableOpacity style={[sharedStyles.button, styles.button]}
       onPress={() => isSignUp ? signUp(email, password) : signIn(email, password)}
       disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}</Text>
+        <Text style={sharedStyles.buttonText}>{loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.googleButton} onPress={googleSignIn}>
+      <TouchableOpacity style={[sharedStyles.button, styles.googleButton]} onPress={googleSignIn}>
         <Text style={styles.googleButtonText}>Continue with Google</Text>
       </TouchableOpacity>
 
@@ -59,43 +58,20 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#0f0f0f',
-    justifyContent: 'center',
-    padding: 24,
   },
   title: {
-    color: '#fff',
     fontSize: 36,
-    fontWeight: '700',
     marginBottom: 40,
-    textAlign: 'center',
   },
   input: {
-    backgroundColor: '#1a1a1a',
-    color: '#fff',
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 16,
-    fontSize: 16,
   },
   button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+    backgroundColor: AppColors.primary,
     marginBottom: 16,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   googleButton: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+    backgroundColor: AppColors.text,
     marginBottom: 16,
   },
   googleButtonText: {

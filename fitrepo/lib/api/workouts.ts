@@ -1,15 +1,10 @@
 import { supabase } from '../supabase'
 import { Workout } from '@/types/database'
+import { getAuthenticatedUser } from './auth'
 
 // Gets all workouts.
 export async function getWorkouts() {
-    const {
-        data: { user },
-        error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError) throw userError
-    if (!user) throw new Error('No authenticated user found.')
+    const user = await getAuthenticatedUser()
 
     const { data, error } = await supabase
         .from('workouts')
@@ -23,13 +18,7 @@ export async function getWorkouts() {
 
 // Gets the most recent workout before today
 export async function getPreviousWorkout() {
-    const {
-        data: { user },
-        error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError) throw userError
-    if (!user) throw new Error('No authenticated user found.')
+    const user = await getAuthenticatedUser()
 
     const { data, error } = await supabase
         .from('workouts')
@@ -59,14 +48,7 @@ export async function getWorkout(id: string) {
 export async function createWorkout(
     workout: Omit<Workout, 'id' | 'user_id' | 'created_at'>
 ) {
-    // get the currently logged in user
-    const {
-        data: { user },
-        error: userError,
-    } = await supabase.auth.getUser()
-
-    if (userError) throw userError
-    if (!user) throw new Error('No authenticated user found.')
+    const user = await getAuthenticatedUser()
     // check if workout already exists for selected day
     const { data: existing, error: existingError } = await supabase
         .from('workouts')

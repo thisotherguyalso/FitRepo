@@ -1,12 +1,13 @@
 import { supabase } from '../supabase'
 import { Exercise, WorkoutExercise } from '@/types/database'
+import { EXERCISE_RELATION_SELECT } from './exerciseRelations'
 
 // Gets all exercises in a specific workout
 export async function getExercisesInWorkout(
     workout_id: string
 ) {
     const { data, error } = await supabase.from('workout_exercises')
-        .select('*, exercises ( name, type, image_url ) ')
+        .select(EXERCISE_RELATION_SELECT)
         .eq('workout_id', workout_id)
         .order('order_index', { ascending: true })
     if (error) throw error
@@ -19,7 +20,7 @@ export async function getExerciseInWorkout(
     workout_id: string
 ) {
     const { data, error } = await supabase.from('workout_exercises')
-        .select('*, exercises ( name, type, image_url ) ')
+        .select(EXERCISE_RELATION_SELECT)
         .eq('workout_id', workout_id)
         .eq('exercise_id', exercise_id)
         .single()
@@ -35,13 +36,9 @@ export async function addExerciseToWorkout(
 ) {
     const { data, error } = await supabase.from('workout_exercises')
         .insert({
-            sets: workout_exercise.sets,
-            reps: workout_exercise.reps,
-            time_seconds: workout_exercise.time_seconds,
-            weight: workout_exercise.weight,
-            order_index: workout_exercise.order_index,
-            workout_id: workout_id,
-            exercise_id: exercise_id
+            ...workout_exercise,
+            workout_id,
+            exercise_id,
         }).select().single()
     if (error) throw error
     return data

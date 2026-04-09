@@ -1,5 +1,3 @@
-import { Timestamp } from "react-native-reanimated/lib/typescript/commonTypes"
-
 export enum ExerciseType {
     timed = "timed",
     reps = "reps"
@@ -28,8 +26,8 @@ export type WorkoutExercise = {
     reps: number | null
     time_seconds: number | null
     weight: number | null
-    workout_id: number 
-    exercise_id: number
+    workout_id: string
+    exercise_id: string
     order_index: number
 }
 
@@ -54,7 +52,7 @@ export type PresetExercise = {
     reps: number | null
     time_seconds: number | null
     weight: number | null
-    preset_id: number 
-    exercise_id: number
+    preset_id: string
+    exercise_id: string
     order_index: number
 }

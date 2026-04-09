@@ -17,8 +17,10 @@ jest.mock('expo-web-browser', () => ({
 jest.mock('@/lib/supabase', () => ({
     supabase: {
         auth: {
+            getSession: jest.fn(),
             signInWithPassword: jest.fn(),
-            signUp: jest.fn()
+            signUp: jest.fn(),
+            signOut: jest.fn(),
         }
     }
 }))
@@ -37,6 +39,15 @@ describe('useAuth', () => {
     // clear the data before each test
     beforeEach(() => {
         jest.clearAllMocks()
+
+        ;(supabase.auth.getSession as jest.Mock).mockResolvedValue({
+            data: { session: null },
+            error: null,
+        })
+
+        ;(supabase.auth.signOut as jest.Mock).mockResolvedValue({
+            error: null,
+        })
     })
 
     it ('should start with loading as false', () => {

@@ -4,12 +4,11 @@ import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useWorkouts } from '@/hooks/use-workouts';
+import { AppColors, sharedStyles } from '@/constants/styles';
 
 export default function ChoiceButtons() {
   // https://docs.expo.dev/router/reference/url-parameters/
   const { date } = useLocalSearchParams(); // get date passed through the router (read router docs for more info)
-  const { planWorkout, loading } = useWorkouts();
   const [selected, setSelected] = useState<'Rep based' | 'Time based' | null>(null); // track which button is selected
   const [workoutName, setWorkoutName] = useState(''); // track workout name input
   // turn date into readable date e.g. March 13
@@ -67,7 +66,7 @@ export default function ChoiceButtons() {
 
         {/* Workout name input */}
         <TextInput
-          style={styles.input}
+          style={[sharedStyles.input, styles.input]}
           placeholder="Enter workout name"
           placeholderTextColor="#888"
           value={workoutName}
@@ -78,45 +77,45 @@ export default function ChoiceButtons() {
 
         {/* Rep-based selection button */}
         <TouchableOpacity
-          style={[styles.button, selected === 'Rep based' && styles.selectedButton]}
+          style={[sharedStyles.card, styles.button, selected === 'Rep based' && styles.selectedButton]}
           onPress={() => setSelected('Rep based')}
         >
-          <Text style={[styles.buttonText, selected === 'Rep based' && styles.selectedButtonText]}>Rep based</Text>
+          <Text style={[sharedStyles.buttonText, styles.buttonText, selected === 'Rep based' && styles.selectedButtonText]}>Rep based</Text>
         </TouchableOpacity>
 
         {/* Time-based selection button */}
         <TouchableOpacity
-          style={[styles.button, selected === 'Time based' && styles.selectedButton]}
+          style={[sharedStyles.card, styles.button, selected === 'Time based' && styles.selectedButton]}
           onPress={() => setSelected('Time based')}
         >
-          <Text style={[styles.buttonText, selected === 'Time based' && styles.selectedButtonText]}>Time based</Text>
+          <Text style={[sharedStyles.buttonText, styles.buttonText, selected === 'Time based' && styles.selectedButtonText]}>Time based</Text>
         </TouchableOpacity>
 
         {/* Continue button */}
         <TouchableOpacity
-          style={styles.createButton}
+          style={[sharedStyles.button, styles.createButton]}
           // moves the user to the exercise selection screen
           onPress={handleContinue}
         >
-          <Text style={styles.buttonText}>Choose Exercises</Text>
+          <Text style={[sharedStyles.buttonText, styles.buttonText]}>Choose Exercises</Text>
         </TouchableOpacity>
 
         {/* Load Preset button */}
         <TouchableOpacity
-          style={styles.presetButton}
+          style={[sharedStyles.button, styles.presetButton]}
           onPress={handleLoadPreset}
         >
-          <Text style={styles.buttonText}>Load from Preset</Text>
+          <Text style={[sharedStyles.buttonText, styles.buttonText]}>Load from Preset</Text>
         </TouchableOpacity>
 
         {/* Back button */}
         <TouchableOpacity
-          style={styles.backButton}
+          style={[sharedStyles.button, styles.backButton]}
           onPress={() => {
             router.push('/(tabs)/workouts');
           }}
         >
-          <Text style={styles.buttonText}>Back to Workouts</Text>
+          <Text style={[sharedStyles.buttonText, styles.buttonText]}>Back to Workouts</Text>
         </TouchableOpacity>
 
       </ThemedView>
@@ -135,33 +134,19 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   input: {
-    backgroundColor: '#1a1a1a',
-    color: '#fff',
-    padding: 18,
-    borderRadius: 16,
     marginBottom: 24,
-    fontSize: 16,
   },
   button: {
-    backgroundColor: '#1a1a1a',
-    padding: 20,
-    borderRadius: 16,
     marginBottom: 20,
     alignItems: 'center',
   },
   createButton: {
-    backgroundColor: 'rgb(0,65,90)',
-    padding: 20,
-    borderRadius: 16,
+    backgroundColor: AppColors.primaryDark,
     marginBottom: 20,
-    alignItems: 'center',
   },
   presetButton: {
-    backgroundColor: 'rgb(30, 133, 247)',
-    padding: 20,
-    borderRadius: 16,
+    backgroundColor: AppColors.secondary,
     marginBottom: 20,
-    alignItems: 'center',
   },
   selectedButton: {
     backgroundColor: 'rgb(0,184,255)',
@@ -170,7 +155,6 @@ const styles = StyleSheet.create({
     color: 'rgb(0,31,43)',
   },
   buttonText: {
-    color: '#fff',
     fontSize: 18,
   },
   headerText: {
@@ -183,10 +167,7 @@ const styles = StyleSheet.create({
     lineHeight: 36,
   },
   backButton: {
-    backgroundColor: 'rgb(241, 106, 111)',
-    padding: 18,
-    borderRadius: 16,
+    backgroundColor: AppColors.danger,
     marginBottom: 24,
-    alignItems: 'center',
   },
 });

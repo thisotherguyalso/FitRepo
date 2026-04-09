@@ -1,5 +1,6 @@
 import { Exercise } from '@/types/database'
 import { supabase } from '../supabase'
+import { getAuthenticatedUser } from './auth'
 
 // Gets all exercises
 export async function getExercises() {
@@ -20,13 +21,7 @@ export async function getExercise(id: string) {
 }
 
 export async function createExercise(exercise: { id: string; name: string }) {
-    // get the currently logged in user
-    const {
-        data: { user },
-        error: userError,
-    } = await supabase.auth.getUser()
-    if (userError) throw userError
-    if (!user) throw new Error('No authenticated user found.')
+    await getAuthenticatedUser()
 
     const { data, error } = await supabase
         .from('exercises')

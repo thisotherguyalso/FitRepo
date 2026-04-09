@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useWorkouts } from '@/hooks/use-workouts';
-import { useExercises, addExercise, removeExercise } from '@/hooks/use-exercises';
+import { useExercises } from '@/hooks/use-exercises';
 
 type SelectedExercise = {
   exercise_id: string;
@@ -45,54 +45,40 @@ export default function ExerciseSelection() {
     );
   }, [search, exercises]);
 
-  // // adds an exercise to the selected list
-  // function addExercise(exercise: { id: string; name: string }) {
+  function addExercise(exercise: { id: string; name: string }) {
+    const exists = selectedExercises.some(
+      (item) => item.exercise_id === exercise.id
+    );
 
-  //   // Prevent adding the same exercise twice
-  //   const exists = selectedExercises.some(
-  //     (item) => item.exercise_id === exercise.id
-  //   );
+    if (exists) {
+      Alert.alert('Error', 'That exercise is already in the workout.');
+      return;
+    }
 
-  //   if (exists) {
-  //     Alert.alert('Error', 'That exercise is already in the workout.');
-  //     return;
-  //   }
+    setSelectedExercises((prev) => [
+      ...prev,
+      {
+        exercise_id: exercise.id,
+        name: exercise.name,
+        sets: '',
+        reps: '',
+        time_seconds: '',
+        weight: '',
+        order_index: prev.length,
+      },
+    ]);
+  }
 
-  //   // adds the exercise to state
-  //   setSelectedExercises((prev) => [
-  //     ...prev,
-
-  //     // creates a new exercise object
-  //     {
-  //       exercise_id: exercise.id,
-  //       name: exercise.name,
-
-  //       sets: '',
-  //       reps: '',
-  //       time_seconds: '',
-  //       weight: '',
-
-  //       // order index determines exercise order in the workout
-  //       order_index: prev.length,
-  //     },
-  //   ]);
-  // }
-
-  // // removes an exercise from the workout
-  // function removeExercise(exercise_id: string) {
-
-  //   // filters out the removed exercise
-  //   setSelectedExercises((prev) =>
-  //     prev
-  //       .filter((item) => item.exercise_id !== exercise_id)
-
-  //       // rebuilds order_index so exercises remain sequential
-  //       .map((item, index) => ({
-  //         ...item,
-  //         order_index: index,
-  //       }))
-  //   );
-  // }
+  function removeExercise(exercise_id: string) {
+    setSelectedExercises((prev) =>
+      prev
+        .filter((item) => item.exercise_id !== exercise_id)
+        .map((item, index) => ({
+          ...item,
+          order_index: index,
+        }))
+    );
+  }
 
   // updates any field (sets, reps, time, weight)
   function updateExerciseField(

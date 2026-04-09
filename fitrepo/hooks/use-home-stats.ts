@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getProfile } from '@/lib/api/profiles'
-import { getPreviousWorkout } from '@/lib/api/workouts'
+import { getPreviousWorkout, getWorkouts } from '@/lib/api/workouts'
 import { supabase } from '@/lib/supabase'
 
 export function useHomeStats() {
@@ -23,8 +23,7 @@ export function useHomeStats() {
             const [profile, previous, workouts] = await Promise.all([
                 getProfile(user.id),
                 getPreviousWorkout(),
-                // reuse existing workouts API
-                import('@/lib/api/workouts').then(m => m.getWorkouts())
+                getWorkouts()
             ])
 
             setUserName(profile?.username ?? user.email ?? 'there')

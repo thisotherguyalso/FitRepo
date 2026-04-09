@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { router } from 'expo-router'
+import { AppColors, sharedStyles } from '@/constants/styles'
 
 export default function Setup() {
   const [username, setUsername] = useState('')
@@ -24,12 +25,12 @@ export default function Setup() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>What should we call you?</Text>
-      <Text style={styles.subtitle}>You can change this later</Text>
+    <View style={[sharedStyles.screen, sharedStyles.screenContent, styles.container]}>
+      <Text style={[sharedStyles.title, styles.title]}>What should we call you?</Text>
+      <Text style={[sharedStyles.mutedText, styles.subtitle]}>You can change this later</Text>
 
       <TextInput
-        style={styles.input}
+        style={[sharedStyles.input, styles.input]}
         placeholder="Username"
         placeholderTextColor="#666"
         value={username}
@@ -37,8 +38,8 @@ export default function Setup() {
         autoCapitalize="none"
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleSave} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Continue'}</Text>
+      <TouchableOpacity style={[sharedStyles.button, styles.button]} onPress={handleSave} disabled={loading}>
+        <Text style={sharedStyles.buttonText}>{loading ? 'Saving...' : 'Continue'}</Text>
       </TouchableOpacity>
     </View>
   )
@@ -46,41 +47,20 @@ export default function Setup() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#0f0f0f',
-    justifyContent: 'center',
-    padding: 24,
   },
   title: {
-    color: '#fff',
     fontSize: 28,
-    fontWeight: '700',
     marginBottom: 8,
-    textAlign: 'center',
   },
   subtitle: {
-    color: '#888',
     fontSize: 14,
     textAlign: 'center',
     marginBottom: 40,
   },
   input: {
-    backgroundColor: '#1a1a1a',
-    color: '#fff',
-    borderRadius: 12,
-    padding: 16,
     marginBottom: 16,
-    fontSize: 16,
   },
   button: {
-    backgroundColor: '#0a7ea4',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    backgroundColor: AppColors.primary,
   },
 })

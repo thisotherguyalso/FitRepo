@@ -4,10 +4,10 @@ import { getProfile } from '@/lib/api/profiles'
 import { supabase } from '@/lib/supabase'
 
 export function useProfile() {
-    const [profile, setProfile] = useState<Profile[]>([])
+    const [profile, setProfile] = useState<Profile | null>(null)
 
     useEffect(() => {
-        loadProfile()
+        void loadProfile()
     }, [])
 
     async function loadProfile() {

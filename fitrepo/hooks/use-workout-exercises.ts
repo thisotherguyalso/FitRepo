@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getExercisesInWorkout } from '@/lib/api/workoutExercises';
 
 export function useWorkoutExercises(workout_id: string) {
   const [exercises, setExercises] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  async function loadExercises() {
+  const loadExercises = useCallback(async () => {
     if (!workout_id) return;
 
     setLoading(true);
@@ -18,13 +18,11 @@ export function useWorkoutExercises(workout_id: string) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [workout_id]);
 
   useEffect(() => {
     void loadExercises();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workout_id]);
+  }, [loadExercises]);
 
   return { exercises, loading, loadExercises };
 }

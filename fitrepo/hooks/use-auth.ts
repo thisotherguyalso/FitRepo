@@ -1,9 +1,10 @@
-import { Profiler, useState } from 'react'
+import { useState } from 'react'
 import { Alert } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { router } from 'expo-router'
 import { createProfile } from '@/lib/api/profiles'
 import * as WebBrowser from 'expo-web-browser'
+import { recoverInvalidSession } from '@/lib/auth-session'
 
 export function useAuth() {
     const [loading, setLoading] = useState(false)
@@ -17,6 +18,7 @@ export function useAuth() {
 
 
         try {
+            await recoverInvalidSession()
             const { data, error } = await supabase.auth.signUp({ email, password })
             if (error) throw error
             if (data.user) {
@@ -45,7 +47,8 @@ export function useAuth() {
         setLoading(true)
 
         try {
-            const {data, error} = await supabase.auth.signInWithPassword(
+            await recoverInvalidSession()
+            const { error } = await supabase.auth.signInWithPassword(
                 { email, password }
             )
             if (error) throw error;
@@ -59,6 +62,7 @@ export function useAuth() {
 
     // Signs in with Google Authentication
     async function googleSignIn() {
+        await recoverInvalidSession()
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
@@ -80,7 +84,7 @@ export function useAuth() {
     }
     
     async function signOut() {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({ scope: 'local' });
         router.replace('/login');
     }
 

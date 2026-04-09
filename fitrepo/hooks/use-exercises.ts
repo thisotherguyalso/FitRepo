@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Exercise } from '@/types/database'
 import { getExercises, createExercise, deleteExercise } from '@/lib/api/exercises'
 
@@ -6,11 +6,7 @@ export function useExercises() {
     const [exercises, setExercises] = useState<Exercise[]>([])
     const [loading, setLoading] = useState(false) // loading is to check if async still loading
 
-    useEffect(() => {
-        loadExercises()
-    }, [])
-
-    async function loadExercises() {
+    const loadExercises = useCallback(async () => {
         setLoading(true)
         try {
             const data = await getExercises()
@@ -21,7 +17,12 @@ export function useExercises() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
+
+    useEffect(() => {
+        void loadExercises()
+    }, [loadExercises])
+
     return { exercises, loading, loadExercises }
 }
 
@@ -34,5 +35,5 @@ export function removeExercise(id: string) {
 }
 
 export function updateExercise(exercise: Exercise, editedName: string) {
-    
+
 }
