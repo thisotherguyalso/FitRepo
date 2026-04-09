@@ -9,7 +9,7 @@ import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styl
 
 type SessionCountdownScreenProps = {
   title: string
-  nextRoute: '/session-screens/breathe' | '/session-screens/summary'
+  onComplete: () => void
   skipLabel: string
   duration?: number
   cardColor?: string
@@ -17,7 +17,7 @@ type SessionCountdownScreenProps = {
 
 export function SessionCountdownScreen({
   title,
-  nextRoute,
+  onComplete,
   skipLabel,
   duration = 20,
   cardColor = '#1a1a1a',
@@ -32,7 +32,7 @@ export function SessionCountdownScreen({
       setTimeRemaining((previous) => {
         if (previous <= 1) {
           clearInterval(interval)
-          router.replace(nextRoute)
+          onComplete()
           return 0
         }
 
@@ -41,13 +41,12 @@ export function SessionCountdownScreen({
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [duration, nextRoute, router])
+  }, [duration, onComplete])
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
-    .onEnd(() => {
-      router.replace(nextRoute)
-    })
+    .onEnd(() =>
+      onComplete())
     .runOnJS(true)
 
   return (
