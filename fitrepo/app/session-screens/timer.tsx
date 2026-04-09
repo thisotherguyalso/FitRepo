@@ -16,11 +16,11 @@ export default function Timer() {
 
   return (
     <SessionCountdownScreen
+      mode='exercise'
       title={exercise?.name ?? 'TIMER'}
       duration={exercise?.time_seconds ?? 30}
       onComplete={() => goToNextExercise(exercises, currentIndex, workout_id as string)}
       skipLabel="Double tap to skip"
-      cardColor="#313131"
     />
   );
 }
