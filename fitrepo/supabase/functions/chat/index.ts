@@ -5,6 +5,56 @@ type ChatMessage = {
   content: string
 }
 
+type ExerciseRow = {
+  id: string
+  name: string
+  type: 'timed' | 'reps'
+}
+
+type WorkoutRow = {
+  id: string
+  name: string
+  performed_at: string
+  is_finished: boolean
+}
+
+type WorkoutPlanExercise = {
+  exercise_name: string
+  sets: number | null
+  reps: number | null
+  time_seconds: number | null
+  weight: number | null
+}
+
+type PendingWorkoutEdit = {
+  kind: 'edit_workout'
+  workout_id: string
+  workout_name: string
+  performed_at: string
+  message: string
+  exercises: WorkoutPlanExercise[]
+}
+
+type ModelAction =
+  | {
+      type: 'reply'
+      message: string
+    }
+  | {
+      type: 'create_workout'
+      message: string
+      workout_name: string
+      performed_at: string
+      exercises: WorkoutPlanExercise[]
+    }
+  | {
+      type: 'edit_workout'
+      message: string
+      workout_name: string
+      performed_at: string
+      exercises: WorkoutPlanExercise[]
+    }
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -19,6 +69,159 @@ function json(body: unknown, init: ResponseInit = {}) {
       ...(init.headers ?? {}),
     },
   })
+}
+
+function normalizeName(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+function parseModelAction(content: string): ModelAction | null {
+  try {
+    return JSON.parse(content) as ModelAction
+  } catch {
+    const match = content.match(/\{[\s\S]*\}/)
+    if (!match) return null
+
+    try {
+      return JSON.parse(match[0]) as ModelAction
+    } catch {
+      return null
+    }
+  }
+}
+
+function extractTextFromContent(content: unknown): string {
+  // openrouter can return plain strings or content-part arrays depending on the model
+  // ref: https://openrouter.ai/docs/api-reference/chat-completion
+  if (typeof content === 'string') {
+    return content.trim()
+  }
+
+  if (!Array.isArray(content)) {
+    return ''
+  }
+
+  return content
+    .map((part) => {
+      if (typeof part === 'string') {
+        return part
+      }
+
+      if (part && typeof part === 'object' && 'text' in part && typeof part.text === 'string') {
+        return part.text
+      }
+
+      return ''
+    })
+    .join('\n')
+    .trim()
+}
+
+function buildExerciseCatalog(exercises: ExerciseRow[]) {
+  return exercises.map((exercise) => ({
+    name: exercise.name,
+    type: exercise.type,
+  }))
+}
+
+function getTodayDate() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function toIsoDate(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
+function parseRequestedDate(value: string | null | undefined) {
+  const raw = value?.trim()
+
+  if (!raw) return getTodayDate()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw
+
+  const normalized = normalizeName(raw)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  if (normalized === 'today') return toIsoDate(today)
+  if (normalized === 'tomorrow') {
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return toIsoDate(tomorrow)
+  }
+  if (normalized === 'yesterday') {
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
+    return toIsoDate(yesterday)
+  }
+
+  const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const weekdayMatch = normalized.match(/^(next )?(sunday|monday|tuesday|wednesday|thursday|friday|saturday)$/)
+
+  if (weekdayMatch) {
+    const isNext = Boolean(weekdayMatch[1])
+    const targetDay = weekdays.indexOf(weekdayMatch[2])
+    const currentDay = today.getDay()
+    let diff = (targetDay - currentDay + 7) % 7
+
+    // if they say "monday" on a monday, assume they mean the next one
+    if (diff === 0 || isNext) {
+      diff += 7
+    }
+
+    const targetDate = new Date(today)
+    targetDate.setDate(targetDate.getDate() + diff)
+    return toIsoDate(targetDate)
+  }
+
+  const parsed = new Date(raw)
+  if (!Number.isNaN(parsed.getTime())) {
+    parsed.setHours(0, 0, 0, 0)
+    return toIsoDate(parsed)
+  }
+
+  // fallback to today if the model gives us some weird date phrase
+  return getTodayDate()
+}
+
+function toNullableNumber(value: unknown) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function sanitizeWorkoutExercises(
+  exercises: WorkoutPlanExercise[],
+  exerciseByName: Map<string, ExerciseRow>
+) {
+  // keep the plan tight so the bot doesn't dump a 14-exercise monstrosity in one go
+  return exercises.slice(0, 8).map((exercise, index) => ({
+    source: exercise,
+    exercise: exerciseByName.get(normalizeName(exercise.exercise_name)),
+    order_index: index,
+  }))
+}
+
+function buildWorkoutExercisesPayload(
+  workoutId: string,
+  resolvedExercises: ReturnType<typeof sanitizeWorkoutExercises>
+) {
+  return resolvedExercises.map((entry) => ({
+    workout_id: workoutId,
+    exercise_id: entry.exercise!.id,
+    // timed vs reps exercises need different defaults or the workout comes out half-broken
+    sets:
+      entry.exercise!.type === 'reps'
+        ? toNullableNumber(entry.source.sets) ?? 3
+        : toNullableNumber(entry.source.sets) ?? 1,
+    reps:
+      entry.exercise!.type === 'reps'
+        ? toNullableNumber(entry.source.reps) ?? 10
+        : null,
+    time_seconds:
+      entry.exercise!.type === 'timed'
+        ? toNullableNumber(entry.source.time_seconds) ?? 30
+        : null,
+    weight: toNullableNumber(entry.source.weight),
+    order_index: entry.order_index,
+  }))
 }
 
 Deno.serve(async (req) => {
@@ -63,7 +266,15 @@ Deno.serve(async (req) => {
       return json({ error: 'Unauthorized.' }, { status: 401 })
     }
 
-    const { messages } = (await req.json()) as { messages?: ChatMessage[] }
+    const {
+      messages,
+      pending_action,
+      confirmation,
+    } = (await req.json()) as {
+      messages?: ChatMessage[]
+      pending_action?: PendingWorkoutEdit | null
+      confirmation?: 'yes' | 'no' | null
+    }
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return json({ error: 'messages must be a non-empty array.' }, { status: 400 })
@@ -82,21 +293,136 @@ Deno.serve(async (req) => {
       }))
       .filter((message) => message.content.length > 0)
 
+    const { data: exercises, error: exercisesError } = await supabase
+      .from('exercises')
+      .select('id, name, type')
+      .order('name', { ascending: true })
+
+    if (exercisesError) {
+      return json({ error: exercisesError.message }, { status: 500 })
+    }
+
+    const exerciseRows = (exercises ?? []) as ExerciseRow[]
+    const exerciseByName = new Map(exerciseRows.map((exercise) => [normalizeName(exercise.name), exercise]))
+
+    if (pending_action?.kind === 'edit_workout') {
+      if (confirmation === 'no') {
+        return json({
+          reply: 'No problem. I left that workout untouched.',
+        })
+      }
+
+      if (confirmation === 'yes') {
+        const resolvedExercises = sanitizeWorkoutExercises(pending_action.exercises, exerciseByName)
+        const missingExercises = resolvedExercises
+          .filter((entry) => !entry.exercise)
+          .map((entry) => entry.source.exercise_name)
+
+        if (missingExercises.length > 0) {
+          return json({
+            reply: `I couldn't apply that edit because these exercises were not found: ${missingExercises.join(', ')}.`,
+          })
+        }
+
+        const { error: workoutUpdateError } = await supabase
+          .from('workouts')
+          .update({ name: pending_action.workout_name.trim() || 'Updated Workout' })
+          .eq('id', pending_action.workout_id)
+          .eq('user_id', user.id)
+
+        if (workoutUpdateError) {
+          return json({ error: workoutUpdateError.message }, { status: 500 })
+        }
+
+        // easiest way here is wipe + replace since the AI may reorder and swap a lot of exercises
+        const { error: deleteExercisesError } = await supabase
+          .from('workout_exercises')
+          .delete()
+          .eq('workout_id', pending_action.workout_id)
+
+        if (deleteExercisesError) {
+          return json({ error: deleteExercisesError.message }, { status: 500 })
+        }
+
+        const workoutExercisesPayload = buildWorkoutExercisesPayload(
+          pending_action.workout_id,
+          resolvedExercises
+        )
+
+        const { error: insertExercisesError } = await supabase
+          .from('workout_exercises')
+          .insert(workoutExercisesPayload)
+
+        if (insertExercisesError) {
+          return json({ error: insertExercisesError.message }, { status: 500 })
+        }
+
+        return json({
+          reply: `Done. I updated your workout for ${pending_action.performed_at}.`,
+          workout_id: pending_action.workout_id,
+        })
+      }
+    }
+
     if (sanitizedMessages.length === 0) {
       return json({ error: 'messages must include non-empty content.' }, { status: 400 })
     }
 
-    const upstreamMessages =
-      sanitizedMessages[0]?.role === 'system'
-        ? sanitizedMessages
-        : [
-            {
-              role: 'system',
-              content:
-                'You are the FitRepo assistant. Be concise and practical. Help with workouts, exercise substitutions, and app usage. Do not give medical advice.',
-            },
-            ...sanitizedMessages,
-          ]
+    const { data: workouts, error: workoutsError } = await supabase
+      .from('workouts')
+      .select('id, name, performed_at, is_finished')
+      .eq('user_id', user.id)
+      .order('performed_at', { ascending: true })
+
+    if (workoutsError) {
+      return json({ error: workoutsError.message }, { status: 500 })
+    }
+
+    const workoutSummary = ((workouts ?? []) as WorkoutRow[]).slice(-12).map((workout) => ({
+      id: workout.id,
+      name: workout.name,
+      performed_at: workout.performed_at,
+      is_finished: workout.is_finished,
+    }))
+
+    const recentMessages = sanitizedMessages.slice(-10)
+    const exerciseCatalog = buildExerciseCatalog(exerciseRows)
+
+    const upstreamMessages = [
+      {
+        role: 'system',
+        content: `You are the FitRepo assistant.
+Be lively, warm, casual, and natural without getting corny. Sound like a sharp coach and helpful app guide, not a robotic FAQ or a corporate support script.
+Respond with valid JSON only and no markdown.
+
+Return exactly one of these shapes:
+{"type":"reply","message":"..."}
+{"type":"create_workout","message":"...","workout_name":"...","performed_at":"YYYY-MM-DD or natural date phrase","exercises":[{"exercise_name":"...","sets":number|null,"reps":number|null,"time_seconds":number|null,"weight":number|null}]}
+{"type":"edit_workout","message":"...","workout_name":"...","performed_at":"YYYY-MM-DD or natural date phrase","exercises":[{"exercise_name":"...","sets":number|null,"reps":number|null,"time_seconds":number|null,"weight":number|null}]}
+
+Rules:
+- Use "reply" for normal conversation, off-topic banter, advice, or ambiguous requests.
+- Keep replies personable and useful when the user goes off-script.
+- Sound conversational and direct. A little playful is fine. Don't be stiff.
+- Use "create_workout" only when the user clearly wants a new workout created in the app.
+- Use "edit_workout" only when the user clearly wants an existing workout changed in the app.
+- For create/edit actions, choose only exercise names from the provided catalog.
+- If the user says a relative date like tomorrow or next Monday, preserve that intent in performed_at.
+- Return 4 to 8 exercises for created or edited workouts unless the user asks otherwise.
+- Do not invent exercise names outside the catalog.
+- Do not include extra keys.
+- If the user asks to edit a workout, target the workout date they mention, or default to the nearest upcoming planned workout.
+
+Today's date: ${getTodayDate()}
+
+Exercise catalog:
+${JSON.stringify(exerciseCatalog)}
+
+Recent workouts:
+${JSON.stringify(workoutSummary)}`,
+      },
+      ...recentMessages,
+    ]
 
     const providerResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -112,24 +438,133 @@ Deno.serve(async (req) => {
 
     if (!providerResponse.ok) {
       const details = await providerResponse.text()
+      return json({ error: 'Model provider request failed.', details }, { status: 502 })
+    }
+
+    const completion = await providerResponse.json()
+    const content = extractTextFromContent(completion?.choices?.[0]?.message?.content)
+
+    if (!content) {
+      const finishReason = completion?.choices?.[0]?.finish_reason
+      const providerError =
+        typeof completion?.error?.message === 'string' ? completion.error.message : null
 
       return json(
         {
-          error: 'Model provider request failed.',
-          details,
+          error: 'Model provider returned no reply.',
+          details:
+            providerError ??
+            `Model "${model}" returned an empty message${finishReason ? ` (finish_reason: ${finishReason})` : ''}. Response keys: ${Object.keys(completion ?? {}).join(', ') || 'none'}.`,
         },
         { status: 502 }
       )
     }
 
-    const completion = await providerResponse.json()
-    const reply = completion?.choices?.[0]?.message?.content
+    const action = parseModelAction(content)
 
-    if (typeof reply !== 'string' || !reply.trim()) {
-      return json({ error: 'Model provider returned no reply.' }, { status: 502 })
+    // if the model ignores the json rule, just send the plain text back instead of hard failing
+    if (!action) {
+      return json({ reply: content.trim() })
     }
 
-    return json({ reply: reply.trim() })
+    if (action.type === 'reply') {
+      return json({ reply: action.message.trim() })
+    }
+
+    if (!Array.isArray(action.exercises) || action.exercises.length === 0) {
+      return json({
+        reply:
+          action.message?.trim() ||
+          'I need a little more detail before I can build that workout. Tell me the goal, workout style, duration, or muscle groups you want.',
+      })
+    }
+
+    const performedAt = parseRequestedDate(action.performed_at)
+    const resolvedExercises = sanitizeWorkoutExercises(action.exercises, exerciseByName)
+    const missingExercises = resolvedExercises
+      .filter((entry) => !entry.exercise)
+      .map((entry) => entry.source.exercise_name)
+
+    if (missingExercises.length > 0) {
+      return json({
+        reply: `I couldn't use these exercises because they're not in your app yet: ${missingExercises.join(', ')}.`,
+      })
+    }
+
+    if (action.type === 'edit_workout') {
+      const targetWorkout =
+        ((workouts ?? []) as WorkoutRow[]).find((workout) => workout.performed_at === performedAt) ??
+        ((workouts ?? []) as WorkoutRow[]).find((workout) => !workout.is_finished)
+
+      if (!targetWorkout) {
+        return json({
+          reply: `I couldn't find a planned workout to edit for ${performedAt}. Ask me to create one instead.`,
+        })
+      }
+
+      // don't edit immediately, just hand the proposal back to the app for a yes/no
+      return json({
+        reply: action.message.trim() || `I drafted an update for your workout on ${targetWorkout.performed_at}.`,
+        pending_action: {
+          kind: 'edit_workout',
+          workout_id: targetWorkout.id,
+          workout_name: action.workout_name.trim() || targetWorkout.name,
+          performed_at: targetWorkout.performed_at,
+          message: action.message.trim(),
+          exercises: action.exercises,
+        },
+      })
+    }
+
+    const { data: existingWorkout, error: existingWorkoutError } = await supabase
+      .from('workouts')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('performed_at', performedAt)
+      .maybeSingle()
+
+    if (existingWorkoutError) {
+      return json({ error: existingWorkoutError.message }, { status: 500 })
+    }
+
+    if (existingWorkout) {
+      return json({
+        reply: `You already have a workout scheduled for ${performedAt}. I can edit that one if you want.`,
+        workout_id: existingWorkout.id,
+      })
+    }
+
+    const { data: createdWorkout, error: workoutError } = await supabase
+      .from('workouts')
+      .insert({
+        user_id: user.id,
+        name: action.workout_name.trim() || 'AI Workout',
+        performed_at: performedAt,
+        is_finished: false,
+      })
+      .select()
+      .single()
+
+    if (workoutError || !createdWorkout) {
+      return json({ error: workoutError?.message ?? 'Failed to create workout.' }, { status: 500 })
+    }
+
+    const workoutExercisesPayload = buildWorkoutExercisesPayload(createdWorkout.id, resolvedExercises)
+
+    const { error: workoutExercisesError } = await supabase
+      .from('workout_exercises')
+      .insert(workoutExercisesPayload)
+
+    if (workoutExercisesError) {
+      // rollback here so we don't leave a dead empty workout lying around
+      await supabase.from('workouts').delete().eq('id', createdWorkout.id)
+      return json({ error: workoutExercisesError.message }, { status: 500 })
+    }
+
+    return json({
+      reply: action.message.trim(),
+      workout_id: createdWorkout.id,
+    })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     return json({ error: message }, { status: 500 })

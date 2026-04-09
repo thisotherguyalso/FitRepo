@@ -27,6 +27,10 @@ npm start
 ## Chat via Supabase Edge Functions
 
 The chat tab calls the `chat` edge function through `supabase.functions.invoke(...)`.
+The function can now either return a normal reply or create a workout in the app and return its `workout_id`.
+
+Full chat docs:
+- [docs/chat.md](/C:/Users/User/Desktop/Folders/Computer%20Codes/GitHub/FitRepo/fitrepo/docs/chat.md)
 
 ### Function files
 
@@ -61,6 +65,22 @@ supabase functions serve chat
 
 The mobile app sends the logged-in user's Supabase auth token automatically when invoking the function.
 The function validates the caller with `supabase.auth.getUser()` before forwarding the prompt to the model provider.
+
+### AI workout creation
+
+If the user clearly asks the chat assistant to create a workout, the edge function:
+
+- asks the model for a structured workout plan
+- resolves exercise names against the `exercises` table
+- parses dates like `today`, `tomorrow`, and `next Monday`
+- creates a `workouts` row
+- creates matching `workout_exercises` rows
+- returns the created `workout_id` so the app can open it
+
+### AI workout editing
+
+If the user asks to edit an existing workout, the assistant now proposes the change first.
+The app shows a `Yes` / `No` confirmation card before any workout rows are updated.
 
 ## Validation
 

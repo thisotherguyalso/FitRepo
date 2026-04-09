@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Alert,
   ScrollView,
@@ -8,20 +8,163 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native'
+import { router } from 'expo-router'
 
 import ParallaxScrollView from '@/components/parallax-scroll-view'
-import { sendChatMessage, type ChatMessage } from '@/lib/api/chat'
+import {
+  sendChatMessage,
+  type ChatResult,
+  type ChatMessage,
+  type PendingWorkoutEdit,
+} from '@/lib/api/chat'
+import { clearChatHistory, loadChatHistory, saveChatHistory } from '@/lib/chat-history'
 import { AppColors, sharedStyles } from '@/constants/styles'
+
+type LocalMessage = ChatMessage & {
+  id: string
+  pending?: boolean
+}
+
+function buildMessage(role: 'user' | 'assistant', content: string, pending = false): LocalMessage {
+  return {
+    id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    role,
+    content,
+    pending,
+  }
+}
+
+let activeChatRequest: Promise<ChatResult> | null = null
+let activeChatBaseMessages: LocalMessage[] | null = null
 
 export default function ChatScreen() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: 'assistant',
-      content: 'Ask me for workout ideas, substitutions, exercise explanations, or help using FitRepo.',
-    },
+  const [createdWorkoutId, setCreatedWorkoutId] = useState<string | null>(null)
+  const [pendingAction, setPendingAction] = useState<PendingWorkoutEdit | null>(null)
+  const [historyReady, setHistoryReady] = useState(false)
+  const isMounted = useRef(true)
+  const [messages, setMessages] = useState<LocalMessage[]>([
+    buildMessage(
+      'assistant',
+      'I can help with workout ideas, create workouts in the app, and propose edits to existing workouts before changing them.'
+    ),
   ])
+
+  function toApiMessages(nextMessages: LocalMessage[]): ChatMessage[] {
+    return nextMessages
+      .filter((message) => !message.pending)
+      .map(({ role, content }) => ({ role, content }))
+  }
+
+  useEffect(() => {
+    isMounted.current = true
+
+    const stored = loadChatHistory()
+    if (!stored) {
+      setHistoryReady(true)
+      return
+    }
+
+    // rebuild local ids here since storage only keeps the real message payload
+    setMessages(
+      stored.messages
+        .filter((message) => message.role !== 'system')
+        .map((message) => buildMessage(message.role as 'user' | 'assistant', message.content))
+    )
+    setPendingAction(stored.pendingAction)
+    setCreatedWorkoutId(stored.createdWorkoutId)
+    setHistoryReady(true)
+
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!historyReady) return
+
+    saveChatHistory({
+      messages: toApiMessages(messages),
+      pendingAction,
+      createdWorkoutId,
+    })
+  }, [messages, pendingAction, createdWorkoutId, historyReady])
+
+  useEffect(() => {
+    if (!historyReady) return
+    if (!activeChatRequest || !activeChatBaseMessages) return
+
+    // if the tab remounts mid-request, rebuild the temp loading bubble and keep things locked
+    setMessages([
+      ...activeChatBaseMessages,
+      buildMessage('assistant', 'Thinking through it...', true),
+    ])
+    setLoading(true)
+
+    void activeChatRequest
+      .then((result) => {
+        if (!isMounted.current || !activeChatBaseMessages) return
+
+        setMessages([
+          ...activeChatBaseMessages,
+          buildMessage('assistant', result.reply),
+        ])
+        setCreatedWorkoutId(result.workoutId ?? null)
+        setPendingAction(result.pendingAction ?? null)
+      })
+      .catch((error: any) => {
+        if (!isMounted.current || !activeChatBaseMessages) return
+
+        setMessages(activeChatBaseMessages)
+        Alert.alert('Chat error', error.message ?? 'Failed to send message.')
+      })
+      .finally(() => {
+        if (!isMounted.current) return
+
+        setLoading(false)
+        activeChatRequest = null
+        activeChatBaseMessages = null
+      })
+  }, [historyReady])
+
+  async function runChatRequest(
+    nextMessages: LocalMessage[],
+    options?: {
+      pendingAction?: PendingWorkoutEdit | null
+      confirmation?: 'yes' | 'no'
+    }
+  ) {
+    if (activeChatRequest) {
+      return
+    }
+
+    // fake assistant bubble while waiting so the loading feels like part of the convo
+    const loadingMessage = buildMessage('assistant', 'Thinking through it...', true)
+    setMessages([...nextMessages, loadingMessage])
+    setLoading(true)
+    setCreatedWorkoutId(null)
+
+    activeChatBaseMessages = nextMessages
+    activeChatRequest = sendChatMessage(toApiMessages(nextMessages), options)
+
+    try {
+      const result = await activeChatRequest
+      const finalMessages = [...nextMessages, buildMessage('assistant', result.reply)]
+
+      setMessages(finalMessages)
+      setCreatedWorkoutId(result.workoutId ?? null)
+      setPendingAction(result.pendingAction ?? null)
+    } catch (error: any) {
+      // roll back the temp loading bubble if the request dies
+      setMessages(nextMessages)
+      Alert.alert('Chat error', error.message ?? 'Failed to send message.')
+    } finally {
+      setLoading(false)
+      activeChatRequest = null
+      activeChatBaseMessages = null
+    }
+  }
 
   async function handleSend() {
     const trimmed = input.trim()
@@ -30,34 +173,30 @@ export default function ChatScreen() {
       return
     }
 
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content: trimmed,
-    }
+    const userMessage = buildMessage('user', trimmed)
+    const nextMessages = [...messages, userMessage]
 
-    const previousMessages = messages
-    const nextMessages = [...previousMessages, userMessage]
-
-    setMessages(nextMessages)
     setInput('')
-    setLoading(true)
+    setPendingAction(null)
+    await runChatRequest(nextMessages)
+  }
 
-    try {
-      const reply = await sendChatMessage(nextMessages)
-
-      setMessages([
-        ...nextMessages,
-        {
-          role: 'assistant',
-          content: reply,
-        },
-      ])
-    } catch (error: any) {
-      setMessages(previousMessages)
-      Alert.alert('Chat error', error.message ?? 'Failed to send message.')
-    } finally {
-      setLoading(false)
+  async function handleEditConfirmation(confirmation: 'yes' | 'no') {
+    if (!pendingAction || loading) {
+      return
     }
+
+    const confirmationMessage = buildMessage(
+      'user',
+      confirmation === 'yes' ? 'Yes, go ahead.' : 'No, cancel that.'
+    )
+    const nextMessages = [...messages, confirmationMessage]
+
+    setPendingAction(null)
+    await runChatRequest(nextMessages, {
+      pendingAction,
+      confirmation,
+    })
   }
 
   return (
@@ -65,24 +204,28 @@ export default function ChatScreen() {
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
       <View style={styles.container}>
         <Text style={[sharedStyles.title, styles.title]}>FitRepo Chat</Text>
+        <Text style={styles.subtitle}>
+          Ask for advice, create workouts, or say things like &quot;edit my workout for tomorrow&quot;.
+        </Text>
 
         <ScrollView
           style={styles.messageList}
           contentContainerStyle={styles.messageListContent}
           showsVerticalScrollIndicator={false}>
-          {messages.map((message, index) => {
+          {messages.map((message) => {
             const isAssistant = message.role === 'assistant'
 
             return (
               <View
-                key={`${message.role}-${index}`}
+                key={message.id}
                 style={[
                   sharedStyles.card,
                   styles.messageBubble,
                   isAssistant ? styles.assistantBubble : styles.userBubble,
+                  message.pending && styles.pendingBubble,
                 ]}>
                 <Text style={[styles.messageRole, isAssistant ? styles.assistantRole : styles.userRole]}>
-                  {isAssistant ? 'Assistant' : 'You'}
+                  {message.pending ? 'Working' : isAssistant ? 'Assistant' : 'You'}
                 </Text>
                 <Text style={styles.messageText}>{message.content}</Text>
               </View>
@@ -90,24 +233,74 @@ export default function ChatScreen() {
           })}
         </ScrollView>
 
+        {pendingAction ? (
+          <View style={[sharedStyles.card, styles.confirmCard]}>
+            <Text style={styles.confirmTitle}>Confirm workout edit?</Text>
+            <Text style={styles.confirmText}>
+              This will update your workout for {pendingAction.performed_at}. Want me to do it?
+            </Text>
+            <View style={styles.confirmActions}>
+              <TouchableOpacity
+                style={[sharedStyles.button, styles.confirmYes]}
+                onPress={() => void handleEditConfirmation('yes')}>
+                <Text style={sharedStyles.buttonText}>Yes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[sharedStyles.button, styles.confirmNo]}
+                onPress={() => void handleEditConfirmation('no')}>
+                <Text style={sharedStyles.buttonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
+
         <TextInput
           style={[sharedStyles.input, styles.input]}
           value={input}
           onChangeText={setInput}
-          placeholder="Ask something..."
+          placeholder="Ask or create a workout..."
           placeholderTextColor="#666"
           multiline
           textAlignVertical="top"
+          editable={!loading}
         />
 
         <TouchableOpacity
           style={[sharedStyles.button, styles.sendButton, loading && styles.sendButtonDisabled]}
-          onPress={handleSend}
+          onPress={() => void handleSend()}
           disabled={loading}>
-          <Text style={sharedStyles.buttonText}>
-            {loading ? 'Sending...' : 'Send'}
-          </Text>
+          <Text style={sharedStyles.buttonText}>Send</Text>
         </TouchableOpacity>
+
+        {createdWorkoutId ? (
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={[sharedStyles.button, styles.openWorkoutButton, styles.actionButton]}
+              onPress={() =>
+                router.push({
+                  pathname: '/view_workout',
+                  params: { workout_id: createdWorkoutId },
+                })
+              }>
+              <Text style={sharedStyles.buttonText}>Open Workout</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[sharedStyles.button, styles.clearButton, styles.actionButton]}
+              onPress={() => {
+                clearChatHistory()
+                setCreatedWorkoutId(null)
+                setPendingAction(null)
+                setMessages([
+                  buildMessage(
+                    'assistant',
+                    'Clean slate. Ask for advice, create a workout, or tell me to edit one.'
+                  ),
+                ])
+              }}>
+              <Text style={sharedStyles.buttonText}>Clear Chat</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
     </ParallaxScrollView>
   )
@@ -120,10 +313,16 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
+    marginBottom: 4,
+  },
+  subtitle: {
+    color: AppColors.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
     marginBottom: 8,
   },
   messageList: {
-    maxHeight: 480,
+    maxHeight: 500,
   },
   messageListContent: {
     gap: 12,
@@ -137,6 +336,9 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     backgroundColor: AppColors.primaryDark,
+  },
+  pendingBubble: {
+    opacity: 0.8,
   },
   messageRole: {
     fontSize: 12,
@@ -154,14 +356,57 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
+  confirmCard: {
+    backgroundColor: AppColors.panel,
+  },
+  confirmTitle: {
+    color: AppColors.text,
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  confirmText: {
+    color: AppColors.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  confirmActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  confirmYes: {
+    flex: 1,
+    backgroundColor: AppColors.secondary,
+  },
+  confirmNo: {
+    flex: 1,
+    backgroundColor: AppColors.danger,
+  },
   input: {
     minHeight: 96,
+    marginBottom: 0,
   },
   sendButton: {
     backgroundColor: AppColors.primary,
-    marginBottom: 24,
+    marginBottom: 12,
   },
   sendButtonDisabled: {
     opacity: 0.6,
+  },
+  openWorkoutButton: {
+    backgroundColor: AppColors.secondary,
+    marginBottom: 24,
+  },
+  clearButton: {
+    backgroundColor: AppColors.danger,
+    marginBottom: 24,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  actionButton: {
+    flex: 1,
   },
 })
