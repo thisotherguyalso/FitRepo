@@ -9,6 +9,8 @@ import { useExercises } from '@/hooks/use-exercises';
 import { Workout } from '@/types/database';
 import { createWorkoutPreset } from '@/lib/api/workoutPresets';
 import { addExerciseToPreset } from '@/lib/api/presetExercises';
+import { sharedStyles } from '@/constants/styles';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   EditableExercise,
   mapWorkoutExercisesToEditable,
@@ -298,6 +300,10 @@ export default function ViewWorkout() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+      <LinearGradient
+        colors={['#020975fb', '#151718']}
+        style={sharedStyles.background}
+      />
       <View style={styles.container}>
         {loadingWorkout ? (
           <Text style={styles.emptyText}>Loading workout...</Text>

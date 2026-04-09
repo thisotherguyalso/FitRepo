@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useLocalSearchParams, router } from 'expo-router';
 import { AppColors, sharedStyles } from '@/constants/styles';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ChoiceButtons() {
   // https://docs.expo.dev/router/reference/url-parameters/
@@ -56,7 +57,10 @@ export default function ChoiceButtons() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-
+      <LinearGradient
+        colors={['#020975fb', '#151718']}
+        style={sharedStyles.background}
+      />
       <ThemedView style={styles.container}>
 
         {/* Screen title */}

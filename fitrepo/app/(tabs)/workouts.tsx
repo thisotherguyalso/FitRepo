@@ -6,6 +6,8 @@ import { useThemeColor } from '@/hooks/use-theme-color';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { router } from 'expo-router';
 import { useRef, useState, useEffect } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
+import { sharedStyles } from '@/constants/styles';
  
 export default function WorkoutsTab() {
   const { workouts, markedDates, loadWorkouts  } = useWorkouts();
@@ -42,7 +44,10 @@ export default function WorkoutsTab() {
     <View style={{ flex: 1 }}>
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#00adccfa', dark: 'rgba(2, 9, 117, 0.98)' }}>
- 
+        <LinearGradient
+          colors={['#020975fb', '#151718']}
+          style={sharedStyles.background}
+        />
         {/* Workouts Displayed Through Calendar */}
         <Text style={styles.headerText}>My Workouts</Text>
  

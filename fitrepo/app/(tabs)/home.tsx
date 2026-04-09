@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useHomeStats } from '@/hooks/use-home-stats';
 import { useAuth } from '@/hooks/use-auth';
 import { AppColors, sharedStyles } from '@/constants/styles';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Home() {
   const { userName, currentStreak, totalWorkouts, previousWorkout, previousWorkoutDate } = useHomeStats()
@@ -12,7 +13,10 @@ export default function Home() {
   return (
     <ParallaxScrollView 
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-      
+      <LinearGradient
+        colors={['#020975fb', '#151718']}
+        style={sharedStyles.background}
+      />
       {/* Greeting */}
       <Text style={[sharedStyles.title, styles.greeting]}>Hello, {userName}!</Text>
 

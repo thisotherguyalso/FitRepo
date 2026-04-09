@@ -4,6 +4,8 @@ import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { useExercises } from '@/hooks/use-exercises';
+import { sharedStyles } from '@/constants/styles';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type SelectedExercise = {
   exercise_id: string;
@@ -147,6 +149,10 @@ export default function ExerciseSelection() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+      <LinearGradient
+        colors={['#020975fb', '#151718']}
+        style={sharedStyles.background}
+      />
       <View style={styles.container}>
         <Text style={styles.headerText}>
           {name} for {'\n'}{readableDate}

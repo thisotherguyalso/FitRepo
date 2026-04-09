@@ -1,14 +1,18 @@
-import { TouchableOpacity, Text, StyleSheet, Button } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { sharedStyles } from '@/constants/styles';
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 export default function Summary() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-        
+        <LinearGradient
+          colors={['#020975fb', '#151718']}
+          style={sharedStyles.background}
+        />
         <Text style={styles.sessionLabel}>Summary</Text>
         {/* Go Back Button */}
         <TouchableOpacity

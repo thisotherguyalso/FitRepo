@@ -5,6 +5,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { createWorkoutFromPreset } from '@/lib/api/createWorkoutFromPreset';
 import { usePresets } from '@/hooks/use-presets';
 import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function PresetList() {
   const { date } = useLocalSearchParams<{
@@ -55,8 +56,11 @@ export default function PresetList() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}
-    >
+      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+      <LinearGradient
+        colors={['#020975fb', '#151718']}
+        style={sharedStyles.background}
+      />
       <View style={styles.container}>
         <Text style={[sharedStyles.title, styles.headerText]}>
           Presets for {'\n'}{readableDate || 'Selected Date'}

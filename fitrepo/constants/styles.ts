@@ -51,6 +51,13 @@ export const sharedStyles = StyleSheet.create({
     padding: AppSpacing.md,
     fontSize: 16,
   },
+    background: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: 200,
+  },
   button: {
     borderRadius: AppRadius.md,
     padding: AppSpacing.md,

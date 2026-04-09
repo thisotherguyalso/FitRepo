@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
+import { LinearGradient } from 'expo-linear-gradient';
 
 import ParallaxScrollView from '@/components/parallax-scroll-view'
 import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles'
@@ -55,6 +56,10 @@ export function SessionCountdownScreen({
         <ParallaxScrollView
           headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}
         >
+        <LinearGradient
+          colors={['#020975fb', '#151718']}
+          style={sharedStyles.background}
+        />
           <View style={[styles.sessionCard, { backgroundColor: cardColor }]}>
             <Text style={styles.sessionTitle}>{title}</Text>
             <Text style={[sharedStyles.mutedText, styles.sessionLabel]}>{timeRemaining}</Text>

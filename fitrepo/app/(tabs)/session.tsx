@@ -1,13 +1,18 @@
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { LinearGradient } from 'expo-linear-gradient';
+import { sharedStyles } from '@/constants/styles';
 
 
 export default function SessionTab() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-      
+      <LinearGradient
+        colors={['#020975fb', '#151718']}
+        style={sharedStyles.background}
+      />
       {/* Exercise Session */}
       <View style={styles.sessionCard}>
         <Text style={styles.sessionLabel}>Exercise Session</Text>

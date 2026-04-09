@@ -3,6 +3,8 @@ import { useRouter } from 'expo-router';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useState } from 'react';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { LinearGradient } from 'expo-linear-gradient';
+import { sharedStyles } from '@/constants/styles';
 
 export default function Reps() {
   const router = useRouter()
@@ -19,6 +21,10 @@ export default function Reps() {
     <GestureHandlerRootView style={{ flex: 1 }}> 
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+          <LinearGradient
+            colors={['#020975fb', '#151718']}
+            style={sharedStyles.background}
+          />
           <GestureDetector gesture={doubleTap}>
 
             {/* Reps Screen */}
