@@ -11,6 +11,7 @@ type SessionCountdownScreenProps = {
   onComplete: () => void
   skipLabel: string
   duration?: number
+  autoStart?: boolean // For testing
 }
 
 export function SessionCountdownScreen({
@@ -19,9 +20,10 @@ export function SessionCountdownScreen({
   onComplete,
   skipLabel,
   duration = 20,
+  autoStart = false,
 }: SessionCountdownScreenProps) {
   const [timeRemaining, setTimeRemaining] = useState(duration)
-  const [isRunning, setIsRunning] = useState(false)
+  const [isRunning, setIsRunning] = useState(autoStart)
 
   useEffect(() => {
     setTimeRemaining(duration)

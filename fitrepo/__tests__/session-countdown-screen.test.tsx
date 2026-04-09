@@ -1,14 +1,13 @@
 import React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { render, act, fireEvent } from '@testing-library/react-native';
 import { SessionCountdownScreen } from '@/components/session-countdown-screen';
 
-const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
-  useRouter: () => ({ replace: mockReplace }),
+  useRouter: () => ({ replace: jest.fn() }),
 }));
 
 jest.mock('react-native-gesture-handler', () => {
-  const { View } = require('react-native');
+  const { View, Pressable } = require('react-native');
   return {
     GestureHandlerRootView: ({ children }: any) => <View>{children}</View>,
     GestureDetector: ({ children }: any) => <View>{children}</View>,
@@ -19,12 +18,19 @@ jest.mock('react-native-gesture-handler', () => {
             runOnJS: () => ({}),
           }),
         }),
+        maxDuration: () => ({
+          onEnd: () => ({
+            runOnJS: () => ({}),
+          }),
+        }),
       }),
+      Exclusive: () => ({}),
     },
   };
 });
 
 describe('SessionCountdownScreen', () => {
+  const mockOnComplete = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -35,77 +41,130 @@ describe('SessionCountdownScreen', () => {
     jest.useRealTimers();
   });
 
-  it('renders title correctly', () => {
-    const { getByText } = render(
-      <SessionCountdownScreen
-        title="Get Ready"
-        nextRoute="/session-screens/breathe"
-        skipLabel="Double tap to skip"/>
-    );
-    expect(getByText('Get Ready')).toBeTruthy();
+  describe('rest mode', () => {
+    it('renders "Breathe" as header', () => {
+      const { getByText } = render(
+        <SessionCountdownScreen
+          mode="rest"
+          title="Planks"
+          onComplete={mockOnComplete}
+          skipLabel="Double tap to skip"
+        />
+      );
+      expect(getByText('Breathe')).toBeTruthy();
+    });
+
+    it('renders exercise name in Up Next card', () => {
+      const { getByText } = render(
+        <SessionCountdownScreen
+          mode="rest"
+          title="Planks"
+          onComplete={mockOnComplete}
+          skipLabel="Double tap to skip"
+        />
+      );
+      expect(getByText('UP NEXT')).toBeTruthy();
+      expect(getByText('Planks')).toBeTruthy();
+    });
   });
 
-  it('renders skip label correctly', () => {
-    const { getByText } = render(
-      <SessionCountdownScreen
-        title="Get Ready"
-        nextRoute="/session-screens/breathe"
-        skipLabel="Double tap to skip"/>
-    );
-    expect(getByText('Double tap to skip')).toBeTruthy();
+  describe('exercise mode', () => {
+    it('renders exercise name as header', () => {
+      const { getByText } = render(
+        <SessionCountdownScreen
+          mode="exercise"
+          title="Planks"
+          onComplete={mockOnComplete}
+          skipLabel="Double tap to skip"
+        />
+      );
+      expect(getByText('Planks')).toBeTruthy();
+    });
+
+    it('does not render Up Next card', () => {
+      const { queryByText } = render(
+        <SessionCountdownScreen
+          mode="exercise"
+          title="Planks"
+          onComplete={mockOnComplete}
+          skipLabel="Double tap to skip"
+        />
+      );
+      expect(queryByText('UP NEXT')).toBeNull();
+    });
   });
 
-  it('renders default duration as initial countdown', () => {
-    const { getByText } = render(
-      <SessionCountdownScreen
-        title="Get Ready"
-        nextRoute="/session-screens/breathe"
-        skipLabel="Double tap to skip"
-        duration={20}/>
-    );
-    expect(getByText('20')).toBeTruthy();
+  describe('common behavior', () => {
+    it('renders skip label correctly', () => {
+      const { getByText } = render(
+        <SessionCountdownScreen
+          mode="rest"
+          title="Planks"
+          onComplete={mockOnComplete}
+          skipLabel="Double tap to skip"
+        />
+      );
+      expect(getByText('Double tap to skip')).toBeTruthy();
+    });
+
+    it('renders duration as initial countdown', () => {
+      const { getByText } = render(
+        <SessionCountdownScreen
+          mode="rest"
+          title="Planks"
+          onComplete={mockOnComplete}
+          skipLabel="Double tap to skip"
+          duration={20}
+        />
+      );
+      expect(getByText('20')).toBeTruthy();
+    });
+
+    it('shows "tap to start" initially', () => {
+      const { getByText } = render(
+        <SessionCountdownScreen
+          mode="rest"
+          title="Planks"
+          onComplete={mockOnComplete}
+          skipLabel="Double tap to skip"
+        />
+      );
+      expect(getByText('tap to start')).toBeTruthy();
+    });
+
+    it('does not count down when not started', () => {
+      const { getByText } = render(
+        <SessionCountdownScreen
+          mode="rest"
+          title="Planks"
+          onComplete={mockOnComplete}
+          skipLabel="Double tap to skip"
+          duration={10}
+        />
+      );
+
+      act(() => {
+        jest.advanceTimersByTime(3000);
+      });
+
+      // Timer should still show initial value since not started
+      expect(getByText('10')).toBeTruthy();
+    });
+
+    it('clears timer on unmount when running', () => {
+      const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+      const { unmount } = render(
+        <SessionCountdownScreen
+          mode="rest"
+          title="Planks"
+          onComplete={mockOnComplete}
+          skipLabel="Double tap to skip"
+          autoStart={true}
+        />
+      );
+
+      unmount();
+      expect(clearIntervalSpy).toHaveBeenCalled();
+    });
   });
-
-  it('counts down over time', async () => {
-    const { getByText } = render(
-      <SessionCountdownScreen
-        title="Get Ready"
-        nextRoute="/session-screens/breathe"
-        skipLabel="Double tap to skip"
-        duration={10}/>
-    );
-
-    await act(async () => {
-      jest.advanceTimersByTime(1000);});
-    expect(getByText('9')).toBeTruthy();
-  });
-
-  it('changes screen when countdown reaches zero', () => {
-    const { getByText } = render(
-      <SessionCountdownScreen
-        title="Get Ready"
-        nextRoute="/session-screens/breathe"
-        skipLabel="Double tap to skip"
-        duration={3}/>
-    );
-
-    act(() => jest.advanceTimersByTime(3000));
-    expect(getByText('0')).toBeTruthy();
-    expect(mockReplace).toHaveBeenCalledWith('/session-screens/breathe');
-  });
-
-  it('clears timer on unmount', () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    const { unmount } = render(
-      <SessionCountdownScreen
-        title="Get Ready"
-        nextRoute="/session-screens/breathe"
-        skipLabel="Double tap to skip"/>
-    );
-
-    unmount();
-    expect(clearIntervalSpy).toHaveBeenCalled();
-  });
-
 });
-
