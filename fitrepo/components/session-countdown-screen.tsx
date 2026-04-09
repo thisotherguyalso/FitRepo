@@ -41,7 +41,7 @@ export function SessionCountdownScreen({
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [duration, nextRoute, router])
+  }, [duration, nextRoute])
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)

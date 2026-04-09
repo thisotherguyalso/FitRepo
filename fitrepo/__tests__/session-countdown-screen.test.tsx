@@ -76,13 +76,12 @@ describe('SessionCountdownScreen', () => {
     );
 
     await act(async () => {
-      jest.advanceTimersByTime(1000);
-      jest.runOnlyPendingTimers();});
+      jest.advanceTimersByTime(1000);});
     expect(getByText('9')).toBeTruthy();
   });
 
   it('changes screen when countdown reaches zero', () => {
-    render(
+    const { getByText } = render(
       <SessionCountdownScreen
         title="Get Ready"
         nextRoute="/session-screens/breathe"
@@ -91,6 +90,7 @@ describe('SessionCountdownScreen', () => {
     );
 
     act(() => jest.advanceTimersByTime(3000));
+    expect(getByText('0')).toBeTruthy();
     expect(mockReplace).toHaveBeenCalledWith('/session-screens/breathe');
   });
 
