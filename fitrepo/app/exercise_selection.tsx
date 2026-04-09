@@ -107,7 +107,6 @@ export default function ExerciseSelection() {
 
       if (!date) throw new Error('No workout date was provided.');
       if (!name) throw new Error('No workout name was provided.');
-      if (!mode) throw new Error('No workout mode was provided.');
       if (selectedExercises.length === 0) {
         throw new Error('Please choose at least one exercise.');
       }
