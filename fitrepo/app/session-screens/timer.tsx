@@ -49,7 +49,6 @@ export default function Timer() {
       duration={exercise?.time_seconds ?? 30}
       onComplete={() => goToNextExercise(exercises, currentIndex, workout_id)}
       onDurationChange={handleDurationChange}
-      skipLabel="Double tap to skip"
     />
   );
 }

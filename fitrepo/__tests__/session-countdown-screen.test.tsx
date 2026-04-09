@@ -48,7 +48,6 @@ describe('SessionCountdownScreen', () => {
           mode="rest"
           title="Planks"
           onComplete={mockOnComplete}
-          skipLabel="Double tap to skip"
         />
       );
       expect(getByText('Breathe')).toBeTruthy();
@@ -60,7 +59,6 @@ describe('SessionCountdownScreen', () => {
           mode="rest"
           title="Planks"
           onComplete={mockOnComplete}
-          skipLabel="Double tap to skip"
         />
       );
       expect(getByText('UP NEXT')).toBeTruthy();
@@ -75,7 +73,6 @@ describe('SessionCountdownScreen', () => {
           mode="exercise"
           title="Planks"
           onComplete={mockOnComplete}
-          skipLabel="Double tap to skip"
         />
       );
       expect(getByText('Planks')).toBeTruthy();
@@ -87,7 +84,6 @@ describe('SessionCountdownScreen', () => {
           mode="exercise"
           title="Planks"
           onComplete={mockOnComplete}
-          skipLabel="Double tap to skip"
         />
       );
       expect(queryByText('UP NEXT')).toBeNull();
@@ -101,7 +97,6 @@ describe('SessionCountdownScreen', () => {
           mode="rest"
           title="Planks"
           onComplete={mockOnComplete}
-          skipLabel="Double tap to skip"
         />
       );
       expect(getByText('Double tap to skip')).toBeTruthy();
@@ -113,7 +108,6 @@ describe('SessionCountdownScreen', () => {
           mode="rest"
           title="Planks"
           onComplete={mockOnComplete}
-          skipLabel="Double tap to skip"
           duration={20}
         />
       );
@@ -126,7 +120,6 @@ describe('SessionCountdownScreen', () => {
           mode="rest"
           title="Planks"
           onComplete={mockOnComplete}
-          skipLabel="Double tap to skip"
         />
       );
       expect(getByText('tap to start')).toBeTruthy();
@@ -138,7 +131,6 @@ describe('SessionCountdownScreen', () => {
           mode="rest"
           title="Planks"
           onComplete={mockOnComplete}
-          skipLabel="Double tap to skip"
           duration={10}
         />
       );
@@ -158,7 +150,6 @@ describe('SessionCountdownScreen', () => {
           mode="rest"
           title="Planks"
           onComplete={mockOnComplete}
-          skipLabel="Double tap to skip"
           autoStart={true}
         />
       );

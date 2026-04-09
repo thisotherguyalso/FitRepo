@@ -1,49 +1,91 @@
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect } from 'react';
 import { ButtonComponent } from '@/components/button-component';
-import { supabase } from '@/lib/supabase';
+import { AppColors, AppRadius, AppSpacing } from '@/constants/styles';
 
 export default function Summary() {
-  const { workout_id, total } = useLocalSearchParams<{ workout_id: string; total: string }>();
-
-  useEffect(() => {
-    if (workout_id) {
-      void supabase
-        .from('workouts')
-        .update({ is_finished: true })
-        .eq('id', workout_id);
-    }
-  }, [workout_id]);
+  const { total } = useLocalSearchParams<{ total: string }>();
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-      <LinearGradient colors={['#020975fb', '#151718']} style={sharedStyles.background} />
+    <LinearGradient
+      colors={['#854d0e', '#151718']}
+      style={styles.container}
+    >
+      {/* Header */}
+      <Text style={styles.header}>Complete</Text>
 
-      <Text style={styles.sessionLabel}>🎉 Workout Complete!</Text>
-      {total ? (
-        <Text style={styles.subLabel}>{total} exercise{Number(total) !== 1 ? 's' : ''} done</Text>
-      ) : null}
+      {/* Centered Content */}
+      <View style={styles.contentSection}>
+        <Text style={styles.emoji}>🎉</Text>
+        <Text style={styles.title}>Workout Finished!</Text>
+        {total ? (
+          <Text style={styles.subtitle}>
+            {total} exercise{Number(total) !== 1 ? 's' : ''} completed
+          </Text>
+        ) : null}
+      </View>
 
-      <ButtonComponent onPress = {() => router.replace('/(tabs)/session')} text = "Back to Home"/>
+      {/* Back Button */}
+      <View style={styles.buttonContainer}>
+        <ButtonComponent
+          onPress={() => router.replace('/(tabs)/session')}
+          text="Back to Home"
+        />
+      </View>
 
-    </ParallaxScrollView>
+      {/* Subtle hint */}
+      <Text style={styles.hint}>Great work! 💪</Text>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  sessionLabel: { fontSize: 32, fontWeight: '700', color: '#ffffff', marginBottom: 8, textAlign: 'center', marginTop: 40 },
-  subLabel: { fontSize: 18, color: '#9ca3af', textAlign: 'center', marginBottom: 40 },
-  buttonStyle: {
-    backgroundColor: 'rgb(30,133,247)',
-    paddingVertical: 24,
-    borderRadius: 100,
+  container: {
+    flex: 1,
+    paddingHorizontal: AppSpacing.lg,
+    paddingTop: 60,
+    paddingBottom: 40,
     alignItems: 'center',
-    marginTop: 16,
   },
-  buttonText: { color: '#ffffff', fontSize: 24, fontWeight: '600' },
+  header: {
+    color: AppColors.text,
+    fontSize: 28,
+    fontWeight: '300',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  contentSection: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emoji: {
+    fontSize: 80,
+    marginBottom: 20,
+  },
+  title: {
+    color: AppColors.text,
+    fontSize: 32,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  subtitle: {
+    color: AppColors.text,
+    fontSize: 18,
+    opacity: 0.6,
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    width: '100%',
+    marginBottom: AppSpacing.lg,
+  },
+  hint: {
+    color: AppColors.text,
+    fontSize: 14,
+    opacity: 0.4,
+  },
 });

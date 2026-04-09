@@ -28,9 +28,8 @@ export default function Breathe() {
   return (
     <SessionCountdownScreen
       mode="rest"
-      title={next ? `Up next: ${next.name}` : 'BREATHE'}
+      title={next?.name ?? 'Rest'}
       onComplete={goToNext}
-      skipLabel="Double tap to skip rest"
     />
   );
 }

@@ -1,13 +1,11 @@
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useState } from 'react';
+import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
-import { sharedStyles } from '@/constants/styles';
 import { SessionExercise } from '@/hooks/use-today-session';
 import { goToNextExercise } from '@/utils/session-navigation';
-import { ButtonComponent } from '@/components/button-component';
+import { AppColors, AppRadius, AppSpacing } from '@/constants/styles';
 
 export default function Reps() {
   const { exercises: exercisesParam, currentIndex: indexParam, workout_id } = useLocalSearchParams<{
@@ -38,52 +36,175 @@ export default function Reps() {
     .onEnd(() => goToNextExercise(exercises, currentIndex, workout_id as string))
     .runOnJS(true);
 
+  const singleTap = Gesture.Tap()
+    .maxDuration(250)
+    .onEnd(() => setRepAmount((r) => r + 1))
+    .runOnJS(true);
+
+  const repGesture = Gesture.Exclusive(doubleTap, singleTap);
+
+  const isLastSet = currentSet >= totalSets;
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-        <LinearGradient colors={['#020975fb', '#151718']} style={sharedStyles.background} />
+    <GestureHandlerRootView style={styles.root}>
+      <LinearGradient
+        colors={['#7c2d12', '#151718']}
+        style={styles.container}
+      >
+        {/* Header */}
+        <Text style={styles.header}>{exercise?.name ?? 'Exercise'}</Text>
 
-        <GestureDetector gesture={doubleTap}>
-          <TouchableOpacity style={styles.sessionCard}>
-            <Text style={styles.sessionTitle}>{exercise?.name ?? 'Exercise'}</Text>
-            <Text style={styles.setLabel}>Set {currentSet} of {totalSets}</Text>
-            {exercise?.weight ? (
-              <Text style={styles.sessionLabel}>{exercise.weight}kg</Text>
-            ) : null}
-            <Text style={styles.repCount}>{repAmount}</Text>
-            <Text style={styles.sessionLabel}>Double tap to skip</Text>
-          </TouchableOpacity>
-        </GestureDetector>
+        {/* Set indicator */}
+        <View style={styles.setIndicator}>
+          <Text style={styles.setLabel}>SET {currentSet} OF {totalSets}</Text>
+          {exercise?.weight ? (
+            <Text style={styles.weightLabel}>{exercise.weight} kg</Text>
+          ) : null}
+        </View>
 
-        <ButtonComponent onPress={() => setRepAmount((r) => r + 1)} text="+ Rep"/>
+        {/* Centered Rep Section */}
+        <View style={styles.repSection}>
+          <View style={styles.repRow}>
+            <TouchableOpacity
+              style={styles.adjustButton}
+              onPress={() => setRepAmount((r) => Math.max(r - 1, 0))}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.adjustButtonText}>−1</Text>
+            </TouchableOpacity>
 
-        <ButtonComponent onPress={() => setRepAmount((r) => Math.max(r - 1, 0))} text="− Rep" />
+            {/* Tap to add rep, double tap to skip */}
+            <GestureDetector gesture={repGesture}>
+              <View>
+                <Text style={styles.repCount}>{repAmount}</Text>
+              </View>
+            </GestureDetector>
 
-      </ParallaxScrollView>
+            <TouchableOpacity
+              style={styles.adjustButton}
+              onPress={() => setRepAmount((r) => r + 1)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.adjustButtonText}>+1</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.repLabel}>
+            {exercise?.reps ? `target: ${exercise.reps} reps` : 'reps'}
+          </Text>
+        </View>
+
+        {/* Finish Set Button */}
+        <TouchableOpacity
+          style={[styles.finishButton, isLastSet && styles.finishButtonLast]}
+          onPress={handleFinishSet}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.finishButtonText}>
+            {isLastSet ? 'Finish Exercise' : 'Finish Set'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Skip Hint */}
+        <Text style={styles.skipHint}>Tap counter to add rep • Double tap to skip</Text>
+      </LinearGradient>
     </GestureHandlerRootView>
   );
 }
 
 const styles = StyleSheet.create({
-  sessionCard: {
-    backgroundColor: '#313131',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 30,
+  root: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: AppSpacing.lg,
+    paddingTop: 60,
+    paddingBottom: 40,
     alignItems: 'center',
   },
-  sessionLabel: { color: '#888', fontSize: 16, marginTop: 4 },
-  sessionTitle: { color: '#fff', fontSize: 26, fontWeight: 'bold', marginBottom: 6 },
-  setLabel: { color: '#93c5fd', fontSize: 18, marginBottom: 8 },
-  repCount: { color: '#fff', fontSize: 64, fontWeight: '700', marginVertical: 12 },
-  buttonStyle: {
-    backgroundColor: 'rgb(30,133,247)',
-    paddingVertical: 24,
-    borderRadius: 100,
-    alignItems: 'center',
+  header: {
+    color: AppColors.text,
+    fontSize: 28,
+    fontWeight: '300',
+    letterSpacing: 3,
+    textTransform: 'uppercase',
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  setIndicator: {
     marginTop: 16,
+    alignItems: 'center',
   },
-  finishButton: { backgroundColor: 'rgb(22,163,74)' },
-  buttonText: { color: '#ffffff', fontSize: 24, fontWeight: '700' },
+  setLabel: {
+    color: '#93c5fd',
+    fontSize: 16,
+    fontWeight: '600',
+    letterSpacing: 2,
+  },
+  weightLabel: {
+    color: AppColors.text,
+    fontSize: 14,
+    opacity: 0.6,
+    marginTop: 4,
+  },
+  repSection: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  repRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+  },
+  repCount: {
+    color: AppColors.text,
+    fontSize: 120,
+    fontWeight: '200',
+    lineHeight: 130,
+    minWidth: 180,
+    textAlign: 'center',
+  },
+  repLabel: {
+    color: AppColors.text,
+    fontSize: 14,
+    fontWeight: '400',
+    opacity: 0.5,
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginTop: -10,
+  },
+  adjustButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: AppRadius.md,
+  },
+  adjustButtonText: {
+    color: AppColors.text,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  finishButton: {
+    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    borderRadius: AppRadius.lg,
+    marginBottom: AppSpacing.lg,
+  },
+  finishButtonLast: {
+    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+  },
+  finishButtonText: {
+    color: AppColors.text,
+    fontSize: 18,
+    fontWeight: '600',
+    letterSpacing: 1,
+  },
+  skipHint: {
+    color: AppColors.text,
+    fontSize: 14,
+    opacity: 0.4,
+  },
 });

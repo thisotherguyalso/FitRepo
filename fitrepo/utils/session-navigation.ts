@@ -1,11 +1,8 @@
 import { router } from 'expo-router';
 import { SessionExercise } from '@/hooks/use-today-session';
+import { updateWorkout } from '@/lib/api/workouts';
 
-type Props = {
-  durationSeconds?: number;
-}
-
-export function goToNextExercise(
+export async function goToNextExercise(
   exercises: SessionExercise[],
   currentIndex: number,
   workout_id: string,
@@ -13,7 +10,13 @@ export function goToNextExercise(
   const nextIndex = currentIndex + 1;
 
   if (nextIndex >= exercises.length) {
-    // All done — go to summary
+    // Mark workout as finished before navigating
+    try {
+      await updateWorkout(workout_id, { is_finished: true });
+    } catch (error) {
+      console.error('Failed to mark workout as finished:', error);
+    }
+
     router.replace({
       pathname: '/session-screens/summary',
       params: { workout_id, total: String(exercises.length) },
@@ -23,7 +26,6 @@ export function goToNextExercise(
 
   const next = exercises[nextIndex];
 
-  // Always go through breathe/rest screen between exercises
   router.push({
     pathname: '/session-screens/breathe',
     params: {

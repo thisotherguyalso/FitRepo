@@ -9,7 +9,6 @@ type SessionCountdownScreenProps = {
   mode: 'rest' | 'exercise'
   title: string
   onComplete: () => void
-  skipLabel: string
   duration?: number
   autoStart?: boolean
   onDurationChange?: (newDuration: number) => void
@@ -19,7 +18,6 @@ export function SessionCountdownScreen({
   mode,
   title,
   onComplete,
-  skipLabel,
   duration = 20,
   autoStart = false,
   onDurationChange,
@@ -39,7 +37,6 @@ export function SessionCountdownScreen({
       setTimeRemaining((previous) => {
         if (previous <= 1) {
           clearInterval(interval)
-          onComplete()
           return 0
         }
         return previous - 1
@@ -47,89 +44,103 @@ export function SessionCountdownScreen({
     }, 1000)
 
     return () => clearInterval(interval)
-  }, [isRunning, onComplete])
+  }, [isRunning])
+
+  useEffect(() => {
+    if (timeRemaining === 0) {
+      onComplete()
+    }
+  }, [timeRemaining, onComplete])
 
   const adjustTime = (delta: number) => {
     setTimeRemaining((prev) => {
-      const newTime = Math.max(5, prev + delta) // Minimum 5 seconds
+      const newTime = Math.max(5, prev + delta)
       onDurationChange?.(newTime)
       return newTime
     })
   }
 
+  // Single tap to start/pause
   const singleTap = Gesture.Tap()
     .maxDuration(250)
-    .onEnd(() => {
-      setIsRunning((prev) => !prev)
-    })
+    .onEnd(() => setIsRunning((prev) => !prev))
     .runOnJS(true)
-
-  const doubleTap = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => onComplete())
-    .runOnJS(true)
-
-  const composedGesture = Gesture.Exclusive(doubleTap, singleTap)
 
   const headerText = mode === 'rest' ? 'Breathe' : title
   const showUpNext = mode === 'rest'
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <GestureDetector gesture={composedGesture}>
-        <LinearGradient
-          colors={mode === 'rest' ? ['#0a4a2e', '#151718'] : ['#020975', '#151718']}
-          style={styles.container}
-        >
-          {/* Header */}
-          <Text style={styles.header}>{headerText}</Text>
+      <LinearGradient
+        colors={mode === 'rest' ? ['#0a4a2e', '#151718'] : ['#020975', '#151718']}
+        style={styles.container}
+      >
+        {/* Header */}
+        <Text style={styles.header}>{headerText}</Text>
 
-          {/* Centered Timer Section */}
-          <View style={styles.timerSection}>
-            <View style={styles.timerRow}>
-              <TouchableOpacity
-                style={styles.adjustButton}
-                onPress={() => adjustTime(-5)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.adjustButtonText}>−5</Text>
-              </TouchableOpacity>
+        {/* Centered Timer Section */}
+        <View style={styles.timerSection}>
+          <View style={styles.timerRow}>
+            <TouchableOpacity
+              style={styles.adjustButton}
+              onPress={() => adjustTime(-5)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.adjustButtonText}>−5</Text>
+            </TouchableOpacity>
 
-              <Text style={styles.timer}>{timeRemaining}</Text>
-
-              <TouchableOpacity
-                style={styles.adjustButton}
-                onPress={() => adjustTime(5)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.adjustButtonText}>+5</Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.timerLabel}>
-              {!isRunning ? 'tap to start' : 'seconds'}
-            </Text>
-
-            {/* Paused indicator */}
-            {!isRunning && timeRemaining < duration && (
-              <View style={styles.pausedBadge}>
-                <Text style={styles.pausedText}>PAUSED</Text>
+            {/* Tap timer to start/pause */}
+            <GestureDetector gesture={singleTap}>
+              <View>
+                <Text style={styles.timer}>{timeRemaining}</Text>
               </View>
-            )}
+            </GestureDetector>
+
+            <TouchableOpacity
+              style={styles.adjustButton}
+              onPress={() => adjustTime(5)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.adjustButtonText}>+5</Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Up Next Card (rest mode only) */}
-          {showUpNext && (
-            <View style={styles.upNextCard}>
-              <Text style={styles.upNextLabel}>UP NEXT</Text>
-              <Text style={styles.upNextTitle}>{title}</Text>
+          <Text style={styles.timerLabel}>
+            {!isRunning ? 'tap timer to start' : 'seconds'}
+          </Text>
+
+          {/* Paused indicator */}
+          {!isRunning && timeRemaining < duration && (
+            <View style={styles.pausedBadge}>
+              <Text style={styles.pausedText}>PAUSED</Text>
             </View>
           )}
+        </View>
 
-          {/* Skip Hint */}
-          <Text style={styles.skipHint}>{skipLabel}</Text>
-        </LinearGradient>
-      </GestureDetector>
+        {/* Up Next Card (rest mode) - tappable to skip */}
+        {showUpNext && (
+          <TouchableOpacity
+            style={styles.upNextCard}
+            onPress={onComplete}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.upNextLabel}>UP NEXT</Text>
+            <Text style={styles.upNextTitle}>{title}</Text>
+            <Text style={styles.skipHint}>Tap to skip</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Skip button (exercise mode) */}
+        {!showUpNext && (
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={onComplete}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.skipButtonText}>Skip Exercise</Text>
+          </TouchableOpacity>
+        )}
+      </LinearGradient>
     </GestureHandlerRootView>
   )
 }
@@ -230,7 +241,21 @@ const styles = StyleSheet.create({
   },
   skipHint: {
     color: AppColors.text,
-    fontSize: 14,
+    fontSize: 12,
     opacity: 0.4,
+    marginTop: 8,
+  },
+  skipButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: AppRadius.md,
+    marginBottom: AppSpacing.lg,
+  },
+  skipButtonText: {
+    color: AppColors.text,
+    fontSize: 14,
+    fontWeight: '500',
+    opacity: 0.6,
   },
 })
