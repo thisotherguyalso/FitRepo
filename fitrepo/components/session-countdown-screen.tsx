@@ -54,12 +54,10 @@ export function SessionCountdownScreen({
     <GestureHandlerRootView style={styles.root}>
       <GestureDetector gesture={doubleTap}>
         <ParallaxScrollView
-          headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}
-        >
+          headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
         <LinearGradient
           colors={['#020975fb', '#151718']}
-          style={sharedStyles.background}
-        />
+          style={sharedStyles.background}/>
           <View style={[styles.sessionCard, { backgroundColor: cardColor }]}>
             <Text style={styles.sessionTitle}>{title}</Text>
             <Text style={[sharedStyles.mutedText, styles.sessionLabel]}>{timeRemaining}</Text>

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { ButtonComponent } from '@/components/button-component'
 import { useLocalSearchParams, router } from 'expo-router';
 import { AppColors, sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -93,28 +94,13 @@ export default function ChoiceButtons() {
       </TouchableOpacity>
 
       {/* Continue button */}
-      <TouchableOpacity
-        style={[sharedStyles.button, styles.createButton]}
-        // moves the user to the exercise selection screen
-        onPress={handleContinue}>
-        <Text style={[sharedStyles.buttonText, styles.buttonText]}>Choose Exercises</Text>
-      </TouchableOpacity>
+      <ButtonComponent onPress = {handleContinue} text = "Choose Exercises"/>
 
       {/* Load Preset button */}
-      <TouchableOpacity
-        style={[sharedStyles.button, styles.presetButton]}
-        onPress={handleLoadPreset}>
-        <Text style={[sharedStyles.buttonText, styles.buttonText]}>Load from Preset</Text>
-      </TouchableOpacity>
+      <ButtonComponent onPress = {handleLoadPreset} text = "Load from Preset"/>
 
       {/* Back button */}
-      <TouchableOpacity
-        style={[sharedStyles.button, styles.backButton]}
-        onPress={() => {
-          router.push('/(tabs)/workouts');
-        }}>
-        <Text style={[sharedStyles.buttonText, styles.buttonText]}>Back to Workouts</Text>
-      </TouchableOpacity>
+      <ButtonComponent onPress = {() => {router.push('/(tabs)/workouts');}} text = "Back to Workouts"/>
 
     </ThemedView>
   </ParallaxScrollView>
