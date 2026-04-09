@@ -1,115 +1,133 @@
-import ParallaxScrollView from '@/components/parallax-scroll-view';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useHomeStats } from '@/hooks/use-home-stats';
 import { useAuth } from '@/hooks/use-auth';
-import { AppColors, sharedStyles } from '@/constants/styles';
-import { LinearGradient } from 'expo-linear-gradient';
+import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
 import { ButtonComponent } from '@/components/button-component';
 
 export default function Home() {
-  const { userName, currentStreak, totalWorkouts, previousWorkout, previousWorkoutDate } = useHomeStats()
-  const { signOut } = useAuth()
+  const { userName, currentStreak, totalWorkouts, previousWorkout, previousWorkoutDate } = useHomeStats();
+  const { signOut } = useAuth();
 
   return (
-    <ParallaxScrollView 
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+    <ParallaxScrollView
+      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}
+    >
       <LinearGradient
-        colors={['#020975fb', '#151718']}
-        style={sharedStyles.background}/>
+        colors={['#020975', '#0d0d12']}
+        style={sharedStyles.background}
+      />
 
       {/* Greeting */}
-      <Text style={[sharedStyles.title, styles.greeting]}>Hello, {userName}!</Text>
+      <Text style={styles.greeting}>Hello, {userName}!</Text>
 
-      {/* Previous Workout */}
-      <View style={[sharedStyles.card, styles.sessionCard]}>
-        <Text style={[sharedStyles.mutedText, styles.sessionLabel]}>Previous Workout</Text>
-        <Text style={styles.sessionTitle}>{previousWorkout}</Text>
-        <Text style={[sharedStyles.mutedText, styles.sessionDate]}>
-          {previousWorkoutDate ? previousWorkoutDate.toLocaleDateString() : "No previous workout"}</Text>
+      {/* Previous Workout Card */}
+      <View style={styles.card}>
+        <Text style={styles.cardLabel}>PREVIOUS WORKOUT</Text>
+        <Text style={styles.workoutName}>{previousWorkout ?? 'None yet'}</Text>
+        <Text style={styles.workoutDate}>
+          {previousWorkoutDate ? previousWorkoutDate.toLocaleDateString() : 'Complete your first workout!'}
+        </Text>
       </View>
 
-      {/* General Stats */}
-      <View className="mb-30">
-        <Text style={[sharedStyles.sectionTitle, styles.sectionTitle]}>Stats Overview</Text>
+      {/* Stats Section */}
+      <Text style={styles.sectionTitle}>Stats Overview</Text>
 
-        <View style={styles.row}>
-          <View style={[sharedStyles.card, styles.wideCard]}>
-            <Text style={styles.statValue}>{totalWorkouts}</Text>
-            <Text style={styles.statLabel}>Total Workouts</Text>
-          </View>
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{totalWorkouts}</Text>
+          <Text style={styles.statLabel}>Total Workouts</Text>
+        </View>
 
-          <View style={[sharedStyles.card, styles.wideCard]}>
-            <Text style={styles.statValue}>{currentStreak}</Text>
-            <Text style={styles.statLabel}>Current Streak</Text>
-          </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{currentStreak}</Text>
+          <Text style={styles.statLabel}>Current Streak</Text>
         </View>
       </View>
 
-    {/* Sign Out Button */}
-    <ButtonComponent onPress = { signOut } text = "Sign Out" style = {styles.signOutButton}/>
-
+      {/* Sign Out Button */}
+      <ButtonComponent
+        onPress={signOut}
+        text="Sign Out"
+        style={styles.signOutButton}
+        textStyle={styles.signOutText}
+      />
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   greeting: {
-    fontSize: 28,
-    marginBottom: 20,
-    textAlign: 'left',
-  },
-  sessionCard: {
-    marginBottom: 30,
-  },
-  sessionLabel: {
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  sessionTitle: {
     color: AppColors.text,
-    fontSize: 20,
-    fontWeight: '600',
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 24,
   },
-  sessionDate: {
-    marginTop: 5,
+  card: {
+    backgroundColor: '#1c1c1f',
+    padding: AppSpacing.lg,
+    borderRadius: AppRadius.lg,
+    marginBottom: 24,
+  },
+  cardLabel: {
+    color: AppColors.text,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 2,
+    opacity: 0.5,
+    marginBottom: 8,
+  },
+  workoutName: {
+    color: '#93c5fd',
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  workoutDate: {
+    color: AppColors.text,
+    fontSize: 14,
+    opacity: 0.5,
   },
   sectionTitle: {
+    color: AppColors.text,
     fontSize: 18,
-    marginBottom: 15,
+    fontWeight: '600',
+    marginBottom: 16,
   },
-  grid: {
+  statsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor:  '#1c1c1f',
+    padding: AppSpacing.lg,
+    borderRadius: AppRadius.lg,
+    alignItems: 'center',
   },
   statValue: {
     color: AppColors.text,
-    fontSize: 22,
+    fontSize: 32,
     fontWeight: '700',
+    marginBottom: 4,
   },
   statLabel: {
-    color: AppColors.textMuted,
-    marginTop: 5,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  wideCard: {
-    width: '48%',
-    alignItems: 'center',
-    padding: 25,
-    backgroundColor: AppColors.surfaceAlt,
+    color: AppColors.text,
+    fontSize: 13,
+    opacity: 0.5,
   },
   signOutButton: {
-    backgroundColor: '#c62b2b',
-    padding: 18,
-    borderRadius: 16,
-    marginBottom: 24,
+    backgroundColor: '#7f1d1d',
+    padding: 16,
+    borderRadius: AppRadius.lg,
     alignItems: 'center',
   },
   signOutText: {
-    fontSize: 24,
+    color: AppColors.text,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

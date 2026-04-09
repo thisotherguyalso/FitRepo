@@ -2,30 +2,27 @@ import { StyleSheet, TouchableOpacity, Text, View, Dimensions } from 'react-nati
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { CalendarList } from 'react-native-calendars';
 import { useWorkouts } from '@/hooks/use-workouts';
-import { useThemeColor } from '@/hooks/use-theme-color';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { router } from 'expo-router';
 import { useRef, useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { sharedStyles } from '@/constants/styles';
+import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
 import { ButtonComponent } from '@/components/button-component';
 
 export default function WorkoutsTab() {
-  const { workouts, markedDates, loadWorkouts  } = useWorkouts();
+  const { workouts, markedDates, loadWorkouts } = useWorkouts();
   const screenWidth = Dimensions.get('window').width;
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const calendarBG = useThemeColor({}, 'background');
 
   useEffect(() => {
     const interval = setInterval(() => {
       void loadWorkouts();
-    }, 1000); // refresh every second
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [loadWorkouts]);
 
-  const today = new Date(); // get local time
-  // format it to react format e.g. 1999-01-25
+  const today = new Date();
   const formatted =
     today.getFullYear() +
     '-' +
@@ -41,72 +38,88 @@ export default function WorkoutsTab() {
     { month: 'long', day: 'numeric', year: 'numeric' }
   );
 
-  return (
-    <View style={{ flex: 1 }}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: 'rgba(2, 9, 117, 0.98)' }}>
-        <LinearGradient
-          colors={['#020975fb', '#151718']}
-          style={sharedStyles.background}/>
+  const hasWorkouts = selectedDateWorkouts.length > 0;
 
-        {/* Workouts Displayed Through Calendar */}
-        <Text style={styles.headerText}>My Workouts</Text>
- 
-        <View style={styles.divider} />
- 
-        <View style={{ marginHorizontal: -32 }}>
+  return (
+    <View style={styles.container}>
+      <ParallaxScrollView
+        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
+      >
+        <LinearGradient
+          colors={['#020975', '#0d0d12']}
+          style={sharedStyles.background}
+        />
+
+        {/* Header */}
+        <Text style={styles.header}>My Workouts</Text>
+
+        {/* Calendar */}
+        <View style={styles.calendarContainer}>
           <CalendarList
             horizontal={true}
             pagingEnabled={true}
             calendarWidth={screenWidth}
             current={formatted}
             theme={{
-              calendarBackground: calendarBG,
+              calendarBackground: 'transparent',
               dayTextColor: '#FFFFFF',
               monthTextColor: '#FFFFFF',
-              textDisabledColor: '#504b4b',
+              textDisabledColor: '#444',
               textMonthFontSize: 20,
-              todayBackgroundColor: '#242431',
+              todayBackgroundColor: '#202025',
+              todayTextColor: '#fff',
             }}
             onDayPress={(day) => {
               setSelected(day.dateString);
               bottomSheetRef.current?.expand();
             }}
             markedDates={{
-              [selected]: { selected: true, disableTouchEvent: true, selectedColor: 'rgb(30,133,247)' },
+              [selected]: { selected: true, disableTouchEvent: true, selectedColor: '#3b82f6' },
               ...markedDates,
-            }}/>
+            }}
+          />
         </View>
- 
-        {/* Create Workout Button */}
-        <ButtonComponent onPress = {() => {
-            router.push({
-              pathname: '/create_workout',
-              params: {date: selected}, // https://docs.expo.dev/router/basics/navigation/
-            })
-          }}
-          text="Plan a Workout!"/>
 
-        {/* Listed Workouts For A Date */}
-        <Text style={styles.sectionTitle}>Workouts for {readableDate}</Text>
+        {/* Section Title */}
+        <Text style={styles.sectionTitle}>{readableDate}</Text>
 
-        {selectedDateWorkouts.length === 0 ? (
-          <Text style={styles.emptyText}>No workouts planned for this date.</Text>
+        {/* Show button OR workouts based on whether workouts exist */}
+        {!hasWorkouts ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No workouts planned</Text>
+            <ButtonComponent
+              onPress={() => {
+                router.push({
+                  pathname: '/create_workout',
+                  params: { date: selected },
+                });
+              }}
+              text="Plan a Workout"
+            />
+          </View>
         ) : (
           selectedDateWorkouts.map((workout) => (
             <TouchableOpacity
               key={workout.id}
-              style={[styles.workoutCard, workout.is_finished && styles.finishedWorkoutCard]}
+              style={[styles.workoutCard, workout.is_finished && styles.finishedCard]}
               onPress={() => {
                 router.push({
                   pathname: '/view_workout',
                   params: { workout_id: workout.id },
                 });
-              }}>
-              <Text style={styles.workoutCardTitle}>{workout.name}</Text>
-              <Text style={styles.workoutCardSubtitle}>
-                {workout.is_finished ? 'Finished' : 'Planned'}
-              </Text>
+              }}
+            >
+              <View style={styles.workoutCardContent}>
+                <Text style={styles.workoutName}>{workout.name}</Text>
+                <Text style={styles.workoutStatus}>
+                  {workout.is_finished ? 'Completed' : 'Planned'}
+                </Text>
+              </View>
+              <View style={[styles.statusBadge, workout.is_finished && styles.statusBadgeFinished]}>
+                <Text style={styles.statusBadgeText}>
+                  {workout.is_finished ? '✓' : '→'}
+                </Text>
+              </View>
             </TouchableOpacity>
           ))
         )}
@@ -114,61 +127,81 @@ export default function WorkoutsTab() {
     </View>
   );
 }
- 
+
 const styles = StyleSheet.create({
-  divider: {
-    height: 1,
-    backgroundColor: '#6e6e6e',
-    marginVertical: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#0d0d12',
   },
-  createButton: {
-    backgroundColor: 'rgb(30,133,247)',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  createButtonText: {
-    color: '#ffffff',
-    fontSize: 24,
+  header: {
+    color: AppColors.text,
+    fontSize: 28,
     fontWeight: '700',
+    marginBottom: 16,
   },
-  headerText: {
-    fontSize: 32,
-    fontWeight: '600',
-    color: '#ffffff',
-    alignSelf: 'center',
+  calendarContainer: {
+    marginHorizontal: -32,
+    marginBottom: 24,
   },
   sectionTitle: {
-    color: '#ffffff',
-    fontSize: 22,
-    fontWeight: '700',
-    marginTop: 24,
-    marginBottom: 12,
+    color: AppColors.text,
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  emptyState: {
+    backgroundColor: '#202025',
+    padding: AppSpacing.lg,
+    borderRadius: AppRadius.lg,
+    alignItems: 'center',
+    gap: 16,
   },
   emptyText: {
-    color: '#9ca3af',
-    fontSize: 16,
+    color: AppColors.text,
+    fontSize: 15,
+    opacity: 0.5,
   },
   workoutCard: {
-    backgroundColor: 'rgb(0,65,90)',
-    padding: 16,
-    borderRadius: 16,
+    backgroundColor: '#202025',
+    padding: AppSpacing.lg,
+    borderRadius: AppRadius.lg,
     marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  finishedWorkoutCard: {
-    borderColor: 'rgb(85,161,148)',
-    backgroundColor: 'rgb(59,112,103)',
-    borderWidth: 2,
+  finishedCard: {
+    backgroundColor: '#1a2e1a',
+    borderWidth: 1,
+    borderColor: '#2d4a2d',
   },
-  workoutCardTitle: {
-    color: '#fff',
+  workoutCardContent: {
+    flex: 1,
+  },
+  workoutName: {
+    color: AppColors.text,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
     marginBottom: 4,
   },
-  workoutCardSubtitle: {
-    color: '#93c5fd',
+  workoutStatus: {
+    color: AppColors.text,
     fontSize: 14,
+    opacity: 0.5,
+  },
+  statusBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2a2a2f',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statusBadgeFinished: {
+    backgroundColor: '#2d4a2d',
+  },
+  statusBadgeText: {
+    color: AppColors.text,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

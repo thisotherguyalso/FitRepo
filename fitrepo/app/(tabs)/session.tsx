@@ -39,7 +39,7 @@ export default function SessionTab() {
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}
     >
       <LinearGradient
-        colors={['#020975fb', '#151718']}
+        colors={['#020975', '#0d0d12']}
         style={sharedStyles.background}
       />
 
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   workoutCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#1c1c1f',
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   exerciseRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#1c1c1f',
     padding: 14,
     borderRadius: AppRadius.md,
     gap: 14,

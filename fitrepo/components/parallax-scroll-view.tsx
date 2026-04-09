@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   interpolate,
   useAnimatedRef,
@@ -7,9 +7,7 @@ import Animated, {
   useScrollOffset,
 } from 'react-native-reanimated';
 
-import { ThemedView } from '@/components/themed-view';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useThemeColor } from '@/hooks/use-theme-color';
 
 const HEADER_HEIGHT = 100;
 
@@ -21,7 +19,6 @@ export default function ParallaxScrollView({
   children,
   headerBackgroundColor,
 }: Props) {
-  const backgroundColor = useThemeColor({}, 'background');
   const colorScheme = useColorScheme() ?? 'light';
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollOffset = useScrollOffset(scrollRef);
@@ -45,24 +42,27 @@ export default function ParallaxScrollView({
   return (
     <Animated.ScrollView
       ref={scrollRef}
-      style={{ backgroundColor, flex: 1 }}
-      scrollEventThrottle={16}>
+      style={styles.scrollView}
+      scrollEventThrottle={16}
+    >
       <Animated.View
         style={[
           styles.header,
           { backgroundColor: headerBackgroundColor[colorScheme] },
           headerAnimatedStyle,
-        ]}>
-          <Text style={styles.headerText}>FitRepo</Text>
+        ]}
+      >
+        <Text style={styles.headerText}>FitRepo</Text>
       </Animated.View>
-      <ThemedView style={styles.content}>{children}</ThemedView>
+      <View style={styles.content}>{children}</View>
     </Animated.ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scrollView: {
     flex: 1,
+    backgroundColor: '#0d0d12',
   },
   header: {
     height: HEADER_HEIGHT,
@@ -73,11 +73,12 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     paddingTop: 50,
     paddingLeft: 20,
-    fontWeight: "bold"
+    fontWeight: 'bold',
   },
   content: {
     flex: 1,
     padding: 32,
     gap: 14,
+    backgroundColor: 'transparent',
   },
 });
