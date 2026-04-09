@@ -1,4 +1,4 @@
-import { TouchableOpacity, Text, StyleSheet, TextInput, Alert } from 'react-native';
+import { StyleSheet, TextInput, Alert } from 'react-native';
 import { useState } from 'react';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
@@ -7,12 +7,10 @@ import { ButtonComponent } from '@/components/button-component'
 import { useLocalSearchParams, router } from 'expo-router';
 import { AppColors, sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Button } from '@react-navigation/elements';
 
 export default function ChoiceButtons() {
   // https://docs.expo.dev/router/reference/url-parameters/
   const { date } = useLocalSearchParams(); // get date passed through the router (read router docs for more info)
-  const [selected, setSelected] = useState<'Rep based' | 'Time based' | null>(null); // track which button is selected
   const [workoutName, setWorkoutName] = useState(''); // track workout name input
   // turn date into readable date e.g. March 13
   const readableDate = new Date(date as string).toLocaleDateString(
@@ -25,14 +23,12 @@ export default function ChoiceButtons() {
     try {
       if (!date) throw new Error('No workout date was provided.');
       if (!workoutName.trim()) throw new Error('Please enter a workout name.');
-      if (!selected) throw new Error('Please choose Rep based or Time based.');
 
       router.push({
         pathname: '/exercise_selection',
         params: {
           date: date as string,
           name: workoutName.trim(),
-          mode: selected,
         },
       });
     } catch (error: any) {
@@ -78,21 +74,6 @@ export default function ChoiceButtons() {
 
         // Updates workoutName state whenever the user types
         onChangeText={setWorkoutName}/>
-
-      {/* Rep-based selection button */}
-      <ButtonComponent
-        text="Rep based"
-        selected={selected === 'Rep based'}
-        onPress={() => setSelected('Rep based')}
-      />
-
-      {/* Time-based selection button */}
-      <ButtonComponent
-        text="Time based"
-        selected={selected === 'Time based'}
-        onPress={() => setSelected('Time based')
-        }
-      />
 
       {/* Continue button */}
       <ButtonComponent
