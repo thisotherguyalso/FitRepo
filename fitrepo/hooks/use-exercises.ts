@@ -32,3 +32,7 @@ export function addExercise(exercise: { id: string; name: string }) {
 export function removeExercise(id: string) {
     return deleteExercise(id)
 }
+
+export function updateExercise(exercise: Exercise, editedName: string) {
+    
+}
