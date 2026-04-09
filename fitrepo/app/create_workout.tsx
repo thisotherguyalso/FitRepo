@@ -1,24 +1,21 @@
-import { StyleSheet, TextInput, Alert } from 'react-native';
+import { StyleSheet, TextInput, Alert, View, Text } from 'react-native';
 import { useState } from 'react';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { ButtonComponent } from '@/components/button-component'
+import { ButtonComponent } from '@/components/button-component';
 import { useLocalSearchParams, router } from 'expo-router';
-import { AppColors, sharedStyles } from '@/constants/styles';
+import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export default function ChoiceButtons() {
-  // https://docs.expo.dev/router/reference/url-parameters/
-  const { date } = useLocalSearchParams(); // get date passed through the router (read router docs for more info)
-  const [workoutName, setWorkoutName] = useState(''); // track workout name input
-  // turn date into readable date e.g. March 13
-  const readableDate = new Date(date as string).toLocaleDateString(
-    undefined,
-    { month: 'long', day: 'numeric', year: 'numeric' }
-  );
+export default function CreateWorkout() {
+  const { date } = useLocalSearchParams();
+  const [workoutName, setWorkoutName] = useState('');
 
-  // goes to the exercise selection screen with the workout details
+  const readableDate = new Date(date as string).toLocaleDateString(undefined, {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
   function handleContinue() {
     try {
       if (!date) throw new Error('No workout date was provided.');
@@ -36,7 +33,6 @@ export default function ChoiceButtons() {
     }
   }
 
-  // opens the global preset list and passes the chosen date
   function handleLoadPreset() {
     try {
       if (!date) throw new Error('No workout date was provided.');
@@ -53,96 +49,104 @@ export default function ChoiceButtons() {
   }
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-      <LinearGradient
-        colors={['#020975fb', '#151718']}
-        style={sharedStyles.background}/>
-      <ThemedView style={styles.container}>
+    <View style={styles.wrapper}>
+      <ParallaxScrollView
+        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
+      >
+        <LinearGradient
+          colors={['#020975', '#0d0d12']}
+          style={sharedStyles.background}
+        />
 
-      {/* Screen title */}
-      <ThemedText style={styles.headerText}>
-        Create Workout for {'\n'}{readableDate}
-      </ThemedText>
+        {/* Header */}
+        <Text style={styles.header}>Create Workout</Text>
+        <Text style={styles.subheader}>{readableDate}</Text>
 
-      {/* Workout name input */}
-      <TextInput
-        style={[sharedStyles.input, styles.input]}
-        placeholder="Enter workout name"
-        placeholderTextColor="#888"
-        value={workoutName}
+        {/* Workout Name Card */}
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>WORKOUT NAME</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter workout name"
+            placeholderTextColor="#666"
+            value={workoutName}
+            onChangeText={setWorkoutName}
+          />
+        </View>
 
-        // Updates workoutName state whenever the user types
-        onChangeText={setWorkoutName}/>
-
-      {/* Continue button */}
-      <ButtonComponent
-        text = "Choose Exercises"
-        onPress = {handleContinue}
-      />
-
-      {/* Load Preset button */}
-      <ButtonComponent
-        text = "Load from Preset"
-        onPress = {handleLoadPreset}
-      />
-
-      {/* Back button */}
-      <ButtonComponent
-        text = "Back to Workouts"
-        onPress = {() => {router.push('/(tabs)/workouts');}}
-      />
-
-    </ThemedView>
-  </ParallaxScrollView>
+        {/* Actions */}
+        <View style={styles.actions}>
+          <ButtonComponent text="Choose Exercises" onPress={handleContinue} />
+          <ButtonComponent
+            text="Load from Preset"
+            onPress={handleLoadPreset}
+            style={styles.secondaryButton}
+          />
+          <ButtonComponent
+            text="Back to Workouts"
+            onPress={() => router.push('/(tabs)/workouts')}
+            style={styles.backButton}
+          />
+        </View>
+      </ParallaxScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
-    padding: 4,
-    justifyContent: 'flex-start',
+    backgroundColor: '#0d0d12',
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
+  header: {
+    color: AppColors.text,
+    fontSize: 28,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subheader: {
+    color: '#93c5fd',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  card: {
+    backgroundColor: '#1c1c1f',
+    padding: AppSpacing.lg,
+    borderRadius: AppRadius.lg,
+    marginBottom: 24,
+  },
+  cardLabel: {
+    color: AppColors.text,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 2,
+    opacity: 0.5,
+    marginBottom: 12,
   },
   input: {
-    marginBottom: 24,
+    backgroundColor: '#141417',
+    color: AppColors.text,
+    padding: 16,
+    borderRadius: AppRadius.md,
+    fontSize: 16,
   },
-  button: {
-    marginBottom: 20,
+  actions: {
+    gap: 12,
+  },
+  secondaryButton: {
+    backgroundColor: '#3b82f6',
+    padding: 16,
+    borderRadius: AppRadius.lg,
     alignItems: 'center',
-  },
-  createButton: {
-    backgroundColor: AppColors.primaryDark,
-    marginBottom: 20,
-  },
-  presetButton: {
-    backgroundColor: AppColors.secondary,
-    marginBottom: 20,
-  },
-  selectedButton: {
-    backgroundColor: 'rgb(0,184,255)',
-  },
-  selectedButtonText: {
-    color: 'rgb(0,31,43)',
-  },
-  buttonText: {
-    fontSize: 18,
-  },
-  headerText: {
-    fontSize: 30,
-    fontWeight: '700',
-    color: '#ffffff',
-    textAlign: 'center',
-    marginTop: 12,
-    marginBottom: 20,
-    lineHeight: 36,
+    marginBottom: 12,
   },
   backButton: {
-    backgroundColor: AppColors.danger,
-    marginBottom: 24,
+    backgroundColor: '#7f1d1d',
+    padding: 16,
+    borderRadius: AppRadius.lg,
+    alignItems: 'center',
+    marginBottom: 12,
   },
 });
