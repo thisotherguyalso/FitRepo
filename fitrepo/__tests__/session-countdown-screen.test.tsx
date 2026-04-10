@@ -99,7 +99,7 @@ describe('SessionCountdownScreen', () => {
           onComplete={mockOnComplete}
         />
       );
-      expect(getByText('Double tap to skip')).toBeTruthy();
+      expect(getByText('Tap to skip')).toBeTruthy();
     });
 
     it('renders duration as initial countdown', () => {
@@ -122,7 +122,7 @@ describe('SessionCountdownScreen', () => {
           onComplete={mockOnComplete}
         />
       );
-      expect(getByText('tap to start')).toBeTruthy();
+      expect(getByText('tap timer to start')).toBeTruthy();
     });
 
     it('does not count down when not started', () => {
