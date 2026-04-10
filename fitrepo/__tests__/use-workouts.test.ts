@@ -23,7 +23,7 @@ describe('useWorkouts', () => {
         jest.clearAllMocks()
     })
 
-    it('should start with loading as false', async () => {
+    it('should initialize as not loading yet', async () => {
         (getWorkouts as jest.Mock).mockResolvedValue([])
         const { result } = renderHook(() => useWorkouts())
         

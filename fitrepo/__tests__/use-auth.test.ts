@@ -50,7 +50,7 @@ describe('useAuth', () => {
         })
     })
 
-    it ('should start with loading as false', () => {
+    it ('should initialize as not loading yet', () => {
         const { result } = renderHook(() => useAuth());
         expect(result.current.loading).toBe(false);
     });
@@ -136,7 +136,7 @@ describe('useAuth', () => {
         expect(createProfile).not.toHaveBeenCalled()
     });
 
-    it('should end with loading as false', async () => {
+    it('should stop loading after signIn', async () => {
         const { result } = renderHook(() => useAuth());
 
         (supabase.auth.signInWithPassword as jest.Mock).mockResolvedValue({
@@ -151,7 +151,7 @@ describe('useAuth', () => {
         expect(result.current.loading).toBe(false);
     });
 
-    it('should set loading to true during signUp', async () => {
+    it('should start loading after signup', async () => {
         const { result } = renderHook(() => useAuth());
 
         (supabase.auth.signInWithPassword as jest.Mock).mockImplementation(() =>
