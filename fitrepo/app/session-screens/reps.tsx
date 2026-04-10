@@ -106,7 +106,7 @@ export default function Reps() {
         </TouchableOpacity>
 
         {/* Skip Hint */}
-        <Text style={styles.skipHint}>Tap counter to add rep • Double tap to skip</Text>
+        <Text style={styles.skipHint}>Tap counter to add rep</Text>
       </LinearGradient>
     </GestureHandlerRootView>
   );
@@ -206,5 +206,6 @@ const styles = StyleSheet.create({
     color: AppColors.text,
     fontSize: 14,
     opacity: 0.4,
+    marginBottom: 15,
   },
 });
