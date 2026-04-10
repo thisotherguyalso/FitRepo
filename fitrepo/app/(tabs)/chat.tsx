@@ -290,23 +290,24 @@ export default function ChatScreen() {
               }>
               <Text style={sharedStyles.buttonText}>Open Workout</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[sharedStyles.button, styles.clearButton, styles.actionButton]}
-              onPress={() => {
-                clearChatHistory()
-                setCreatedWorkoutId(null)
-                setPendingAction(null)
-                setMessages([
-                  buildMessage(
-                    'assistant',
-                    'Clean slate. Ask for advice, create a workout, or tell me to edit one.'
-                  ),
-                ])
-              }}>
-              <Text style={sharedStyles.buttonText}>Clear Chat</Text>
-            </TouchableOpacity>
           </View>
         ) : null}
+        
+        <TouchableOpacity
+          style={[sharedStyles.button, styles.clearButton, styles.actionButton]}
+          onPress={() => {
+            clearChatHistory()
+            setCreatedWorkoutId(null)
+            setPendingAction(null)
+            setMessages([
+              buildMessage(
+                'assistant',
+                'Clean slate. Ask for advice, create a workout, or tell me to edit one.'
+              ),
+            ])
+          }}>
+          <Text style={sharedStyles.buttonText}>Clear Chat</Text>
+        </TouchableOpacity>
       </View>
     </ParallaxScrollView>
   )
