@@ -19,6 +19,7 @@ import {
 } from '@/lib/api/chat'
 import { clearChatHistory, loadChatHistory, saveChatHistory } from '@/lib/chat-history'
 import { AppColors, sharedStyles } from '@/constants/styles'
+import { LinearGradient } from 'expo-linear-gradient'
 
 type LocalMessage = ChatMessage & {
   id: string
@@ -202,6 +203,11 @@ export default function ChatScreen() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
+
+      <LinearGradient
+              colors={['#020975', '#0d0d12']}
+              style={sharedStyles.background}
+            />
       <View style={styles.container}>
         <Text style={[sharedStyles.title, styles.title]}>FitRepo Chat</Text>
         <Text style={styles.subtitle}>
