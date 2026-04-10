@@ -6,11 +6,11 @@ export async function goToNextExercise(
   exercises: SessionExercise[],
   currentIndex: number,
   workout_id: string,
+  user_id: string,
 ) {
   const nextIndex = currentIndex + 1;
 
   if (nextIndex >= exercises.length) {
-    // Mark workout as finished before navigating
     try {
       await updateWorkout(workout_id, { is_finished: true });
     } catch (error) {
@@ -24,14 +24,13 @@ export async function goToNextExercise(
     return;
   }
 
-  const next = exercises[nextIndex];
-
   router.push({
     pathname: '/session-screens/breathe',
     params: {
       exercises: JSON.stringify(exercises),
       currentIndex: String(nextIndex),
       workout_id,
+      user_id,
     },
   });
 }

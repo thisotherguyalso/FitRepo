@@ -56,3 +56,15 @@ export type PresetExercise = {
     exercise_id: string
     order_index: number
 }
+
+export type HistoryEntry = {
+    id: string
+    user_id: string
+    workout_id: string
+    exercise_id: string
+    set_number: number
+    reps: number | null
+    time_seconds: number | null
+    weight: number | null
+    created_at: string
+}

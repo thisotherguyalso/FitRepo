@@ -17,6 +17,8 @@ import {
   mapWorkoutExercisesToEditable,
   toNullableNumber,
 } from '@/lib/workout-editor';
+import { useWorkoutHistory } from '@/hooks/use-history-entry';
+import { HistoryEntry } from '@/types/database';
 
 export default function ViewWorkout() {
   const params = useLocalSearchParams<{ workout_id?: string | string[] }>();
@@ -50,6 +52,24 @@ export default function ViewWorkout() {
         year: 'numeric',
       })
     : '';
+
+  const { history, loading: loadingHistory } = useWorkoutHistory(workout_id ?? '');
+
+  // Group history by exercise_id for display
+  const historyByExercise = useMemo(() => {
+    const grouped: Record<string, HistoryEntry[]> = {};
+    for (const entry of history) {
+      if (!grouped[entry.exercise_id]) {
+        grouped[entry.exercise_id] = [];
+      }
+      grouped[entry.exercise_id].push(entry);
+    }
+    // Sort sets within each exercise
+    for (const key of Object.keys(grouped)) {
+      grouped[key].sort((a, b) => a.set_number - b.set_number);
+    }
+    return grouped;
+  }, [history]);
 
   useEffect(() => {
     if (!workout_id) return;
@@ -337,6 +357,20 @@ export default function ViewWorkout() {
                           style={styles.removeButton}
                         />
                       </>
+                    ) : workout.is_finished && historyByExercise[exercise.exercise_id]?.length > 0 ? (
+                      // Show actual logged history for finished workouts
+                      <View style={styles.historyContainer}>
+                        {historyByExercise[exercise.exercise_id].map((entry) => (
+                          <View key={entry.id} style={styles.historyRow}>
+                            <Text style={styles.historySetLabel}>Set {entry.set_number}</Text>
+                            <View style={styles.historyMeta}>
+                              {entry.reps && <Text style={styles.metaText}>{entry.reps} reps</Text>}
+                              {entry.time_seconds && <Text style={styles.metaText}>{entry.time_seconds}s</Text>}
+                              {entry.weight && <Text style={styles.metaText}>{entry.weight}kg</Text>}
+                            </View>
+                          </View>
+                        ))}
+                      </View>
                     ) : (
                       <View style={styles.metaRow}>
                         {exercise.sets && <Text style={styles.metaText}>{exercise.sets} sets</Text>}
@@ -634,5 +668,25 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
+  },
+  historyContainer: {
+    gap: 8,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#141417',
+    padding: 10,
+    borderRadius: AppRadius.md,
+  },
+  historySetLabel: {
+    color: '#93c5fd',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  historyMeta: {
+    flexDirection: 'row',
+    gap: 12,
   },
 });

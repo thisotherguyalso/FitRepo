@@ -9,6 +9,7 @@ type SessionCountdownScreenProps = {
   mode: 'rest' | 'exercise'
   title: string
   onComplete: () => void
+  onSkip?: () => void
   duration?: number
   autoStart?: boolean
   onDurationChange?: (newDuration: number) => void
@@ -18,6 +19,7 @@ export function SessionCountdownScreen({
   mode,
   title,
   onComplete,
+  onSkip,
   duration = 20,
   autoStart = false,
   onDurationChange,
@@ -46,9 +48,13 @@ export function SessionCountdownScreen({
     return () => clearInterval(interval)
   }, [isRunning])
 
+  // Defer onComplete to avoid state update during render
   useEffect(() => {
     if (timeRemaining === 0) {
-      onComplete()
+      const timeout = setTimeout(() => {
+        onComplete()
+      }, 0)
+      return () => clearTimeout(timeout)
     }
   }, [timeRemaining, onComplete])
 
@@ -60,7 +66,13 @@ export function SessionCountdownScreen({
     })
   }
 
-  // Single tap to start/pause
+  const handleSkip = () => {
+    // Defer to next tick to avoid render conflicts
+    setTimeout(() => {
+      (onSkip ?? onComplete)()
+    }, 0)
+  }
+
   const singleTap = Gesture.Tap()
     .maxDuration(250)
     .onEnd(() => setIsRunning((prev) => !prev))
@@ -89,7 +101,6 @@ export function SessionCountdownScreen({
               <Text style={styles.adjustButtonText}>−5</Text>
             </TouchableOpacity>
 
-            {/* Tap timer to start/pause */}
             <GestureDetector gesture={singleTap}>
               <View>
                 <Text style={styles.timer}>{timeRemaining}</Text>
@@ -109,7 +120,6 @@ export function SessionCountdownScreen({
             {!isRunning ? 'tap timer to start' : 'seconds'}
           </Text>
 
-          {/* Paused indicator */}
           {!isRunning && timeRemaining < duration && (
             <View style={styles.pausedBadge}>
               <Text style={styles.pausedText}>PAUSED</Text>
@@ -117,11 +127,11 @@ export function SessionCountdownScreen({
           )}
         </View>
 
-        {/* Up Next Card (rest mode) - tappable to skip */}
+        {/* Up Next Card (rest mode) */}
         {showUpNext && (
           <TouchableOpacity
             style={styles.upNextCard}
-            onPress={onComplete}
+            onPress={handleSkip}
             activeOpacity={0.7}
           >
             <Text style={styles.upNextLabel}>UP NEXT</Text>
@@ -134,7 +144,7 @@ export function SessionCountdownScreen({
         {!showUpNext && (
           <TouchableOpacity
             style={styles.skipButton}
-            onPress={onComplete}
+            onPress={handleSkip}
             activeOpacity={0.7}
           >
             <Text style={styles.skipButtonText}>Skip Exercise</Text>

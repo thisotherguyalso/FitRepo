@@ -6,6 +6,7 @@ import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useTodaySession } from '@/hooks/use-today-session';
 import { ButtonComponent } from '@/components/button-component';
 import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { supabase } from '@/lib/supabase'; // or your auth hook
 
 export default function SessionTab() {
   const { session, loading, reload } = useTodaySession();
@@ -16,8 +17,12 @@ export default function SessionTab() {
     }, [])
   );
 
-  function startSession() {
+  async function startSession() {
     if (!session || session.exercises.length === 0) return;
+
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
 
     const first = session.exercises[0];
     const allExercises = JSON.stringify(session.exercises);
@@ -30,6 +35,7 @@ export default function SessionTab() {
         exercises: allExercises,
         currentIndex: '0',
         workout_id: session.workout_id,
+        user_id: user.id,
       },
     });
   }

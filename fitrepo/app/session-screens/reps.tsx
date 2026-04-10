@@ -5,13 +5,20 @@ import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-g
 import { LinearGradient } from 'expo-linear-gradient';
 import { SessionExercise } from '@/hooks/use-today-session';
 import { goToNextExercise } from '@/utils/session-navigation';
+import { createHistoryEntry } from '@/lib/api/historyEntries';
 import { AppColors, AppRadius, AppSpacing } from '@/constants/styles';
 
 export default function Reps() {
-  const { exercises: exercisesParam, currentIndex: indexParam, workout_id } = useLocalSearchParams<{
+  const {
+    exercises: exercisesParam,
+    currentIndex: indexParam,
+    workout_id,
+    user_id,
+  } = useLocalSearchParams<{
     exercises: string;
     currentIndex: string;
     workout_id: string;
+    user_id: string;
   }>();
 
   const exercises: SessionExercise[] = JSON.parse(exercisesParam ?? '[]');
@@ -21,19 +28,44 @@ export default function Reps() {
   const totalSets = exercise?.sets ?? 1;
   const [currentSet, setCurrentSet] = useState(1);
   const [repAmount, setRepAmount] = useState(0);
+  const [saving, setSaving] = useState(false);
 
-  function handleFinishSet() {
-    if (currentSet < totalSets) {
-      setCurrentSet((s) => s + 1);
-      setRepAmount(0);
-    } else {
-      goToNextExercise(exercises, currentIndex, workout_id as string);
+  async function handleFinishSet() {
+    if (saving) return;
+
+    setSaving(true);
+    try {
+      // Log this set to history
+      await createHistoryEntry(user_id, workout_id, exercise.exercise_id, {
+        set_number: currentSet,
+        reps: repAmount > 0 ? repAmount : null,
+        time_seconds: null,
+        weight: exercise?.weight ?? null,
+      });
+
+      if (currentSet < totalSets) {
+        setCurrentSet((s) => s + 1);
+        setRepAmount(0);
+      } else {
+        goToNextExercise(exercises, currentIndex, workout_id, user_id);
+      }
+    } catch (error) {
+      console.error('Failed to save set:', error);
+      // Still advance even if save fails - could show toast here
+      if (currentSet < totalSets) {
+        setCurrentSet((s) => s + 1);
+        setRepAmount(0);
+      } else {
+        goToNextExercise(exercises, currentIndex, workout_id, user_id);
+      }
+    } finally {
+      setSaving(false);
     }
   }
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
-    .onEnd(() => goToNextExercise(exercises, currentIndex, workout_id as string))
+    .onEnd(() => goToNextExercise(exercises, currentIndex, workout_id, user_id))
     .runOnJS(true);
 
   const singleTap = Gesture.Tap()
@@ -99,18 +131,21 @@ export default function Reps() {
           style={[styles.finishButton, isLastSet && styles.finishButtonLast]}
           onPress={handleFinishSet}
           activeOpacity={0.8}
+          disabled={saving}
         >
           <Text style={styles.finishButtonText}>
-            {isLastSet ? 'Finish Exercise' : 'Finish Set'}
+            {saving ? 'Saving...' : isLastSet ? 'Finish Exercise' : 'Finish Set'}
           </Text>
         </TouchableOpacity>
 
         {/* Skip Hint */}
-        <Text style={styles.skipHint}>Tap counter to add rep</Text>
+        <Text style={styles.skipHint}>Tap counter to add rep • Double-tap to skip</Text>
       </LinearGradient>
     </GestureHandlerRootView>
   );
 }
+
+// ... styles stay the same
 
 const styles = StyleSheet.create({
   root: {

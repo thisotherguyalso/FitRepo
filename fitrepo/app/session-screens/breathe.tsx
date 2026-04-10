@@ -3,10 +3,16 @@ import { SessionCountdownScreen } from '@/components/session-countdown-screen';
 import { SessionExercise } from '@/hooks/use-today-session';
 
 export default function Breathe() {
-  const { exercises: exercisesParam, currentIndex: indexParam, workout_id } = useLocalSearchParams<{
+  const {
+    exercises: exercisesParam,
+    currentIndex: indexParam,
+    workout_id,
+    user_id,
+  } = useLocalSearchParams<{
     exercises: string;
     currentIndex: string;
     workout_id: string;
+    user_id: string;
   }>();
 
   const exercises: SessionExercise[] = JSON.parse(exercisesParam ?? '[]');
@@ -21,6 +27,7 @@ export default function Breathe() {
         exercises: exercisesParam,
         currentIndex: String(currentIndex),
         workout_id,
+        user_id,
       },
     });
   }
