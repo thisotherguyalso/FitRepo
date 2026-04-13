@@ -2,12 +2,15 @@ import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import * as WebBrowser from 'expo-web-browser'
 import { useAuth } from '@/hooks/use-auth'
-import { AppColors, sharedStyles } from '@/constants/styles'
+import { useAppColors, sharedStyles, AppColors } from '@/constants/styles'
 
 WebBrowser.maybeCompleteAuthSession()
 
+
 export default function Login() {
   // sets the states that triggers re-rendering of the screen
+  const colors = useAppColors()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
@@ -35,13 +38,13 @@ export default function Login() {
         onChangeText={setPassword}
         secureTextEntry/>
 
-      <TouchableOpacity style={[sharedStyles.button, styles.button]}
+      <TouchableOpacity style={[sharedStyles.button, styles.button, {backgroundColor : colors.primary}]}
       onPress={() => isSignUp ? signUp(email, password) : signIn(email, password)}
       disabled={loading}>
         <Text style={sharedStyles.buttonText}>{loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[sharedStyles.button, styles.googleButton]} onPress={googleSignIn}>
+      <TouchableOpacity style={[sharedStyles.button, styles.googleButton, {backgroundColor : colors.text}]} onPress={googleSignIn}>
         <Text style={styles.googleButtonText}>Continue with Google</Text>
       </TouchableOpacity>
 
@@ -65,11 +68,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   button: {
-    backgroundColor: AppColors.primary,
     marginBottom: 16,
   },
   googleButton: {
-    backgroundColor: AppColors.text,
     marginBottom: 16,
   },
   googleButtonText: {

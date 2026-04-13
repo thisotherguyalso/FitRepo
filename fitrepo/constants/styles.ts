@@ -1,7 +1,24 @@
-import { StyleSheet } from 'react-native'
+import { StyleSheet, useColorScheme } from 'react-native'
 
-export const AppColors = {
-  background: '#0f0f0f',
+export const LightColors = {
+  background: '#f2f2f7',
+  surface: '#ffffff',
+  surfaceAlt: '#e5e5ea',
+  panel: '#f2f2f7',
+  panelAlt: '#e5e5ea',
+  text: '#11181C',
+  textMuted: '#6b6b6b',
+  textSubtle: '#6b7280',
+  textAccent: '#0a7ea4',
+  primary: '#0a7ea4',
+  secondary: 'rgb(30,133,247)',
+  danger: 'rgb(241,106,111)',
+  warning: '#f59e0b',
+  signOut: '#a81a1a',
+} as const
+
+export const DarkColors = {
+  background: '#0d0d12',
   surface: '#1a1a1a',
   surfaceAlt: '#232323',
   panel: '#111827',
@@ -10,12 +27,20 @@ export const AppColors = {
   textMuted: '#888',
   textSubtle: '#9ca3af',
   textAccent: '#93c5fd',
-  primary: '#0a7ea4',
-  primaryDark: 'rgb(0,65,90)',
+  primary: '#020975fb',
   secondary: 'rgb(30,133,247)',
   danger: 'rgb(241,106,111)',
   warning: '#f59e0b',
+  signOut: '#7f1d1d',
 } as const
+
+// Keep AppColors as dark for static styles (StyleSheet.create)
+export const AppColors = DarkColors
+
+export function useAppColors() {
+  const scheme = useColorScheme()
+  return scheme === 'light' ? LightColors : DarkColors
+}
 
 export const AppRadius = {
   md: 12,
@@ -51,7 +76,7 @@ export const sharedStyles = StyleSheet.create({
     padding: AppSpacing.md,
     fontSize: 16,
   },
-    background: {
+  background: {
     position: 'absolute',
     left: 0,
     right: 0,
