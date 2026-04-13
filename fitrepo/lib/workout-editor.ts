@@ -3,6 +3,7 @@ export type EditableExercise = {
   workout_id: string
   exercise_id: string
   name: string
+  type: 'reps' | 'timed'
   sets: string
   reps: string
   time_seconds: string
@@ -19,6 +20,7 @@ export function mapWorkoutExercisesToEditable(exercises: any[]): EditableExercis
     workout_id: exercise.workout_id,
     exercise_id: exercise.exercise_id,
     name: exercise.exercises?.name ?? 'Unnamed Exercise',
+    type: exercise.exercises?.type === 'timed' ? 'timed' : 'reps',
     sets: toEditableValue(exercise.sets),
     reps: toEditableValue(exercise.reps),
     time_seconds: toEditableValue(exercise.time_seconds),

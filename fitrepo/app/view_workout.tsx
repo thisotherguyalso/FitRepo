@@ -117,7 +117,7 @@ export default function ViewWorkout() {
     );
   }
 
-  async function handleAddExercise(exercise: { id: string; name: string }) {
+  async function handleAddExercise(exercise: { id: string; name: string; type: string }) {
     if (!workout) {
       Alert.alert('Error', 'Workout not found.');
       return;
@@ -133,6 +133,7 @@ export default function ViewWorkout() {
         workout_id: workout.id,
         exercise_id: exercise.id,
         name: exercise.name,
+        type: exercise.type === 'timed' ? 'timed' : 'reps',
         sets: '',
         reps: '',
         time_seconds: '',
@@ -319,33 +320,38 @@ export default function ViewWorkout() {
 
                     {isEditing ? (
                       <>
+                        {exercise.type === 'reps' ? (
+                          <>
+                            <TextInput
+                              style={styles.input}
+                              placeholder="Sets"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              value={exercise.sets}
+                              onChangeText={(v) => updateExerciseField(exercise.id, 'sets', v)}
+                            />
+                            <TextInput
+                              style={styles.input}
+                              placeholder="Reps"
+                              placeholderTextColor="#666"
+                              keyboardType="numeric"
+                              value={exercise.reps}
+                              onChangeText={(v) => updateExerciseField(exercise.id, 'reps', v)}
+                            />
+                          </>
+                        ) : (
+                          <TextInput
+                            style={styles.input}
+                            placeholder="Time (seconds)"
+                            placeholderTextColor="#666"
+                            keyboardType="numeric"
+                            value={exercise.time_seconds}
+                            onChangeText={(v) => updateExerciseField(exercise.id, 'time_seconds', v)}
+                          />
+                        )}
                         <TextInput
                           style={styles.input}
-                          placeholder="Sets"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          value={exercise.sets}
-                          onChangeText={(v) => updateExerciseField(exercise.id, 'sets', v)}
-                        />
-                        <TextInput
-                          style={styles.input}
-                          placeholder="Reps"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          value={exercise.reps}
-                          onChangeText={(v) => updateExerciseField(exercise.id, 'reps', v)}
-                        />
-                        <TextInput
-                          style={styles.input}
-                          placeholder="Time (seconds)"
-                          placeholderTextColor="#666"
-                          keyboardType="numeric"
-                          value={exercise.time_seconds}
-                          onChangeText={(v) => updateExerciseField(exercise.id, 'time_seconds', v)}
-                        />
-                        <TextInput
-                          style={styles.input}
-                          placeholder="Weight"
+                          placeholder="Weight (optional)"
                           placeholderTextColor="#666"
                           keyboardType="numeric"
                           value={exercise.weight}
