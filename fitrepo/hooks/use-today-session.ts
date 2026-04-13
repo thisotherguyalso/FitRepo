@@ -18,6 +18,7 @@ export type TodaySession = {
   workout_id: string;
   workout_name: string;
   exercises: SessionExercise[];
+  completed?: boolean;
 };
 
 export function useTodaySession() {
@@ -35,15 +36,20 @@ export function useTodaySession() {
 
     const { data: workout } = await supabase
       .from('workouts')
-      .select('id, name')
+      .select('id, name, is_finished')
       .eq('performed_at', formatted)
-      .eq('is_finished', false)
       .order('created_at', { ascending: true })
       .limit(1)
-      .single();
+      .single() as {data : { id: string; name: string; is_finished: boolean } | null, error: any};
 
     if (!workout) {
       setSession(null);
+      setLoading(false);
+      return;
+    }
+
+    if (workout.is_finished) {
+      setSession({workout_id : workout.id, workout_name : workout.name, exercises: [], completed: true})
       setLoading(false);
       return;
     }

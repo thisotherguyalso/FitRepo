@@ -61,6 +61,13 @@ export default function SessionTab() {
           <Text style={styles.emptyTitle}>Rest Day</Text>
           <Text style={styles.emptyText}>No workout planned for today.</Text>
         </View>
+      ) : session.completed ? (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyTitle}>Great work! 💪</Text>
+          <Text/>
+          <Text style={styles.emptyText}>You've completed today's workout,</Text>
+          <Text style={styles.emptyWorkoutName}>{session.workout_name}</Text>
+        </View>
       ) : (
         <>
           {/* Workout Name Card */}
@@ -129,6 +136,13 @@ const styles = StyleSheet.create({
     color: AppColors.text,
     fontSize: 16,
     opacity: 0.5,
+  },
+  emptyWorkoutName: {
+    color: '#93c5fd',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 4,
   },
   workoutCard: {
     backgroundColor: '#1c1c1f',
