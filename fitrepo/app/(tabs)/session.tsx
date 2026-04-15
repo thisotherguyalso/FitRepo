@@ -5,11 +5,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { useTodaySession } from '@/hooks/use-today-session';
 import { ButtonComponent } from '@/components/button-component';
-import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { useAppColors, AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
 import { supabase } from '@/lib/supabase'; // or your auth hook
 
 export default function SessionTab() {
   const { session, loading, reload } = useTodaySession();
+  const colors = useAppColors();
 
   useFocusEffect(
     useCallback(() => {
@@ -42,15 +43,15 @@ export default function SessionTab() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}
+      headerBackgroundColor={{ light: '#3daace', dark: '#020975fb' }}
     >
       <LinearGradient
-        colors={['#020975', '#0d0d12']}
+        colors={[colors.primary, colors.background]}
         style={sharedStyles.background}
       />
 
       {/* Header */}
-      <Text style={styles.header}>Today's Session</Text>
+      <Text style={[styles.header, { color: colors.text }]}>Today's Session</Text>
 
       {loading ? (
         <View style={styles.centered}>
@@ -58,23 +59,24 @@ export default function SessionTab() {
         </View>
       ) : !session ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>Rest Day</Text>
-          <Text style={styles.emptyText}>No workout planned for today.</Text>
+          <Text style={[styles.emptyTitle, {color: colors.text}]}>Rest Day</Text>
+          <Text style={[styles.emptyText, {color: colors.text}]}>No workout planned for today.</Text>
         </View>
       ) : session.completed ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>Great work! 💪</Text>
-          <Text/>
-          <Text style={styles.emptyText}>You've completed today's workout,</Text>
-          <Text style={styles.emptyWorkoutName}>{session.workout_name}</Text>
+          <Text style={[{color: colors.text}, styles.emptyTitle]}>Great work! 💪</Text>
+          <Text style={[{color: colors.textMuted}, styles.emptyText]}>
+            You've completed today's workout,
+            <Text style={styles.emptyWorkoutName}> {session.workout_name}</Text>.
+          </Text>
         </View>
       ) : (
         <>
           {/* Workout Name Card */}
-          <View style={styles.workoutCard}>
-            <Text style={styles.workoutLabel}>WORKOUT</Text>
+          <View style={[styles.workoutCard, {backgroundColor: colors.surface}]}>
+            <Text style={[styles.workoutLabel, {color: colors.text}]}>WORKOUT</Text>
             <Text style={styles.workoutName}>{session.workout_name}</Text>
-            <Text style={styles.exerciseCount}>
+            <Text style={[styles.exerciseCount, {color: colors.text}]}>
               {session.exercises.length} exercise{session.exercises.length !== 1 ? 's' : ''}
             </Text>
           </View>
@@ -82,20 +84,20 @@ export default function SessionTab() {
           {/* Exercise List */}
           <View style={styles.exerciseList}>
             {session.exercises.map((ex, i) => (
-              <View key={ex.workout_exercise_id} style={styles.exerciseRow}>
-                <View style={styles.indexBadge}>
-                  <Text style={styles.exerciseIndex}>{i + 1}</Text>
+              <View key={ex.workout_exercise_id} style={[{backgroundColor: colors.panel}, styles.exerciseRow]}>
+                <View style={[{backgroundColor: colors.panelAlt}, styles.indexBadge]}>
+                  <Text style={[{color: colors.text}, styles.exerciseIndex]}>{i + 1}</Text>
                 </View>
                 <View style={styles.exerciseInfo}>
-                  <Text style={styles.exerciseName}>{ex.name}</Text>
-                  <Text style={styles.exerciseMeta}>
+                  <Text style={[{color: colors.text}, styles.exerciseName]}>{ex.name}</Text>
+                  <Text style={[{color: colors.text}, styles.exerciseMeta]}>
                     {ex.type === 'timed'
                       ? `${ex.sets} set${ex.sets !== 1 ? 's' : ''} · ${ex.time_seconds}s`
                       : `${ex.sets} × ${ex.reps} reps${ex.weight ? ` · ${ex.weight}kg` : ''}`}
                   </Text>
                 </View>
-                <View style={styles.typeBadge}>
-                  <Text style={styles.typeText}>
+                <View style={[{backgroundColor: colors.panelAlt}, styles.typeBadge]}>
+                  <Text style={[{color: colors.text}, styles.typeText]}>
                     {ex.type === 'timed' ? 'Timed' : 'Reps'}
                   </Text>
                 </View>
@@ -104,7 +106,11 @@ export default function SessionTab() {
           </View>
 
           {/* Start Button */}
-          <ButtonComponent onPress={startSession} text="Start Session" />
+          <ButtonComponent
+            onPress={startSession}
+            text="Start Session"
+            style={{backgroundColor: colors.textAccent}}
+          />
         </>
       )}
     </ParallaxScrollView>
@@ -127,15 +133,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyTitle: {
-    color: AppColors.text,
     fontSize: 24,
     fontWeight: '600',
     marginBottom: 8,
   },
   emptyText: {
-    color: AppColors.text,
     fontSize: 16,
-    opacity: 0.5,
   },
   emptyWorkoutName: {
     color: '#93c5fd',
@@ -145,7 +148,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   workoutCard: {
-    backgroundColor: '#1c1c1f',
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
@@ -167,7 +169,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   exerciseCount: {
-    color: AppColors.text,
     fontSize: 14,
     opacity: 0.5,
   },
@@ -178,7 +179,6 @@ const styles = StyleSheet.create({
   exerciseRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1c1c1f',
     padding: 14,
     borderRadius: AppRadius.md,
     gap: 14,
@@ -187,12 +187,10 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   exerciseIndex: {
-    color: AppColors.text,
     fontSize: 14,
     fontWeight: '700',
     opacity: 0.7,
@@ -201,24 +199,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   exerciseName: {
-    color: AppColors.text,
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 2,
   },
   exerciseMeta: {
-    color: AppColors.text,
     fontSize: 13,
     opacity: 0.5,
   },
   typeBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: AppRadius.md,
   },
   typeText: {
-    color: AppColors.text,
     fontSize: 12,
     fontWeight: '500',
     opacity: 0.6,

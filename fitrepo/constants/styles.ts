@@ -2,27 +2,29 @@ import { StyleSheet, useColorScheme } from 'react-native'
 
 export const LightColors = {
   background: '#f2f2f7',
-  surface: '#ffffff',
+  surface: '#fff',
   surfaceAlt: '#e5e5ea',
-  panel: '#f2f2f7',
+  panel: '#fff',
   panelAlt: '#e5e5ea',
   text: '#11181C',
   textMuted: '#6b6b6b',
   textSubtle: '#6b7280',
-  textAccent: '#0a7ea4',
-  primary: '#0a7ea4',
-  secondary: 'rgb(30,133,247)',
+  textAccent: '#93c5fd',
+  primary: '#3daace',
+  secondary: 'rgb(105, 158, 219)',
   danger: 'rgb(241,106,111)',
   warning: '#f59e0b',
   signOut: '#a81a1a',
+  active: '#3a3a3a',
+  inactive: '#999999',
 } as const
 
 export const DarkColors = {
   background: '#0d0d12',
   surface: '#1a1a1a',
-  surfaceAlt: '#232323',
-  panel: '#111827',
-  panelAlt: '#0f172a',
+  surfaceAlt: '#2c2c2c',
+  panel: '#1c1c1f',
+  panelAlt: 'rgba(255, 255, 255, 0.1)',
   text: '#fff',
   textMuted: '#888',
   textSubtle: '#9ca3af',
@@ -32,6 +34,8 @@ export const DarkColors = {
   danger: 'rgb(241,106,111)',
   warning: '#f59e0b',
   signOut: '#7f1d1d',
+  active: '#fff',
+  inactive: '#6b6b6b',
 } as const
 
 // Keep AppColors as dark for static styles (StyleSheet.create)

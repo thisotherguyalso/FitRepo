@@ -2,21 +2,25 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { HapticTab } from '@/components/haptic-tab';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { LightColors, DarkColors } from '@/constants/styles';
 
 export default function TabLayout() {
+  const colorScheme = useColorScheme() ?? 'dark';
+  const colors = colorScheme === 'dark' ? DarkColors : LightColors;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarButton: HapticTab,
 
-        // Dark theme override
         tabBarStyle: {
-          backgroundColor: '#0f0f0f',   // darker background
-          borderTopColor: '#1c1c1c',
+          backgroundColor: colors.surface,
+          borderTopColor: colors.surfaceAlt,
         },
-        tabBarActiveTintColor: '#ffffff',
-        tabBarInactiveTintColor: '#6b6b6b',
+        tabBarActiveTintColor: colors.active,
+        tabBarInactiveTintColor: colors.inactive,
 
         tabBarLabelStyle: {
           fontWeight: '600',

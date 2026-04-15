@@ -17,7 +17,7 @@ export function ButtonComponent({onPress, text, selected, disabled, style, textS
   return (
     <TouchableOpacity
       disabled={disabled}
-      style={style ? [style] : [sharedStyles.button, styles.presetButton]}
+      style={[sharedStyles.button, styles.presetButton, style]}
       onPress={onPress}>
       <Text style={textStyle ?
         [textStyle, selected && styles.selectedButtonText] :
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   createButton: {
-    backgroundColor: AppColors.primaryDark,
+    backgroundColor: AppColors.primary,
     marginBottom: 20,
   },
   presetButton: {

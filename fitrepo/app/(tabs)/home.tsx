@@ -14,7 +14,7 @@ export default function Home() {
 
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#0a7ea4', dark: '#020975fb' }}
+      headerBackgroundColor={{ light: '#3daace', dark: '#020975fb' }}
     >
       <LinearGradient
         colors={[colors.primary, colors.background]}
@@ -47,7 +47,7 @@ export default function Home() {
       <ButtonComponent
         onPress={signOut}
         text="Sign Out"
-        style={[styles.signOutButton, {backgroundColor: colors.signOut}]}
+        style={[{backgroundColor: colors.signOut}, styles.signOutButton]}
         textStyle={{ color: '#fff' }}
       />
     </ParallaxScrollView>
