@@ -42,9 +42,7 @@ export default function SessionTab() {
   }
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#3daace', dark: '#020975fb' }}
-    >
+    <ParallaxScrollView>
       <LinearGradient
         colors={[colors.primary, colors.background]}
         style={sharedStyles.background}

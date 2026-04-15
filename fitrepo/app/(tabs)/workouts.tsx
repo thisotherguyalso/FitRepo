@@ -42,9 +42,7 @@ export default function WorkoutsTab() {
 
   return (
     <View style={styles.container}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
-      >
+      <ParallaxScrollView>
         <LinearGradient
           colors={['#020975', '#0d0d12']}
           style={sharedStyles.background}

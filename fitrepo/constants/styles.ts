@@ -1,7 +1,7 @@
 import { StyleSheet, useColorScheme } from 'react-native'
 
 export const LightColors = {
-  background: '#f2f2f7',
+  background: '#f1f1f7',
   surface: '#fff',
   surfaceAlt: '#e5e5ea',
   panel: '#fff',

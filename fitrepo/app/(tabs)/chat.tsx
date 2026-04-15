@@ -201,13 +201,11 @@ export default function ChatScreen() {
   }
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#00adccfa', dark: '#020975fb' }}>
-
+    <ParallaxScrollView>
       <LinearGradient
-              colors={['#020975', '#0d0d12']}
-              style={sharedStyles.background}
-            />
+        colors={['#020975', '#0d0d12']}
+        style={sharedStyles.background}
+      />
       <View style={styles.container}>
         <Text style={[sharedStyles.title, styles.title]}>FitRepo Chat</Text>
         <Text style={styles.subtitle}>
@@ -342,7 +340,7 @@ const styles = StyleSheet.create({
     backgroundColor: AppColors.surface,
   },
   userBubble: {
-    backgroundColor: AppColors.primaryDark,
+    backgroundColor: AppColors.primary,
   },
   pendingBubble: {
     opacity: 0.8,

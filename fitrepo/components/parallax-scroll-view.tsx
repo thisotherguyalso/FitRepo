@@ -8,19 +8,18 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAppColors } from '@/constants/styles';
 
 const HEADER_HEIGHT = 100;
 
-type Props = PropsWithChildren<{
-  headerBackgroundColor: { dark: string; light: string };
-}>;
+type Props = PropsWithChildren<{}>;
 
 export default function ParallaxScrollView({
-  children,
-  headerBackgroundColor,
+  children
 }: Props) {
   const colorScheme = useColorScheme() ?? 'light';
-  const backgroundColor = colorScheme === 'light' ? '#f2f2f7' : '#0d0d12';
+  const colors = useAppColors();
+  const backgroundColor = colors.background;
   const textColor = colorScheme === 'light' ? '#2c2c2c' : '#f2f2f7';
 
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -51,7 +50,7 @@ export default function ParallaxScrollView({
       <Animated.View
         style={[
           styles.header,
-          { backgroundColor: headerBackgroundColor[colorScheme] },
+          { backgroundColor: colors.primary },
           headerAnimatedStyle,
         ]}
       >
