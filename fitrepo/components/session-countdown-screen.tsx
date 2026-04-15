@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 import { LinearGradient } from 'expo-linear-gradient'
-
+import { AnimatedCircularProgress } from 'react-native-circular-progress'
 import { AppColors, AppRadius, AppSpacing } from '@/constants/styles'
 
 type SessionCountdownScreenProps = {
@@ -102,8 +102,20 @@ export function SessionCountdownScreen({
             </TouchableOpacity>
 
             <GestureDetector gesture={singleTap}>
-              <View>
-                <Text style={styles.timer}>{timeRemaining}</Text>
+              <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                <AnimatedCircularProgress
+                  size={220}
+                  width={14}
+                  fill={(timeRemaining / duration) * 100}
+                  tintColor={mode === 'rest' ? '#22c55e' : '#3b82f6'}
+                  backgroundColor="rgba(255,255,255,0.1)"
+                  rotation={0}
+                  lineCap="round"
+                  duration={800}
+                />
+                <View style={{ position: 'absolute' }}>
+                  <Text style={styles.timer}>{timeRemaining}</Text>
+                </View>
               </View>
             </GestureDetector>
 
@@ -179,6 +191,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 20,
   },
   timerRow: {
     flexDirection: 'row',
