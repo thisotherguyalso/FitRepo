@@ -18,7 +18,7 @@ import {
   type PendingWorkoutEdit,
 } from '@/lib/api/chat'
 import { clearChatHistory, loadChatHistory, saveChatHistory } from '@/lib/chat-history'
-import { AppColors, sharedStyles } from '@/constants/styles'
+import { useAppColors, AppColors, sharedStyles } from '@/constants/styles'
 import { LinearGradient } from 'expo-linear-gradient'
 
 type LocalMessage = ChatMessage & {
@@ -200,16 +200,18 @@ export default function ChatScreen() {
     })
   }
 
+  const colors = useAppColors();
+
   return (
     <ParallaxScrollView>
       <LinearGradient
-        colors={['#020975', '#0d0d12']}
+        colors={[colors.primary, colors.background]}
         style={sharedStyles.background}
       />
       <View style={styles.container}>
         <Text style={[sharedStyles.title, styles.title]}>FitRepo Chat</Text>
-        <Text style={styles.subtitle}>
-          Ask for advice, create workouts, or say things like &quot;edit my workout for tomorrow&quot;.
+        <Text style={[styles.subtitle, {color: colors.textMuted}]}>
+          Ask for advice, create workouts, or say things like &quot;Edit my workout for tomorrow.&quot;
         </Text>
 
         <ScrollView
@@ -225,13 +227,13 @@ export default function ChatScreen() {
                 style={[
                   sharedStyles.card,
                   styles.messageBubble,
-                  isAssistant ? styles.assistantBubble : styles.userBubble,
+                  {backgroundColor: isAssistant ? colors.surface : colors.primary},
                   message.pending && styles.pendingBubble,
                 ]}>
-                <Text style={[styles.messageRole, isAssistant ? styles.assistantRole : styles.userRole]}>
+                <Text style={[styles.messageRole, {color: isAssistant ? colors.textChatbotTitle : '#fff'}]}>
                   {message.pending ? 'Working' : isAssistant ? 'Assistant' : 'You'}
                 </Text>
-                <Text style={styles.messageText}>{message.content}</Text>
+                <Text style={[styles.messageText, {color: isAssistant ? colors.textChatbot : '#fff'}]}>{message.content}</Text>
               </View>
             )
           })}
@@ -258,41 +260,69 @@ export default function ChatScreen() {
           </View>
         ) : null}
 
-        <TextInput
-          style={[sharedStyles.input, styles.input]}
-          value={input}
-          onChangeText={setInput}
-          placeholder="Ask or create a workout..."
-          placeholderTextColor="#666"
-          multiline
-          textAlignVertical="top"
-          editable={!loading}
-        />
-
-        <TouchableOpacity
-          style={[sharedStyles.button, styles.sendButton, loading && styles.sendButtonDisabled]}
-          onPress={() => void handleSend()}
-          disabled={loading}>
-          <Text style={sharedStyles.buttonText}>Send</Text>
-        </TouchableOpacity>
-
-        {createdWorkoutId ? (
-          <View style={styles.actionRow}>
+      {createdWorkoutId ? (
+          <View style={[{
+              overflow: 'hidden',
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: colors.accent1Border,
+              height: 60
+            }]}>
             <TouchableOpacity
-              style={[sharedStyles.button, styles.openWorkoutButton, styles.actionButton]}
+              style={[sharedStyles.button, styles.openWorkoutButton, styles.actionButton,
+              ]}
               onPress={() =>
                 router.push({
                   pathname: '/view_workout',
                   params: { workout_id: createdWorkoutId },
                 })
               }>
-              <Text style={sharedStyles.buttonText}>Open Workout</Text>
+              <LinearGradient
+                colors={[colors.accent1Alt, colors.accent1]}
+                style={[sharedStyles.background, {height: 85}]}
+              />
+              <Text style={[sharedStyles.buttonText]}>View Workout?</Text>
             </TouchableOpacity>
           </View>
         ) : null}
+
+        <View style={[{
+          alignContent: 'center',
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-evenly',
+          alignItems: "stretch",          
+
+          backgroundColor: colors.surface,
+          borderRadius: 16,
+        }]}>
+          <TextInput
+            style={[sharedStyles.input, styles.input, {
+              minWidth: 250,
+              maxWidth: 250,
+              borderRadius: 16,
+
+              backgroundColor: colors.panelAlt,
+              color: colors.text
+            }]}
+            value={input}
+            onChangeText={setInput}
+            placeholder="Ask or create a workout..."
+            placeholderTextColor="#666"
+            multiline
+            textAlignVertical="top"
+            editable={!loading}
+          />
+          <TouchableOpacity
+            style={[sharedStyles.button, loading && styles.sendButtonDisabled, {width: 80}]}
+            onPress={() => void handleSend()}
+            disabled={loading}>
+            <Text style={[sharedStyles.buttonText, {color: colors.text, textAlignVertical: 'center', textAlign: 'center'}]}>Send ➤</Text>
+          </TouchableOpacity>
+        </View>
         
         <TouchableOpacity
-          style={[sharedStyles.button, styles.clearButton, styles.actionButton]}
+          style={[sharedStyles.button, styles.clearButton, styles.actionButton, {backgroundColor: colors.signOut}]}
           onPress={() => {
             clearChatHistory()
             setCreatedWorkoutId(null)
@@ -391,10 +421,6 @@ const styles = StyleSheet.create({
   input: {
     minHeight: 96,
     marginBottom: 0,
-  },
-  sendButton: {
-    backgroundColor: AppColors.primary,
-    marginBottom: 12,
   },
   sendButtonDisabled: {
     opacity: 0.6,

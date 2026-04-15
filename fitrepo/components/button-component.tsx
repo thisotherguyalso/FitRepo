@@ -19,9 +19,8 @@ export function ButtonComponent({onPress, text, selected, disabled, style, textS
       disabled={disabled}
       style={[sharedStyles.button, styles.presetButton, style]}
       onPress={onPress}>
-      <Text style={textStyle ?
-        [textStyle, selected && styles.selectedButtonText] :
-        [sharedStyles.buttonText, styles.buttonText, selected && styles.selectedButtonText]}
+      <Text
+        style={[sharedStyles.buttonText, styles.buttonText, textStyle, selected && styles.selectedButtonText]}
       >
         {text}
       </Text>

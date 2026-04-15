@@ -19,7 +19,7 @@ export default function Home() {
         style={sharedStyles.background}
       />
 
-      <Text style={[styles.greeting, { color: colors.text }]}>Hello, {userName}!</Text>
+      <Text style={[styles.greeting, { color: '#fff' }]}>Hello, {userName}!</Text>
 
       <View style={[styles.card, { backgroundColor: colors.surface }]}>
         <Text style={[styles.cardLabel, { color: colors.text }]}>PREVIOUS WORKOUT</Text>
@@ -45,7 +45,7 @@ export default function Home() {
       <ButtonComponent
         onPress={signOut}
         text="Sign Out"
-        style={[{backgroundColor: colors.signOut}, styles.signOutButton]}
+        style={[{backgroundColor: colors.signOut}, styles.signOutButton,]}
         textStyle={{ color: '#fff' }}
       />
     </ParallaxScrollView>
@@ -107,7 +107,6 @@ const styles = StyleSheet.create({
   },
   signOutButton: {
     padding: 16,
-    borderRadius: AppRadius.lg,
     alignItems: 'center',
   },
 });

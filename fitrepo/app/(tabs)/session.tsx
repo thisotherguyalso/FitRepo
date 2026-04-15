@@ -49,7 +49,7 @@ export default function SessionTab() {
       />
 
       {/* Header */}
-      <Text style={[styles.header, { color: colors.text }]}>Today's Session</Text>
+      <Text style={[styles.header, { color: '#fff' }]}>Today's Session</Text>
 
       {loading ? (
         <View style={styles.centered}>
@@ -107,7 +107,6 @@ export default function SessionTab() {
           <ButtonComponent
             onPress={startSession}
             text="Start Session"
-            style={{backgroundColor: colors.textAccent}}
           />
         </>
       )}

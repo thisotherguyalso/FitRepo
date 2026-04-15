@@ -3,12 +3,14 @@ import { useState } from 'react';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ButtonComponent } from '@/components/button-component';
 import { useLocalSearchParams, router } from 'expo-router';
-import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { useAppColors, AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function CreateWorkout() {
   const { date } = useLocalSearchParams();
   const [workoutName, setWorkoutName] = useState('');
+
+  const colors = useAppColors();
 
   const readableDate = new Date(date as string).toLocaleDateString(undefined, {
     month: 'long',
@@ -50,11 +52,9 @@ export default function CreateWorkout() {
 
   return (
     <View style={styles.wrapper}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
-      >
+      <ParallaxScrollView>
         <LinearGradient
-          colors={['#020975', '#0d0d12']}
+          colors={[colors.primary, colors.background]}
           style={sharedStyles.background}
         />
 

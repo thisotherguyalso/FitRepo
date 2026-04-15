@@ -6,13 +6,15 @@ import BottomSheet from '@gorhom/bottom-sheet';
 import { router } from 'expo-router';
 import { useRef, useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { useAppColors, AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
 import { ButtonComponent } from '@/components/button-component';
 
 export default function WorkoutsTab() {
   const { workouts, markedDates, loadWorkouts } = useWorkouts();
   const screenWidth = Dimensions.get('window').width;
   const bottomSheetRef = useRef<BottomSheet>(null);
+
+  const colors = useAppColors();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -44,12 +46,12 @@ export default function WorkoutsTab() {
     <View style={styles.container}>
       <ParallaxScrollView>
         <LinearGradient
-          colors={['#020975', '#0d0d12']}
+          colors={[colors.primary, colors.background]}
           style={sharedStyles.background}
         />
 
         {/* Header */}
-        <Text style={styles.header}>My Workouts</Text>
+        <Text style={[styles.header, {color: '#fff'}]}>My Workouts</Text>
 
         {/* Calendar */}
         <View style={styles.calendarContainer}>
@@ -58,14 +60,15 @@ export default function WorkoutsTab() {
             pagingEnabled={true}
             calendarWidth={screenWidth}
             current={formatted}
+            key={colors.mode}
             theme={{
               calendarBackground: 'transparent',
-              dayTextColor: '#FFFFFF',
-              monthTextColor: '#FFFFFF',
-              textDisabledColor: '#444',
+              dayTextColor: colors.text,
+              monthTextColor: colors.text,
+              textDisabledColor: colors.textMuted,
               textMonthFontSize: 20,
-              todayBackgroundColor: '#202025',
-              todayTextColor: '#fff',
+              todayBackgroundColor: colors.panelAlt,
+              todayTextColor: colors.text,
             }}
             onDayPress={(day) => {
               setSelected(day.dateString);
@@ -79,12 +82,12 @@ export default function WorkoutsTab() {
         </View>
 
         {/* Section Title */}
-        <Text style={styles.sectionTitle}>{readableDate}</Text>
+        <Text style={[{color: colors.text}, styles.sectionTitle]}>{readableDate}</Text>
 
         {/* Show button OR workouts based on whether workouts exist */}
         {!hasWorkouts ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No workouts planned</Text>
+          <View style={[{backgroundColor: colors.surface}, styles.emptyState]}>
+            <Text style={[{color: colors.text}, styles.emptyText]}>No workouts planned</Text>
             <ButtonComponent
               onPress={() => {
                 router.push({
@@ -99,7 +102,7 @@ export default function WorkoutsTab() {
           selectedDateWorkouts.map((workout) => (
             <TouchableOpacity
               key={workout.id}
-              style={[styles.workoutCard, workout.is_finished && styles.finishedCard]}
+              style={[{overflow: 'hidden', borderColor: workout.is_finished ? colors.accent1Border : colors.accent2Border}, styles.workoutCard]}
               onPress={() => {
                 router.push({
                   pathname: '/view_workout',
@@ -107,15 +110,19 @@ export default function WorkoutsTab() {
                 });
               }}
             >
-              <View style={styles.workoutCardContent}>
+              <LinearGradient
+                colors={[workout.is_finished ? colors.accent1Alt : colors.accent2Alt, workout.is_finished ? colors.accent1 : colors.accent2]}
+                style={[sharedStyles.background, {height: 85}]}
+              />
+              <View style={[styles.workoutCardContent]}>
                 <Text style={styles.workoutName}>{workout.name}</Text>
                 <Text style={styles.workoutStatus}>
                   {workout.is_finished ? 'Completed' : 'Planned'}
                 </Text>
               </View>
-              <View style={[styles.statusBadge, workout.is_finished && styles.statusBadgeFinished]}>
+              <View style={[styles.statusBadge, {backgroundColor: workout.is_finished ? colors.accent1Border : colors.accent2Border}]}>
                 <Text style={styles.statusBadgeText}>
-                  {workout.is_finished ? '✓' : '→'}
+                  {workout.is_finished ? '✓' : '➤'}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -132,7 +139,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0d0d12',
   },
   header: {
-    color: AppColors.text,
     fontSize: 28,
     fontWeight: '700',
     marginBottom: 16,
@@ -142,35 +148,27 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    color: AppColors.text,
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 16,
   },
   emptyState: {
-    backgroundColor: '#202025',
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
     gap: 16,
   },
   emptyText: {
-    color: AppColors.text,
     fontSize: 15,
     opacity: 0.5,
   },
   workoutCard: {
-    backgroundColor: '#202025',
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  finishedCard: {
-    backgroundColor: '#1a2e1a',
     borderWidth: 1,
-    borderColor: '#2d4a2d',
   },
   workoutCardContent: {
     flex: 1,
@@ -190,12 +188,8 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2a2a2f',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  statusBadgeFinished: {
-    backgroundColor: '#2d4a2d',
   },
   statusBadgeText: {
     color: AppColors.text,
