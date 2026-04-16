@@ -7,6 +7,7 @@ import { SessionExercise } from '@/hooks/use-today-session';
 import { goToNextExercise } from '@/utils/session-navigation';
 import { createHistoryEntry } from '@/lib/api/historyEntries';
 import { AppColors, AppRadius, AppSpacing } from '@/constants/styles';
+import { AnimatedCircularProgress, CircularProgress } from 'react-native-circular-progress';
 
 export default function Reps() {
   const {
@@ -107,8 +108,20 @@ export default function Reps() {
 
             {/* Tap to add rep, double tap to skip */}
             <GestureDetector gesture={repGesture}>
-              <View>
-                <Text style={styles.repCount}>{repAmount}</Text>
+              <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                <AnimatedCircularProgress
+                  size={220}
+                  width={14}
+                  fill={((repAmount / (exercise?.reps || 1)) * 100)}
+                  tintColor='#3b82f6'
+                  backgroundColor="rgba(255,255,255,0.1)"
+                  rotation={0}
+                  lineCap="round"
+                  duration={800}
+                />
+                <View style={{ position: 'absolute' }}>
+                  <Text style={styles.repCount}>{repAmount}</Text>
+                </View>
               </View>
             </GestureDetector>
 
@@ -187,6 +200,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 20,
   },
   repRow: {
     flexDirection: 'row',
