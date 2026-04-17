@@ -219,7 +219,7 @@ export default function ChatScreen() {
           contentContainerStyle={styles.messageListContent}
           showsVerticalScrollIndicator={false}>
           {messages.map((message) => {
-            const isAssistant = message.role === 'assistant'
+            const isUser = message.role === 'user'
 
             return (
               <View
@@ -227,13 +227,13 @@ export default function ChatScreen() {
                 style={[
                   sharedStyles.card,
                   styles.messageBubble,
-                  {backgroundColor: isAssistant ? colors.surface : colors.primary},
+                  {backgroundColor: isUser ? colors.primary : colors.surface},
                   message.pending && styles.pendingBubble,
                 ]}>
-                <Text style={[styles.messageRole, {color: isAssistant ? colors.textChatbotTitle : '#fff'}]}>
-                  {message.pending ? 'Working' : isAssistant ? 'Assistant' : 'You'}
+                <Text style={[styles.messageRole, {color: isUser ? '#fff' : colors.textChatbotTitle}]}>
+                  {message.pending ? 'Working' : isUser ? 'You' : 'Assistant'}
                 </Text>
-                <Text style={[styles.messageText, {color: isAssistant ? colors.textChatbot : '#fff'}]}>{message.content}</Text>
+                <Text style={[styles.messageText, {color: isUser ? '#fff': colors.textChatbot}]}>{message.content}</Text>
               </View>
             )
           })}

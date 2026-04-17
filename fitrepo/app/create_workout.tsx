@@ -60,15 +60,15 @@ export default function CreateWorkout() {
 
         {/* Header */}
         <Text style={styles.header}>Create Workout</Text>
-        <Text style={styles.subheader}>{readableDate}</Text>
+        <Text style={[styles.subheader, {color: colors.textAccent2}]}>{readableDate}</Text>
 
         {/* Workout Name Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>WORKOUT NAME</Text>
+        <View style={[{backgroundColor: colors.surface}, styles.card]}>
+          <Text style={[styles.cardLabel, {color: colors.textMuted}]}>WORKOUT NAME</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, {backgroundColor: colors.surfaceAlt, color: colors.text} ]}
             placeholder="Enter workout name"
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.textMuted}
             value={workoutName}
             onChangeText={setWorkoutName}
           />
@@ -106,19 +106,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subheader: {
-    color: '#93c5fd',
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 24,
   },
   card: {
-    backgroundColor: '#1c1c1f',
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     marginBottom: 24,
   },
   cardLabel: {
-    color: AppColors.text,
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 2,

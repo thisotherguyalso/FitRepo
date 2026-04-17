@@ -5,7 +5,7 @@ import { ButtonComponent } from '@/components/button-component';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { useExercises } from '@/hooks/use-exercises';
-import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { AppColors, AppRadius, AppSpacing, sharedStyles, useAppColors } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
 
 type SelectedExercise = {
@@ -114,37 +114,37 @@ export default function ExerciseSelection() {
     }
   }
 
+  const colors = useAppColors();
+
   return (
-    <View style={styles.wrapper}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
-      >
+    <View style={[styles.wrapper, {backgroundColor: colors.background}]}>
+      <ParallaxScrollView>
         <LinearGradient
-          colors={['#020975', '#0d0d12']}
+          colors={[colors.primary, colors.background]}
           style={sharedStyles.background}
         />
 
         {/* Header */}
-        <Text style={styles.header}>{name}</Text>
-        <Text style={styles.subheader}>{readableDate}</Text>
+        <Text style={[styles.header, {color: "#fff"}]}>{name}</Text>
+        <Text style={[styles.subheader, {color: colors.textAccent2}]}>{readableDate}</Text>
 
         {/* Search */}
-        <Text style={styles.sectionTitle}>Find Exercises</Text>
+        <Text style={[styles.sectionTitle, {color: colors.text}]}>Find Exercises</Text>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, {backgroundColor: colors.panel, color: colors.text}]}
           placeholder="Search exercises..."
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.textMuted}
           value={search}
           onChangeText={setSearch}
         />
 
         {/* Available Exercises */}
-        <Text style={styles.sectionTitle}>Available Exercises</Text>
-        <View style={styles.listContainer}>
+        <Text style={[styles.sectionTitle, {color: colors.text}]}>Available Exercises</Text>
+        <View style={[styles.listContainer, {backgroundColor: colors.surface}]}>
           {exercisesLoading ? (
-            <Text style={styles.emptyText}>Loading exercises...</Text>
+            <Text style={[styles.emptyText, {color: colors.textSubtle}]}>Loading exercises...</Text>
           ) : filteredExercises.length === 0 ? (
-            <Text style={styles.emptyText}>No matching exercises found.</Text>
+            <Text style={[styles.emptyText, {color: colors.textSubtle}]}>No matching exercises found.</Text>
           ) : (
             <ScrollView showsVerticalScrollIndicator nestedScrollEnabled>
               {filteredExercises.map((exercise) => {
@@ -155,17 +155,17 @@ export default function ExerciseSelection() {
                 return (
                   <TouchableOpacity
                     key={exercise.id}
-                    style={[styles.listRow, alreadySelected && styles.listRowSelected]}
+                    style={[styles.listRow, {backgroundColor: colors.surfaceAlt}, alreadySelected && styles.listRowSelected]}
                     onPress={() => addExercise(exercise)}
                     disabled={alreadySelected}
                   >
                     <View style={styles.listRowContent}>
-                      <Text style={styles.listRowTitle}>{exercise.name}</Text>
-                      <Text style={styles.listRowType}>
+                      <Text style={[styles.listRowTitle, {color: colors.text}]}>{exercise.name}</Text>
+                      <Text style={[styles.listRowType, {color: colors.textAccent}]}>
                         {exercise.type === 'timed' ? 'Timed' : 'Reps'}
                       </Text>
                     </View>
-                    <Text style={styles.addText}>
+                    <Text style={[styles.addText, {color: colors.textAccent}]}>
                       {alreadySelected ? 'Added' : 'Add'}
                     </Text>
                   </TouchableOpacity>
@@ -176,18 +176,22 @@ export default function ExerciseSelection() {
         </View>
 
         {/* Selected Exercises */}
-        <Text style={styles.sectionTitle}>Selected Exercises</Text>
+        <Text style={[styles.sectionTitle, {color: colors.text}]}>Selected Exercises</Text>
         {selectedExercises.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No exercises selected yet.</Text>
+          <View style={[styles.emptyCard, {backgroundColor: colors.panel}]}>
+            <Text style={[styles.emptyText, {color: colors.textSubtle}]}>No exercises selected yet.</Text>
           </View>
         ) : (
           selectedExercises.map((exercise) => (
-            <View key={exercise.exercise_id} style={styles.card}>
+            <View key={exercise.exercise_id} style={[styles.card, {backgroundColor: colors.panel}]}>
               <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{exercise.name}</Text>
-                <View style={[styles.typeBadge, exercise.type === 'timed' && styles.typeBadgeTimed]}>
-                  <Text style={styles.typeBadgeText}>
+                <Text style={[styles.cardTitle, {color: colors.text}]}>{exercise.name}</Text>
+                <View style={[{overflow: 'hidden', borderWidth: 1, borderColor: exercise.type === 'timed' ? colors.accent1Border : colors.accent2Border}, styles.typeBadge]}>
+                  <LinearGradient
+                    colors={[exercise.type === 'timed' ? colors.accent1Alt : colors.accent2Alt, exercise.type === 'timed'? colors.accent1 : colors.accent2]}
+                    style={[sharedStyles.background, {height: 25}]}
+                  />
+                  <Text style={[styles.typeBadgeText, {color: '#fff'}]}>
                     {exercise.type === 'timed' ? 'Timed' : 'Reps'}
                   </Text>
                 </View>
@@ -196,9 +200,9 @@ export default function ExerciseSelection() {
               {exercise.type === 'reps' ? (
                 <>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, {backgroundColor: colors.surfaceAlt, color: colors.text}]}
                     placeholder="Sets"
-                    placeholderTextColor="#666"
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="numeric"
                     value={exercise.sets}
                     onChangeText={(value) =>
@@ -206,9 +210,9 @@ export default function ExerciseSelection() {
                     }
                   />
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, {backgroundColor: colors.surfaceAlt, color: colors.text}]}
                     placeholder="Reps"
-                    placeholderTextColor="#666"
+                    placeholderTextColor={colors.textMuted}
                     keyboardType="numeric"
                     value={exercise.reps}
                     onChangeText={(value) =>
@@ -218,9 +222,9 @@ export default function ExerciseSelection() {
                 </>
               ) : (
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, {backgroundColor: colors.surfaceAlt, color: colors.text}]}
                   placeholder="Time in seconds"
-                  placeholderTextColor="#666"
+                  placeholderTextColor={colors.textMuted}
                   keyboardType="numeric"
                   value={exercise.time_seconds}
                   onChangeText={(value) =>
@@ -230,9 +234,9 @@ export default function ExerciseSelection() {
               )}
 
               <TextInput
-                style={styles.input}
+                style={[styles.input, {backgroundColor: colors.surfaceAlt, color: colors.text}]}
                 placeholder="Weight (optional)"
-                placeholderTextColor="#666"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="numeric"
                 value={exercise.weight}
                 onChangeText={(value) =>
@@ -270,7 +274,7 @@ export default function ExerciseSelection() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#0d0d12',
+    backgroundColor: AppColors.background,
   },
   header: {
     color: AppColors.text,
@@ -280,7 +284,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subheader: {
-    color: '#93c5fd',
+    color: AppColors.textAccent2,
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 24,
@@ -293,7 +297,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   searchInput: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     color: AppColors.text,
     padding: 14,
     borderRadius: AppRadius.md,
@@ -302,13 +306,13 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     maxHeight: 280,
-    backgroundColor: '#141417',
+    backgroundColor: AppColors.surface,
     borderRadius: AppRadius.lg,
     padding: 8,
     marginBottom: 16,
   },
   listRow: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.surfaceAlt,
     borderRadius: AppRadius.md,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -329,29 +333,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   listRowType: {
-    color: '#93c5fd',
+    color: AppColors.textAccent,
     fontSize: 12,
     marginTop: 2,
   },
   addText: {
-    color: '#3b82f6',
+    color: AppColors.secondary,
     fontSize: 14,
     fontWeight: '700',
   },
   emptyCard: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
     marginBottom: 16,
   },
   emptyText: {
-    color: AppColors.text,
+    color: AppColors.textSubtle,
     fontSize: 15,
     opacity: 0.5,
   },
   card: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     marginBottom: 12,
@@ -369,13 +373,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   typeBadge: {
-    backgroundColor: '#3b82f6',
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: AppRadius.md,
   },
   typeBadgeTimed: {
-    backgroundColor: '#166534',
+    backgroundColor: AppColors.accent1Alt,
   },
   typeBadgeText: {
     color: AppColors.text,
@@ -383,7 +386,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   input: {
-    backgroundColor: '#141417',
     color: AppColors.text,
     padding: 14,
     borderRadius: AppRadius.md,
@@ -391,7 +393,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   removeButton: {
-    backgroundColor: '#7f1d1d',
     padding: 14,
     borderRadius: AppRadius.md,
     alignItems: 'center',
@@ -403,13 +404,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   saveButton: {
-    backgroundColor: '#166534',
     padding: 16,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
   },
   backButton: {
-    backgroundColor: '#7f1d1d',
     padding: 16,
     borderRadius: AppRadius.lg,
     alignItems: 'center',

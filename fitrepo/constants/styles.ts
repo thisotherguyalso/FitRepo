@@ -16,10 +16,11 @@ export const LightColors = {
   textMuted: '#6b6b6b',
   textSubtle: '#6b7280',
   textAccent: '#93c5fd',
-  textChatbotTitle: 'rgb(30,133,247)',
-  textChatbot: '',
+  textAccent2: '#fff',
+  textChatbotTitle: '#1e85f7',
+  textChatbot: '#273035',
   
-  danger: 'rgb(241,106,111)',
+  danger: '#f16a6f',
   warning: '#f59e0b',
 
   signOut: '#a81a1a',
@@ -54,6 +55,7 @@ export const DarkColors = {
   textMuted: '#888',
   textSubtle: '#9ca3af',
   textAccent: '#93c5fd',
+  textAccent2: '#93c5fd',
   textChatbotTitle: '#1e85f7',
   textChatbot: '#fff',
 

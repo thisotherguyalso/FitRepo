@@ -9,7 +9,7 @@ import { useExercises } from '@/hooks/use-exercises';
 import { Workout } from '@/types/database';
 import { createWorkoutPreset } from '@/lib/api/workoutPresets';
 import { addExerciseToPreset } from '@/lib/api/presetExercises';
-import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { useAppColors, AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ButtonComponent } from '@/components/button-component';
 import {
@@ -267,73 +267,76 @@ export default function ViewWorkout() {
     }
   }
 
+  const colors = useAppColors();
+
   return (
-    <View style={styles.wrapper}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
-      >
+    <View style={[styles.wrapper, {backgroundColor: colors.background}]}>
+      <ParallaxScrollView>
         <LinearGradient
-          colors={['#020975', '#0d0d12']}
+          colors={[colors.primary, colors.background]}
           style={sharedStyles.background}
         />
 
         <View style={styles.container}>
           {loadingWorkout || loadingExercises ? (
-            <Text style={styles.emptyText}>Loading workout...</Text>
+            <Text style={[styles.emptyText, {color: colors.textSubtle}]}>Loading workout...</Text>
           ) : !workout ? (
-            <Text style={styles.emptyText}>Workout not found.</Text>
+            <Text style={[styles.emptyText, {color: colors.textSubtle}]}>Workout not found.</Text>
           ) : (
             <>
               {/* Header */}
               {isEditing ? (
                 <TextInput
-                  style={styles.titleInput}
+                  style={[styles.titleInput, {backgroundColor: colors.panel, color: colors.text}]}
                   value={draftWorkoutName}
                   onChangeText={setDraftWorkoutName}
                   placeholder="Workout name"
-                  placeholderTextColor="#666"
+                  placeholderTextColor={colors.textMuted}
                 />
               ) : (
-                <Text style={styles.header}>{workout.name}</Text>
+                <Text style={[styles.header, {color: colors.text}]}>{workout.name}</Text>
               )}
 
-              <Text style={styles.subheader}>{readableDate}</Text>
+              <Text style={[styles.subheader, {color: colors.textAccent}]}>{readableDate}</Text>
 
               {/* Status Badge */}
-              <View style={[styles.statusBadge, workout.is_finished && styles.statusBadgeFinished]}>
-                <Text style={styles.statusText}>
+              <View style={[
+                styles.statusBadge,
+                {backgroundColor: workout.is_finished ? colors.accent1 : colors.panel}
+              ]}>
+                <Text style={[styles.statusText, {color: colors.text}]}>
                   {workout.is_finished ? 'Completed' : 'Planned'}
                 </Text>
               </View>
 
               {/* Exercises */}
-              <Text style={styles.sectionTitle}>Exercises</Text>
+              <Text style={[styles.sectionTitle, {color: colors.text}]}>Exercises</Text>
 
               {editedExercises.length === 0 ? (
-                <View style={styles.emptyCard}>
-                  <Text style={styles.emptyText}>No exercises added yet.</Text>
+                <View style={[styles.emptyCard, {backgroundColor: colors.panel}]}>
+                  <Text style={[styles.emptyText, {color: colors.textSubtle}]}>No exercises added yet.</Text>
                 </View>
               ) : (
                 editedExercises.map((exercise) => (
-                  <View key={exercise.id} style={styles.card}>
-                    <Text style={styles.cardTitle}>{exercise.name}</Text>
+                  <View key={exercise.id} style={[styles.card, {backgroundColor: colors.panel}]}>
+                    <Text style={[styles.cardTitle, {color: colors.text}]}>{exercise.name}</Text>
 
                     {isEditing ? (
                       <>
                         {exercise.type === 'reps' ? (
                           <>
                             <TextInput
-                              style={styles.input}
+                              style={[styles.input, {backgroundColor: colors.panelAlt, color: colors.text}]}
                               placeholder="Sets"
-                              placeholderTextColor="#666"
+                              placeholderTextColor={colors.textMuted}
                               keyboardType="numeric"
                               value={exercise.sets}
                               onChangeText={(v) => updateExerciseField(exercise.id, 'sets', v)}
                             />
                             <TextInput
-                              style={styles.input}
+                              style={[styles.input, {backgroundColor: colors.panelAlt, color: colors.text}]}
                               placeholder="Reps"
-                              placeholderTextColor="#666"
+                              placeholderTextColor={colors.textMuted}
                               keyboardType="numeric"
                               value={exercise.reps}
                               onChangeText={(v) => updateExerciseField(exercise.id, 'reps', v)}
@@ -341,18 +344,18 @@ export default function ViewWorkout() {
                           </>
                         ) : (
                           <TextInput
-                            style={styles.input}
+                            style={[styles.input, {backgroundColor: colors.panelAlt, color: colors.text}]}
                             placeholder="Time (seconds)"
-                            placeholderTextColor="#666"
+                            placeholderTextColor={colors.textMuted}
                             keyboardType="numeric"
                             value={exercise.time_seconds}
                             onChangeText={(v) => updateExerciseField(exercise.id, 'time_seconds', v)}
                           />
                         )}
                         <TextInput
-                          style={styles.input}
+                          style={[styles.input, {backgroundColor: colors.panelAlt, color: colors.text}]}
                           placeholder="Weight (optional)"
-                          placeholderTextColor="#666"
+                          placeholderTextColor={colors.textMuted}
                           keyboardType="numeric"
                           value={exercise.weight}
                           onChangeText={(v) => updateExerciseField(exercise.id, 'weight', v)}
@@ -364,25 +367,26 @@ export default function ViewWorkout() {
                         />
                       </>
                     ) : workout.is_finished && historyByExercise[exercise.exercise_id]?.length > 0 ? (
-                      // Show actual logged history for finished workouts
                       <View style={styles.historyContainer}>
                         {historyByExercise[exercise.exercise_id].map((entry) => (
-                          <View key={entry.id} style={styles.historyRow}>
-                            <Text style={styles.historySetLabel}>Set {entry.set_number}</Text>
+                          <View key={entry.id} style={[styles.historyRow, {backgroundColor: colors.panelAlt}]}>
+                            <Text style={[styles.historySetLabel, {color: colors.textAccent}]}>
+                              Set {entry.set_number}
+                            </Text>
                             <View style={styles.historyMeta}>
-                              {entry.reps && <Text style={styles.metaText}>{entry.reps} reps</Text>}
-                              {entry.time_seconds && <Text style={styles.metaText}>{entry.time_seconds}s</Text>}
-                              {entry.weight && <Text style={styles.metaText}>{entry.weight}kg</Text>}
+                              {entry.reps && <Text style={[styles.metaText, {color: colors.textMuted}]}>{entry.reps} reps</Text>}
+                              {entry.time_seconds && <Text style={[styles.metaText, {color: colors.textMuted}]}>{entry.time_seconds}s</Text>}
+                              {entry.weight && <Text style={[styles.metaText, {color: colors.textMuted}]}>{entry.weight}kg</Text>}
                             </View>
                           </View>
                         ))}
                       </View>
                     ) : (
                       <View style={styles.metaRow}>
-                        {exercise.sets && <Text style={styles.metaText}>{exercise.sets} sets</Text>}
-                        {exercise.reps && <Text style={styles.metaText}>{exercise.reps} reps</Text>}
-                        {exercise.time_seconds && <Text style={styles.metaText}>{exercise.time_seconds}s</Text>}
-                        {exercise.weight && <Text style={styles.metaText}>{exercise.weight}kg</Text>}
+                        {exercise.sets && <Text style={[styles.metaText, {color: colors.textMuted}]}>{exercise.sets} sets</Text>}
+                        {exercise.reps && <Text style={[styles.metaText, {color: colors.textMuted}]}>{exercise.reps} reps</Text>}
+                        {exercise.time_seconds && <Text style={[styles.metaText, {color: colors.textMuted}]}>{exercise.time_seconds}s</Text>}
+                        {exercise.weight && <Text style={[styles.metaText, {color: colors.textMuted}]}>{exercise.weight}kg</Text>}
                       </View>
                     )}
                   </View>
@@ -392,29 +396,29 @@ export default function ViewWorkout() {
               {/* Add Exercise (when editing) */}
               {isEditing && (
                 <>
-                  <Text style={styles.sectionTitle}>Add Exercise</Text>
+                  <Text style={[styles.sectionTitle, {color: colors.text}]}>Add Exercise</Text>
                   <TextInput
-                    style={styles.searchInput}
+                    style={[styles.searchInput, {backgroundColor: colors.panel, color: colors.text}]}
                     placeholder="Search exercises..."
-                    placeholderTextColor="#666"
+                    placeholderTextColor={colors.textMuted}
                     value={search}
                     onChangeText={setSearch}
                   />
-                  <View style={styles.listContainer}>
+                  <View style={[styles.listContainer, {backgroundColor: colors.panelAlt}]}>
                     {loadingAllExercises ? (
-                      <Text style={styles.emptyText}>Loading...</Text>
+                      <Text style={[styles.emptyText, {color: colors.textSubtle}]}>Loading...</Text>
                     ) : filteredExercisesToAdd.length === 0 ? (
-                      <Text style={styles.emptyText}>No exercises found.</Text>
+                      <Text style={[styles.emptyText, {color: colors.textSubtle}]}>No exercises found.</Text>
                     ) : (
                       <ScrollView showsVerticalScrollIndicator nestedScrollEnabled>
                         {filteredExercisesToAdd.map((exercise) => (
                           <TouchableOpacity
                             key={exercise.id}
-                            style={styles.listRow}
+                            style={[styles.listRow, {backgroundColor: colors.panel}]}
                             onPress={() => handleAddExercise(exercise)}
                           >
-                            <Text style={styles.listRowTitle}>{exercise.name}</Text>
-                            <Text style={styles.addText}>Add</Text>
+                            <Text style={[styles.listRowTitle, {color: colors.text}]}>{exercise.name}</Text>
+                            <Text style={[styles.addText, {color: colors.secondary}]}>Add</Text>
                           </TouchableOpacity>
                         ))}
                       </ScrollView>
@@ -445,7 +449,6 @@ export default function ViewWorkout() {
                       text="Edit Workout"
                       style={styles.editButton}
                     />
-
                     <ButtonComponent
                       onPress={() => {
                         setPresetName(workout.name);
@@ -456,11 +459,11 @@ export default function ViewWorkout() {
                     />
 
                     {showPresetSave && (
-                      <View style={styles.presetCard}>
+                      <View style={[styles.presetCard, {backgroundColor: colors.panel}]}>
                         <TextInput
-                          style={styles.input}
+                          style={[styles.input, {backgroundColor: colors.panelAlt, color: colors.text}]}
                           placeholder="Preset name"
-                          placeholderTextColor="#666"
+                          placeholderTextColor={colors.textMuted}
                           value={presetName}
                           onChangeText={setPresetName}
                         />
@@ -493,7 +496,7 @@ export default function ViewWorkout() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#0d0d12',
+    backgroundColor: AppColors.background,
   },
   container: {
     flex: 1,
@@ -506,7 +509,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   titleInput: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     color: AppColors.text,
     padding: 16,
     borderRadius: AppRadius.lg,
@@ -516,21 +519,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subheader: {
-    color: '#93c5fd',
+    color: AppColors.textAccent,
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 16,
   },
   statusBadge: {
     alignSelf: 'center',
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: AppRadius.md,
     marginBottom: 24,
-  },
-  statusBadgeFinished: {
-    backgroundColor: '#166534',
   },
   statusText: {
     color: AppColors.text,
@@ -545,19 +545,19 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   emptyCard: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
     marginBottom: 16,
   },
   emptyText: {
-    color: AppColors.text,
+    color: AppColors.textSubtle,
     fontSize: 15,
     opacity: 0.5,
   },
   card: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     marginBottom: 12,
@@ -574,12 +574,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   metaText: {
-    color: AppColors.text,
+    color: AppColors.textMuted,
     fontSize: 14,
     opacity: 0.6,
   },
   input: {
-    backgroundColor: '#141417',
+    backgroundColor: AppColors.panelAlt,
     color: AppColors.text,
     padding: 14,
     borderRadius: AppRadius.md,
@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   searchInput: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     color: AppColors.text,
     padding: 14,
     borderRadius: AppRadius.md,
@@ -596,13 +596,13 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     maxHeight: 200,
-    backgroundColor: '#141417',
+    backgroundColor: AppColors.panelAlt,
     borderRadius: AppRadius.lg,
     padding: 8,
     marginBottom: 16,
   },
   listRow: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     borderRadius: AppRadius.md,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -617,12 +617,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   addText: {
-    color: '#3b82f6',
+    color: AppColors.secondary,
     fontSize: 14,
     fontWeight: '700',
   },
   presetCard: {
-    backgroundColor: '#1c1c1f',
+    backgroundColor: AppColors.panel,
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     marginBottom: 12,
@@ -633,44 +633,44 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   editButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: AppColors.secondary,
     padding: 16,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
   },
   saveButton: {
-    backgroundColor: '#166534',
+    backgroundColor: AppColors.accent1Alt,
     padding: 16,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#7f1d1d',
+    backgroundColor: AppColors.signOut,
     padding: 16,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
   },
   removeButton: {
-    backgroundColor: '#7f1d1d',
+    backgroundColor: AppColors.signOut,
     padding: 14,
     borderRadius: AppRadius.md,
     alignItems: 'center',
     marginTop: 4,
   },
   presetButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: AppColors.secondary,
     padding: 16,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
   },
   markFinishedButton: {
-    backgroundColor: '#166534',
+    backgroundColor: AppColors.accent1Alt,
     padding: 16,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
   },
   markPlannedButton: {
-    backgroundColor: '#b45309',
+    backgroundColor: AppColors.warning,
     padding: 16,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
@@ -682,12 +682,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#141417',
+    backgroundColor: AppColors.panelAlt,
     padding: 10,
     borderRadius: AppRadius.md,
   },
   historySetLabel: {
-    color: '#93c5fd',
+    color: AppColors.textAccent,
     fontSize: 13,
     fontWeight: '600',
   },
