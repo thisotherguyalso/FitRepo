@@ -294,17 +294,25 @@ export default function ViewWorkout() {
                   placeholderTextColor={colors.textMuted}
                 />
               ) : (
-                <Text style={[styles.header, {color: colors.text}]}>{workout.name}</Text>
+                <Text style={[styles.header, {color: '#fff'}]}>{workout.name}</Text>
               )}
 
-              <Text style={[styles.subheader, {color: colors.textAccent}]}>{readableDate}</Text>
+              <Text style={[styles.subheader, {color: colors.textAccent2}]}>{readableDate}</Text>
 
               {/* Status Badge */}
               <View style={[
                 styles.statusBadge,
-                {backgroundColor: workout.is_finished ? colors.accent1 : colors.panel}
+                {
+                  overflow: 'hidden',
+                  borderColor: workout.is_finished ? colors.accent1Border : colors.accent2Border,
+                  borderWidth: 1
+                }
               ]}>
-                <Text style={[styles.statusText, {color: colors.text}]}>
+                <LinearGradient
+                  colors={[workout.is_finished ? colors.accent1Alt : colors.accent2Alt, workout.is_finished ? colors.accent1 : colors.accent2]}
+                  style={[sharedStyles.background, {height: 40}]}
+                />
+                <Text style={[styles.statusText, {color: '#fff'}]}>
                   {workout.is_finished ? 'Completed' : 'Planned'}
                 </Text>
               </View>

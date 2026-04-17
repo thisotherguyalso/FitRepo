@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SessionExercise } from '@/hooks/use-today-session';
 import { goToNextExercise } from '@/utils/session-navigation';
 import { createHistoryEntry } from '@/lib/api/historyEntries';
-import { AppColors, AppRadius, AppSpacing } from '@/constants/styles';
+import { AppColors, AppRadius, AppSpacing, useAppColors } from '@/constants/styles';
 import { AnimatedCircularProgress, CircularProgress } from 'react-native-circular-progress';
 
 export default function Reps() {
@@ -77,6 +77,8 @@ export default function Reps() {
   const repGesture = Gesture.Exclusive(doubleTap, singleTap);
 
   const isLastSet = currentSet >= totalSets;
+
+  const colors = useAppColors();
 
   return (
     <GestureHandlerRootView style={styles.root}>

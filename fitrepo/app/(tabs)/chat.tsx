@@ -241,7 +241,7 @@ export default function ChatScreen() {
 
         {pendingAction ? (
           <View style={[sharedStyles.card, styles.confirmCard]}>
-            <Text style={styles.confirmTitle}>Confirm workout edit?</Text>
+            <Text style={[styles.confirmTitle, {color: '#fff'}]}>Confirm workout edit?</Text>s
             <Text style={styles.confirmText}>
               This will update your workout for {pendingAction.performed_at}. Want me to do it?
             </Text>
@@ -279,9 +279,10 @@ export default function ChatScreen() {
               }>
               <LinearGradient
                 colors={[colors.accent1Alt, colors.accent1]}
-                style={[sharedStyles.background, {height: 85}]}
-              />
-              <Text style={[sharedStyles.buttonText]}>View Workout?</Text>
+                style={[sharedStyles.background, {height: 60, alignItems: 'center'}]}
+              >
+                <Text style={[sharedStyles.buttonText, {color: '#fff', margin:15}]}>View Workout?</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         ) : null}
@@ -293,7 +294,7 @@ export default function ChatScreen() {
           justifyContent: 'space-evenly',
           alignItems: "stretch",          
 
-          backgroundColor: colors.surface,
+          backgroundColor: colors.surface, 
           borderRadius: 16,
         }]}>
           <TextInput
@@ -426,7 +427,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   openWorkoutButton: {
-    backgroundColor: AppColors.secondary,
     marginBottom: 24,
   },
   clearButton: {
