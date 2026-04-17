@@ -1,84 +1,120 @@
-import type { PropsWithChildren } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import type { PropsWithChildren } from 'react'
+import { StyleSheet, Text, View } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import Animated, {
   interpolate,
   useAnimatedRef,
   useAnimatedStyle,
   useScrollOffset,
-} from 'react-native-reanimated';
+} from 'react-native-reanimated'
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAppColors } from '@/constants/styles';
+import { AppRadius, AppSpacing, useAppColors } from '@/constants/styles'
 
-const HEADER_HEIGHT = 100;
+const HEADER_HEIGHT = 220
 
-type Props = PropsWithChildren<{}>;
+type Props = PropsWithChildren<object>
 
-export default function ParallaxScrollView({
-  children
-}: Props) {
-  const colorScheme = useColorScheme() ?? 'light';
-  const colors = useAppColors();
-  const backgroundColor = colors.background;
+export default function ParallaxScrollView({ children }: Props) {
+  const colors = useAppColors()
+  const scrollRef = useAnimatedRef<Animated.ScrollView>()
+  const scrollOffset = useScrollOffset(scrollRef)
 
-  const scrollRef = useAnimatedRef<Animated.ScrollView>();
-  const scrollOffset = useScrollOffset(scrollRef);
-  const headerAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateY: interpolate(
-            scrollOffset.value,
-            [-HEADER_HEIGHT, 0, HEADER_HEIGHT],
-            [-HEADER_HEIGHT / 2, 0, HEADER_HEIGHT * 0.75]
-          ),
-        },
-        {
-          scale: interpolate(scrollOffset.value, [-HEADER_HEIGHT, 0, HEADER_HEIGHT], [2, 1, 1]),
-        },
-      ],
-    };
-  });
+  const headerAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY: interpolate(
+          scrollOffset.value,
+          [-HEADER_HEIGHT, 0, HEADER_HEIGHT],
+          [-HEADER_HEIGHT / 2, 0, HEADER_HEIGHT * 0.42]
+        ),
+      },
+      {
+        scale: interpolate(scrollOffset.value, [-HEADER_HEIGHT, 0, HEADER_HEIGHT], [1.18, 1, 0.96]),
+      },
+    ],
+  }))
 
   return (
-    <Animated.ScrollView
-      ref={scrollRef}
-      style={[styles.scrollView, {backgroundColor}]}
-      scrollEventThrottle={16}
-    >
-      <Animated.View
-        style={[
-          styles.header,
-          { backgroundColor: colors.primary },
-          headerAnimatedStyle,
-        ]}
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <Animated.ScrollView
+        ref={scrollRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.headerText]}>FitRepo</Text>
-      </Animated.View>
-      <View style={styles.content}>{children}</View>
-    </Animated.ScrollView>
-  );
+        <Animated.View style={[styles.header, headerAnimatedStyle]}>
+          <LinearGradient
+            colors={[colors.backgroundStrong, colors.backgroundAlt, colors.background]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[styles.headerGradient, { borderBottomLeftRadius: 42, borderBottomRightRadius: 42 }]}
+          />
+          <View style={[styles.glowLarge, { backgroundColor: colors.panelStrong }]} />
+          <View style={[styles.glowSmall, { backgroundColor: colors.overlay }]} />
+          <View style={[styles.brandChip, { backgroundColor: colors.tabBar, borderColor: colors.border }]}>
+            <Text style={[styles.brandText, { color: colors.textAccent }]}>FITREPO</Text>
+          </View>
+        </Animated.View>
+        <View style={styles.content}>{children}</View>
+      </Animated.ScrollView>
+    </View>
+  )
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   scrollView: {
-    flex: 1
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: AppSpacing.xxl + 32,
   },
   header: {
     height: HEADER_HEIGHT,
+    overflow: 'hidden',
   },
-  headerText: {
-    color: 'white',
-    fontSize: 24,
-    textAlign: 'left',
-    paddingTop: 50,
-    paddingLeft: 20,
-    fontWeight: 'bold',
+  headerGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  glowLarge: {
+    position: 'absolute',
+    top: 26,
+    right: -38,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    opacity: 0.95,
+  },
+  glowSmall: {
+    position: 'absolute',
+    top: 88,
+    left: -26,
+    width: 128,
+    height: 128,
+    borderRadius: 64,
+    opacity: 0.9,
+  },
+  brandChip: {
+    position: 'absolute',
+    top: 62,
+    left: AppSpacing.page,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: AppRadius.pill,
+    borderWidth: 1,
+  },
+  brandText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2.4,
   },
   content: {
     flex: 1,
-    padding: 32,
-    gap: 14,
-    backgroundColor: 'transparent',
+    marginTop: -58,
+    paddingHorizontal: AppSpacing.page,
+    gap: 16,
   },
-});
+})

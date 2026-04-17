@@ -61,6 +61,7 @@ export async function createHistoryEntry(
             workout_id,
             exercise_id,
         }, {
+            // one row per workout/exercise/set keeps accidental double-saves from spamming duplicates
             onConflict: 'workout_id,exercise_id,set_number',
         })
         .select()

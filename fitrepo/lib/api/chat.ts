@@ -13,10 +13,11 @@ export type PendingWorkoutEdit = {
   message: string
   exercises: Array<{
     exercise_name: string
-    sets: number | null
-    reps: number | null
-    time_seconds: number | null
-    weight: number | null
+    sets: Array<{
+      reps: number | null
+      time_seconds: number | null
+      weight: number | null
+    }>
   }>
 }
 
@@ -37,6 +38,53 @@ export type ChatResult = {
 type SendChatMessageOptions = {
   pendingAction?: PendingWorkoutEdit | null
   confirmation?: 'yes' | 'no'
+}
+
+export function normalizeReply(reply: string) {
+  const trimmed = reply.trim()
+
+  for (const candidate of [trimmed, trimmed.replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i, '$1').trim()]) {
+    try {
+      let parsed: unknown = candidate
+
+      // some providers send json, some send stringified json, and some send stringified json inside code fences.
+      // yeah, it's annoying.
+      for (let depth = 0; depth < 3 && typeof parsed === 'string'; depth += 1) {
+        parsed = JSON.parse(parsed)
+      }
+
+      if (parsed && typeof parsed === 'object') {
+        if ('message' in parsed && typeof parsed.message === 'string') {
+          return parsed.message.trim()
+        }
+
+        if ('reply' in parsed && typeof parsed.reply === 'string') {
+          return parsed.reply.trim()
+        }
+      }
+    } catch {
+      // leave the raw reply alone if it is not valid JSON
+    }
+  }
+
+  const embeddedJsonMatch = trimmed.match(/\{[\s\S]*\}/)
+  if (embeddedJsonMatch) {
+    try {
+      const parsed = JSON.parse(embeddedJsonMatch[0]) as { message?: string; reply?: string }
+
+      if (typeof parsed.message === 'string') {
+        return parsed.message.trim()
+      }
+
+      if (typeof parsed.reply === 'string') {
+        return parsed.reply.trim()
+      }
+    } catch {
+      // this one's usually junk wrapped around a non-json message, so just fall through
+    }
+  }
+
+  return trimmed
 }
 
 export async function sendChatMessage(
@@ -107,7 +155,7 @@ export async function sendChatMessage(
   }
 
   return {
-    reply: data.reply,
+    reply: normalizeReply(data.reply),
     workoutId: data.workout_id,
     pendingAction: data.pending_action,
   } satisfies ChatResult

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -6,8 +6,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SessionExercise } from '@/hooks/use-today-session';
 import { goToNextExercise } from '@/utils/session-navigation';
 import { createHistoryEntry } from '@/lib/api/historyEntries';
-import { AppColors, AppRadius, AppSpacing, useAppColors } from '@/constants/styles';
-import { AnimatedCircularProgress, CircularProgress } from 'react-native-circular-progress';
+import { AppColors, AppRadius, AppSpacing } from '@/constants/styles';
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+import { getCurrentUserBodyWeightKg, resolveEffectiveWeight } from '@/lib/bodyweight';
 
 export default function Reps() {
   const {
@@ -30,18 +31,25 @@ export default function Reps() {
   const [currentSet, setCurrentSet] = useState(1);
   const [repAmount, setRepAmount] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [bodyWeightKg, setBodyWeightKg] = useState<number | null>(null);
+  const currentSetConfig = exercise?.setConfigs?.[currentSet - 1];
+  const effectiveWeight = resolveEffectiveWeight(currentSetConfig?.weight ?? exercise?.weight ?? null, bodyWeightKg);
+
+  useEffect(() => {
+    void getCurrentUserBodyWeightKg().then(setBodyWeightKg);
+  }, []);
 
   async function handleFinishSet() {
     if (saving) return;
 
     setSaving(true);
     try {
-      // Log this set to history
+      // each set logs separately so finished workouts can show the real set-by-set result later
       await createHistoryEntry(user_id, workout_id, exercise.exercise_id, {
         set_number: currentSet,
         reps: repAmount > 0 ? repAmount : null,
         time_seconds: null,
-        weight: exercise?.weight ?? null,
+        weight: effectiveWeight,
       });
 
       if (currentSet < totalSets) {
@@ -78,8 +86,6 @@ export default function Reps() {
 
   const isLastSet = currentSet >= totalSets;
 
-  const colors = useAppColors();
-
   return (
     <GestureHandlerRootView style={styles.root}>
       <LinearGradient
@@ -92,8 +98,10 @@ export default function Reps() {
         {/* Set indicator */}
         <View style={styles.setIndicator}>
           <Text style={styles.setLabel}>SET {currentSet} OF {totalSets}</Text>
-          {exercise?.weight ? (
-            <Text style={styles.weightLabel}>{exercise.weight} kg</Text>
+          {effectiveWeight ? (
+            <Text style={styles.weightLabel}>
+              {currentSetConfig?.weight ?? exercise?.weight ? `${effectiveWeight} kg` : `${effectiveWeight} kg bodyweight`}
+            </Text>
           ) : null}
         </View>
 
@@ -114,7 +122,7 @@ export default function Reps() {
                 <AnimatedCircularProgress
                   size={220}
                   width={14}
-                  fill={((repAmount / (exercise?.reps || 1)) * 100)}
+                  fill={((repAmount / (currentSetConfig?.reps || exercise?.reps || 1)) * 100)}
                   tintColor='#3b82f6'
                   backgroundColor="rgba(255,255,255,0.1)"
                   rotation={0}
@@ -137,7 +145,7 @@ export default function Reps() {
           </View>
 
           <Text style={styles.repLabel}>
-            {exercise?.reps ? `target: ${exercise.reps} reps` : 'reps'}
+            {currentSetConfig?.reps ?? exercise?.reps ? `target: ${currentSetConfig?.reps ?? exercise?.reps} reps` : 'reps'}
           </Text>
         </View>
 
@@ -159,8 +167,6 @@ export default function Reps() {
     </GestureHandlerRootView>
   );
 }
-
-// ... styles stay the same
 
 const styles = StyleSheet.create({
   root: {

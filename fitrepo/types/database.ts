@@ -37,6 +37,8 @@ export type Profile = {
     started_at: string
     goal: string
     current_streak: number
+    height_cm: number | null
+    body_weight_kg: number | null
 }
 
 export type WorkoutPreset = {

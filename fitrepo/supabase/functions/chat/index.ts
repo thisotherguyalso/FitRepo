@@ -18,12 +18,21 @@ type WorkoutRow = {
   is_finished: boolean
 }
 
+type ProfileRow = {
+  username?: string | null
+  goal?: string | null
+  current_streak?: number | null
+  height_cm?: number | null
+  body_weight_kg?: number | null
+}
+
 type WorkoutPlanExercise = {
   exercise_name: string
-  sets: number | null
-  reps: number | null
-  time_seconds: number | null
-  weight: number | null
+  sets: Array<{
+    reps: number | null
+    time_seconds: number | null
+    weight: number | null
+  }>
 }
 
 type PendingWorkoutEdit = {
@@ -75,18 +84,73 @@ function normalizeName(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, ' ')
 }
 
-function parseModelAction(content: string): ModelAction | null {
-  try {
-    return JSON.parse(content) as ModelAction
-  } catch {
-    const match = content.match(/\{[\s\S]*\}/)
-    if (!match) return null
+function stripCodeFence(content: string) {
+  const match = content.trim().match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i)
+  return match ? match[1].trim() : content.trim()
+}
 
+function parseJsonValue(content: string): unknown | null {
+  let current: unknown = content.trim()
+
+  for (let depth = 0; depth < 3 && typeof current === 'string'; depth += 1) {
     try {
-      return JSON.parse(match[0]) as ModelAction
+      current = JSON.parse(current)
     } catch {
       return null
     }
+  }
+
+  return current
+}
+
+function toModelAction(value: unknown): ModelAction | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  const candidate = value as Record<string, unknown>
+
+  if (candidate.type === 'reply' && typeof candidate.message === 'string') {
+    return {
+      type: 'reply',
+      message: candidate.message,
+    }
+  }
+
+  if (
+    (candidate.type === 'create_workout' || candidate.type === 'edit_workout') &&
+    typeof candidate.message === 'string' &&
+    typeof candidate.workout_name === 'string' &&
+    typeof candidate.performed_at === 'string' &&
+    Array.isArray(candidate.exercises)
+  ) {
+    return {
+      type: candidate.type,
+      message: candidate.message,
+      workout_name: candidate.workout_name,
+      performed_at: candidate.performed_at,
+      exercises: candidate.exercises as WorkoutPlanExercise[],
+    }
+  }
+
+  return null
+}
+
+function parseModelAction(content: string): ModelAction | null {
+  const normalizedContent = stripCodeFence(content)
+  const directMatch = toModelAction(parseJsonValue(normalizedContent))
+
+  if (directMatch) {
+    return directMatch
+  }
+
+  try {
+    return toModelAction(JSON.parse(content))
+  } catch {
+    const match = normalizedContent.match(/\{[\s\S]*\}/)
+    if (!match) return null
+
+    return toModelAction(parseJsonValue(match[0]))
   }
 }
 
@@ -203,25 +267,29 @@ function buildWorkoutExercisesPayload(
   workoutId: string,
   resolvedExercises: ReturnType<typeof sanitizeWorkoutExercises>
 ) {
-  return resolvedExercises.map((entry) => ({
-    workout_id: workoutId,
-    exercise_id: entry.exercise!.id,
-    // timed vs reps exercises need different defaults or the workout comes out half-broken
-    sets:
-      entry.exercise!.type === 'reps'
-        ? toNullableNumber(entry.source.sets) ?? 3
-        : toNullableNumber(entry.source.sets) ?? 1,
-    reps:
-      entry.exercise!.type === 'reps'
-        ? toNullableNumber(entry.source.reps) ?? 10
-        : null,
-    time_seconds:
-      entry.exercise!.type === 'timed'
-        ? toNullableNumber(entry.source.time_seconds) ?? 30
-        : null,
-    weight: toNullableNumber(entry.source.weight),
-    order_index: entry.order_index,
-  }))
+  return resolvedExercises.flatMap((entry) => {
+    const fallbackSetCount = entry.exercise!.type === 'reps' ? 3 : 1
+    const rawSets = Array.isArray(entry.source.sets) ? entry.source.sets : []
+    const normalizedSets = rawSets.length > 0 ? rawSets : Array.from({ length: fallbackSetCount }, () => ({}))
+
+    // chat plans are grouped by exercise now, but workout_exercises is still one row per set
+    return normalizedSets.map((set, setIndex) => ({
+      workout_id: workoutId,
+      exercise_id: entry.exercise!.id,
+      sets: 1,
+      reps:
+        entry.exercise!.type === 'reps'
+          ? toNullableNumber(set.reps) ?? 10
+          : null,
+      time_seconds:
+        entry.exercise!.type === 'timed'
+          ? toNullableNumber(set.time_seconds) ?? 30
+          : null,
+      weight: toNullableNumber(set.weight),
+      // leaving some spacing here makes reordering/debugging less annoying if we ever inspect raw rows
+      order_index: entry.order_index * 100 + setIndex,
+    }))
+  })
 }
 
 Deno.serve(async (req) => {
@@ -385,6 +453,20 @@ Deno.serve(async (req) => {
       is_finished: workout.is_finished,
     }))
 
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const profileSummary = {
+      username: (profile as ProfileRow | null)?.username ?? null,
+      goal: (profile as ProfileRow | null)?.goal ?? null,
+      current_streak: (profile as ProfileRow | null)?.current_streak ?? null,
+      height_cm: (profile as ProfileRow | null)?.height_cm ?? null,
+      body_weight_kg: (profile as ProfileRow | null)?.body_weight_kg ?? null,
+    }
+
     const recentMessages = sanitizedMessages.slice(-10)
     const exerciseCatalog = buildExerciseCatalog(exerciseRows)
 
@@ -397,8 +479,8 @@ Respond with valid JSON only and no markdown.
 
 Return exactly one of these shapes:
 {"type":"reply","message":"..."}
-{"type":"create_workout","message":"...","workout_name":"...","performed_at":"YYYY-MM-DD or natural date phrase","exercises":[{"exercise_name":"...","sets":number|null,"reps":number|null,"time_seconds":number|null,"weight":number|null}]}
-{"type":"edit_workout","message":"...","workout_name":"...","performed_at":"YYYY-MM-DD or natural date phrase","exercises":[{"exercise_name":"...","sets":number|null,"reps":number|null,"time_seconds":number|null,"weight":number|null}]}
+{"type":"create_workout","message":"...","workout_name":"...","performed_at":"YYYY-MM-DD or natural date phrase","exercises":[{"exercise_name":"...","sets":[{"reps":number|null,"time_seconds":number|null,"weight":number|null}]}]}
+{"type":"edit_workout","message":"...","workout_name":"...","performed_at":"YYYY-MM-DD or natural date phrase","exercises":[{"exercise_name":"...","sets":[{"reps":number|null,"time_seconds":number|null,"weight":number|null}]}]}
 
 Rules:
 - Use "reply" for normal conversation, off-topic banter, advice, or ambiguous requests.
@@ -410,11 +492,18 @@ Rules:
 - For create/edit actions, choose only exercise names from the provided catalog.
 - If the user says a relative date like tomorrow or next Monday, preserve that intent in performed_at.
 - Return 4 to 8 exercises for created or edited workouts unless the user asks otherwise.
+- Each exercise must include a "sets" array.
+- For reps exercises, each set should usually include reps and optionally weight.
+- For timed exercises, each set should usually include time_seconds and optionally weight.
+- Don't use the old flat reps/time/weight fields outside the set objects.
 - Do not invent exercise names outside the catalog.
 - Do not include extra keys.
 - If the user asks to edit a workout, target the workout date they mention, or default to the nearest upcoming planned workout.
 
 Today's date: ${getTodayDate()}
+
+User profile:
+${JSON.stringify(profileSummary)}
 
 Exercise catalog:
 ${JSON.stringify(exerciseCatalog)}
@@ -514,24 +603,6 @@ ${JSON.stringify(workoutSummary)}`,
           message: action.message.trim(),
           exercises: action.exercises,
         },
-      })
-    }
-
-    const { data: existingWorkout, error: existingWorkoutError } = await supabase
-      .from('workouts')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('performed_at', performedAt)
-      .maybeSingle()
-
-    if (existingWorkoutError) {
-      return json({ error: existingWorkoutError.message }, { status: 500 })
-    }
-
-    if (existingWorkout) {
-      return json({
-        reply: `You already have a workout scheduled for ${performedAt}. I can edit that one if you want.`,
-        workout_id: existingWorkout.id,
       })
     }
 

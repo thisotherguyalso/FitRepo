@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Workout } from '@/types/database'
 import { getWorkouts, createWorkout } from '@/lib/api/workouts'
-import { addExerciseToWorkout } from '@/lib/api/workoutExercises'
+import { addExerciseToWorkout, getWorkoutSummaries } from '@/lib/api/workoutExercises'
+import { getCurrentUserBodyWeightKg, resolveEffectiveWeight } from '@/lib/bodyweight'
 
 // for planned exercises
 type PlannedExercise = {
@@ -23,6 +24,7 @@ type PlannedWorkoutInput = {
 
 export function useWorkouts() {
   const [workouts, setWorkouts] = useState<Workout[]>([])
+  const [workoutSummaries, setWorkoutSummaries] = useState<Record<string, { totalSets: number; totalVolume: number }>>({})
   const [loading, setLoading] = useState(false)
 
   // useCallback keeps the function stable so it can be safely used
@@ -31,10 +33,29 @@ export function useWorkouts() {
     setLoading(true)
     try {
       const data = await getWorkouts()
-      setWorkouts(data ?? [])
+      const nextWorkouts = data ?? []
+      setWorkouts(nextWorkouts)
+      const bodyWeightKg = await getCurrentUserBodyWeightKg()
+
+      try {
+        const summaries = await getWorkoutSummaries(nextWorkouts.map((workout) => workout.id), bodyWeightKg)
+        setWorkoutSummaries(
+          summaries.reduce((acc, summary) => {
+            acc[summary.workout_id] = {
+              totalSets: summary.totalSets,
+              totalVolume: summary.totalVolume,
+            }
+            return acc
+          }, {} as Record<string, { totalSets: number; totalVolume: number }>)
+        )
+      } catch (summaryError: any) {
+        // don't blank the whole workouts screen just because the extra summary query died
+        console.warn(summaryError?.message ?? 'Failed to load workout summaries')
+      }
     } catch (error: any) {
-      console.error(error.message)
+      console.warn(error.message)
       setWorkouts([])
+      setWorkoutSummaries({})
     } finally {
       setLoading(false)
     }
@@ -58,6 +79,7 @@ export function useWorkouts() {
   ): Promise<Workout> {
     setLoading(true)
     try {
+      const bodyWeightKg = await getCurrentUserBodyWeightKg()
       const createdWorkout = await createWorkout({
         name: workout.name,
         performed_at: workout.performed_at,
@@ -79,9 +101,22 @@ export function useWorkouts() {
       }
 
       setWorkouts((prev) => [...prev, createdWorkout])
+      const totalSets = workout.exercises.reduce((sum, exercise) => sum + (exercise.sets ?? 1), 0)
+      const totalVolume = workout.exercises.reduce(
+        (sum, exercise) =>
+          sum + ((exercise.reps ?? 0) * (resolveEffectiveWeight(exercise.weight, bodyWeightKg) ?? 0) * (exercise.sets ?? 1)),
+        0
+      )
+      setWorkoutSummaries((prev) => ({
+        ...prev,
+        [createdWorkout.id]: {
+          totalSets,
+          totalVolume,
+        },
+      }))
       return createdWorkout
     } catch (error: any) {
-      console.error(error.message)
+      console.warn(error.message)
       throw error
     } finally {
       setLoading(false)
@@ -91,6 +126,7 @@ export function useWorkouts() {
   return {
     loading,
     workouts,
+    workoutSummaries,
     markedDates,
     planWorkout,
     loadWorkouts,

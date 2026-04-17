@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { SessionCountdownScreen } from '@/components/session-countdown-screen';
 import { SessionExercise } from '@/hooks/use-today-session';
 import { goToNextExercise } from '@/utils/session-navigation';
-import { updateWorkoutExercise } from '@/lib/api/workoutExercises';
+import { updateWorkoutExerciseById } from '@/lib/api/workoutExercises';
 import { createHistoryEntry } from '@/lib/api/historyEntries';
+import { getCurrentUserBodyWeightKg, resolveEffectiveWeight } from '@/lib/bodyweight';
 
 export default function Timer() {
   const {
@@ -27,7 +28,19 @@ export default function Timer() {
 
   const totalSets = exercise?.sets ?? 1;
   const [currentSet, setCurrentSet] = useState(1);
-  const currentDurationRef = useRef(exercise?.time_seconds ?? 30);
+  const [bodyWeightKg, setBodyWeightKg] = useState<number | null>(null);
+  const currentSetConfig = exercise?.setConfigs?.[currentSet - 1];
+  const currentDurationRef = useRef(currentSetConfig?.time_seconds ?? exercise?.time_seconds ?? 30);
+  const effectiveWeight = resolveEffectiveWeight(currentSetConfig?.weight ?? exercise?.weight ?? null, bodyWeightKg);
+
+  useEffect(() => {
+    void getCurrentUserBodyWeightKg().then(setBodyWeightKg);
+  }, []);
+
+  useEffect(() => {
+    // ref stays outside render so the completion handler doesn't get stuck with an old duration value
+    currentDurationRef.current = currentSetConfig?.time_seconds ?? exercise?.time_seconds ?? 30;
+  }, [currentSetConfig?.time_seconds, exercise?.time_seconds]);
 
   const handleDurationChange = async (newDuration: number) => {
     currentDurationRef.current = newDuration;
@@ -37,12 +50,17 @@ export default function Timer() {
       updated[currentIndex] = {
         ...updated[currentIndex],
         time_seconds: newDuration,
+        // mirror the new time into the active set only. other sets might have their own custom durations.
+        setConfigs: updated[currentIndex].setConfigs.map((set, index) =>
+          index === currentSet - 1 ? { ...set, time_seconds: newDuration } : set
+        ),
       };
       return updated;
     });
 
     try {
-      await updateWorkoutExercise(workout_id, exercise.exercise_id, {
+      if (!currentSetConfig?.workout_exercise_id) return
+      await updateWorkoutExerciseById(currentSetConfig.workout_exercise_id, {
         time_seconds: newDuration,
       });
     } catch (error) {
@@ -57,7 +75,7 @@ export default function Timer() {
         set_number: currentSet,
         reps: null,
         time_seconds: currentDurationRef.current,
-        weight: exercise?.weight ?? null,
+        weight: effectiveWeight,
       });
     } catch (error) {
       console.error('Failed to save timed set:', error);
@@ -79,7 +97,7 @@ export default function Timer() {
     <SessionCountdownScreen
       mode="exercise"
       title={`${exercise?.name ?? 'TIMER'}${totalSets > 1 ? ` (Set ${currentSet}/${totalSets})` : ''}`}
-      duration={exercise?.time_seconds ?? 30}
+      duration={currentSetConfig?.time_seconds ?? exercise?.time_seconds ?? 30}
       onComplete={handleComplete}
       onSkip={handleSkip}
       onDurationChange={handleDurationChange}

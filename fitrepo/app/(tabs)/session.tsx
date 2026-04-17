@@ -3,10 +3,10 @@ import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { useTodaySession } from '@/hooks/use-today-session';
+import { SessionExercise, useTodaySession } from '@/hooks/use-today-session';
 import { ButtonComponent } from '@/components/button-component';
 import { useAppColors, AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
-import { supabase } from '@/lib/supabase'; // or your auth hook
+import { supabase } from '@/lib/supabase';
 
 export default function SessionTab() {
   const { session, loading, reload } = useTodaySession();
@@ -15,13 +15,13 @@ export default function SessionTab() {
   useFocusEffect(
     useCallback(() => {
       reload();
-    }, [])
+    }, [reload])
   );
 
   async function startSession() {
     if (!session || session.exercises.length === 0) return;
 
-    // Get current user
+    // grabbing the user here keeps the session screens dumb and avoids threading auth through every route manually
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -41,6 +41,34 @@ export default function SessionTab() {
     });
   }
 
+  function buildExerciseSummary(exercise: SessionExercise) {
+    if (exercise.type === 'timed') {
+      // if every set has the same time, show the clean summary. otherwise just admit it's a custom block.
+      const uniqueDurations = Array.from(
+        new Set(exercise.setConfigs.map((set) => set.time_seconds).filter((value) => value != null))
+      )
+
+      if (uniqueDurations.length === 1) {
+        return `${exercise.sets} set${exercise.sets !== 1 ? 's' : ''} · ${uniqueDurations[0]}s`
+      }
+
+      return `${exercise.sets} custom timed sets`
+    }
+
+    const uniqueReps = Array.from(
+      new Set(exercise.setConfigs.map((set) => set.reps).filter((value) => value != null))
+    )
+    const uniqueWeights = Array.from(
+      new Set(exercise.setConfigs.map((set) => set.weight).filter((value) => value != null))
+    )
+
+    if (uniqueReps.length === 1 && uniqueWeights.length <= 1) {
+      return `${exercise.sets} × ${uniqueReps[0]} reps${uniqueWeights[0] ? ` · ${uniqueWeights[0]}kg` : ''}`
+    }
+
+    return `${exercise.sets} custom strength sets`
+  }
+
   return (
     <ParallaxScrollView>
       <LinearGradient
@@ -49,7 +77,7 @@ export default function SessionTab() {
       />
 
       {/* Header */}
-      <Text style={[styles.header, { color: '#fff' }]}>Today's Session</Text>
+      <Text style={[styles.header, { color: '#fff' }]}>Today&apos;s Session</Text>
 
       {loading ? (
         <View style={styles.centered}>
@@ -64,7 +92,7 @@ export default function SessionTab() {
         <View style={styles.emptyContainer}>
           <Text style={[{color: colors.text}, styles.emptyTitle]}>Great work! 💪</Text>
           <Text style={[{color: colors.textMuted}, styles.emptyText]}>
-            You've completed today's workout,
+            You&apos;ve completed today&apos;s workout,
             <Text style={styles.emptyWorkoutName}> {session.workout_name}</Text>.
           </Text>
         </View>
@@ -89,9 +117,7 @@ export default function SessionTab() {
                 <View style={styles.exerciseInfo}>
                   <Text style={[{color: colors.text}, styles.exerciseName]}>{ex.name}</Text>
                   <Text style={[{color: colors.text}, styles.exerciseMeta]}>
-                    {ex.type === 'timed'
-                      ? `${ex.sets} set${ex.sets !== 1 ? 's' : ''} · ${ex.time_seconds}s`
-                      : `${ex.sets} × ${ex.reps} reps${ex.weight ? ` · ${ex.weight}kg` : ''}`}
+                    {buildExerciseSummary(ex)}
                   </Text>
                 </View>
                 <View style={[{backgroundColor: colors.panelAlt}, styles.typeBadge]}>

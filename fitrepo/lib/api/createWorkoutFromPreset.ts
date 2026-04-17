@@ -15,14 +15,14 @@ export async function createWorkoutFromPreset(
 
   const presetExercises = await getExercisesInPreset(preset_id)
 
-  // Create the actual workout row
+  // create the parent workout first so the copied preset rows have somewhere to land
   const workout = await createWorkout({
     name: preset.name,
     performed_at,
     is_finished: false,
   })
 
-  // Copy all preset exercises into workout_exercises
+  // preserve preset order if it exists. if not, just fall back to the current loop index.
   await Promise.all(
     presetExercises.map((exercise: any, index: number) =>
       addExerciseToWorkout(workout.id, exercise.exercise_id, {

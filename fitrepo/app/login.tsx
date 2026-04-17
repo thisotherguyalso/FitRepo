@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
 import * as WebBrowser from 'expo-web-browser'
 import { useAuth } from '@/hooks/use-auth'
-import { useAppColors, sharedStyles, AppColors } from '@/constants/styles'
+import { useAppColors, sharedStyles } from '@/constants/styles'
 
+// this closes the auth browser tab on web once oauth bounces back
 WebBrowser.maybeCompleteAuthSession()
 
 
 export default function Login() {
-  // sets the states that triggers re-rendering of the screen
   const colors = useAppColors()
 
   const [email, setEmail] = useState('')

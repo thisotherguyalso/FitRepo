@@ -1,6 +1,13 @@
 import { supabase } from '../supabase'
-import { Exercise, WorkoutExercise } from '@/types/database'
+import { WorkoutExercise } from '@/types/database'
 import { EXERCISE_RELATION_SELECT } from './exerciseRelations'
+import { resolveEffectiveWeight } from '@/lib/bodyweight'
+
+export type WorkoutSummary = {
+    workout_id: string
+    totalSets: number
+    totalVolume: number
+}
 
 // Gets all exercises in a specific workout
 export async function getExercisesInWorkout(
@@ -59,6 +66,19 @@ export async function updateWorkoutExercise(
     return data
 }
 
+export async function updateWorkoutExerciseById(
+    id: string,
+    workout_exercise: Partial<WorkoutExercise>
+) {
+    const { data, error } = await supabase.from('workout_exercises')
+        .update(workout_exercise)
+        .eq('id', id)
+        .select()
+        .single()
+    if (error) throw error
+    return data
+}
+
 // Removes an exercise from a workout
 export async function removeExerciseFromWorkout(
     exercise_id: string,
@@ -69,4 +89,50 @@ export async function removeExerciseFromWorkout(
     .eq('workout_id', workout_id)
     .eq('exercise_id', exercise_id)
     if (error) throw error
+}
+
+export async function clearWorkoutExercises(
+    workout_id: string
+) {
+    const { error } = await supabase.from('workout_exercises')
+        .delete()
+        .eq('workout_id', workout_id)
+    if (error) throw error
+}
+
+export async function getWorkoutSummaries(workoutIds: string[], bodyWeightKg: number | null = null) {
+    if (workoutIds.length === 0) {
+        return [] as WorkoutSummary[]
+    }
+
+    const { data, error } = await supabase
+        .from('workout_exercises')
+        .select('workout_id, sets, reps, weight')
+        .in('workout_id', workoutIds)
+
+    if (error) throw error
+
+    const summaries = new Map<string, WorkoutSummary>()
+
+    for (const row of data ?? []) {
+        const current = summaries.get(row.workout_id) ?? {
+            workout_id: row.workout_id,
+            totalSets: 0,
+            totalVolume: 0,
+        }
+
+        const setCount = row.sets ?? 1
+        const effectiveWeight = resolveEffectiveWeight(row.weight, bodyWeightKg) ?? 0
+        const volume = (row.reps ?? 0) * effectiveWeight * setCount
+
+        current.totalSets += setCount
+        current.totalVolume += volume
+        summaries.set(row.workout_id, current)
+    }
+
+    return workoutIds.map((id) => summaries.get(id) ?? {
+        workout_id: id,
+        totalSets: 0,
+        totalVolume: 0,
+    })
 }

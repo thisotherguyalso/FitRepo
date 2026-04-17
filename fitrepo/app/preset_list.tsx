@@ -5,7 +5,7 @@ import { ButtonComponent } from '@/components/button-component';
 import { useLocalSearchParams, router } from 'expo-router';
 import { createWorkoutFromPreset } from '@/lib/api/createWorkoutFromPreset';
 import { usePresets } from '@/hooks/use-presets';
-import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { AppColors, AppRadius, sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function PresetList() {
@@ -35,6 +35,8 @@ export default function PresetList() {
     try {
       if (!date) throw new Error('No workout date was provided.');
       setCreatingPresetWorkout(preset_id);
+
+      // keep the loading state tied to one preset row so the whole list doesn't feel frozen
       const workout = await createWorkoutFromPreset(preset_id, date);
 
       Alert.alert('Success', 'Workout created from preset.');
@@ -51,9 +53,7 @@ export default function PresetList() {
 
   return (
     <View style={styles.wrapper}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
-      >
+      <ParallaxScrollView>
         <LinearGradient
           colors={['#020975', '#0d0d12']}
           style={sharedStyles.background}

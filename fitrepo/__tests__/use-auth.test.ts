@@ -2,7 +2,10 @@ import { renderHook, act, render } from '@testing-library/react-native';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase';
 import { Alert } from 'react-native'
-import { createProfile } from '@/lib/api/profiles';
+import { createProfile, getProfile } from '@/lib/api/profiles';
+import { router } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
+import * as AuthSession from 'expo-auth-session'
 
 jest.mock('expo-router', () => ({
     router: {
@@ -14,19 +17,27 @@ jest.mock('expo-web-browser', () => ({
     openAuthSessionAsync: jest.fn()
 }))
 
+jest.mock('expo-auth-session', () => ({
+    makeRedirectUri: jest.fn()
+}))
+
 jest.mock('@/lib/supabase', () => ({
     supabase: {
         auth: {
             getSession: jest.fn(),
+            getUser: jest.fn(),
             signInWithPassword: jest.fn(),
             signUp: jest.fn(),
+            signInWithOAuth: jest.fn(),
+            exchangeCodeForSession: jest.fn(),
             signOut: jest.fn(),
         }
     }
 }))
 
 jest.mock('@/lib/api/profiles', () => ({
-    createProfile: jest.fn()
+    createProfile: jest.fn(),
+    getProfile: jest.fn()
 }))
 
 jest.mock('react-native', () => ({
@@ -45,8 +56,22 @@ describe('useAuth', () => {
             error: null,
         })
 
+        ;(supabase.auth.getUser as jest.Mock).mockResolvedValue({
+            data: { user: { id: '123' } },
+            error: null,
+        })
+
         ;(supabase.auth.signOut as jest.Mock).mockResolvedValue({
             error: null,
+        })
+
+        ;(AuthSession.makeRedirectUri as jest.Mock).mockReturnValue('fitrepo://auth/callback')
+        ;(getProfile as jest.Mock).mockResolvedValue({
+            username: 'testuser',
+            goal: '',
+            current_streak: 0,
+            height_cm: null,
+            body_weight_kg: null,
         })
     })
 
@@ -164,4 +189,65 @@ describe('useAuth', () => {
 
         expect(result.current.loading).toBe(true);
     });
+
+    it('should sign in with Google and exchange the returned code', async () => {
+        const { result } = renderHook(() => useAuth());
+
+        ;(supabase.auth.signInWithOAuth as jest.Mock).mockResolvedValue({
+            data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
+            error: null,
+        })
+
+        ;(WebBrowser.openAuthSessionAsync as jest.Mock).mockResolvedValue({
+            type: 'success',
+            url: 'fitrepo://auth/callback?code=oauth-code-123',
+        })
+
+        ;(supabase.auth.exchangeCodeForSession as jest.Mock).mockResolvedValue({
+            data: { session: { access_token: 'token' } },
+            error: null,
+        })
+
+        await act(async () => {
+            await result.current.googleSignIn()
+        })
+
+        expect(AuthSession.makeRedirectUri).toHaveBeenCalledWith({
+            scheme: 'fitrepo',
+            path: 'auth/callback',
+        })
+        expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({
+            provider: 'google',
+            options: {
+                redirectTo: 'fitrepo://auth/callback',
+                skipBrowserRedirect: true,
+            },
+        })
+        expect(WebBrowser.openAuthSessionAsync).toHaveBeenCalledWith(
+            'https://accounts.google.com/o/oauth2/v2/auth',
+            'fitrepo://auth/callback'
+        )
+        expect(supabase.auth.exchangeCodeForSession).toHaveBeenCalledWith('oauth-code-123')
+        expect(router.replace).toHaveBeenCalledWith('/(tabs)/home')
+    })
+
+    it('should not exchange a code when Google sign-in is cancelled', async () => {
+        const { result } = renderHook(() => useAuth());
+
+        ;(supabase.auth.signInWithOAuth as jest.Mock).mockResolvedValue({
+            data: { url: 'https://accounts.google.com/o/oauth2/v2/auth' },
+            error: null,
+        })
+
+        ;(WebBrowser.openAuthSessionAsync as jest.Mock).mockResolvedValue({
+            type: 'cancel',
+        })
+
+        await act(async () => {
+            await result.current.googleSignIn()
+        })
+
+        expect(supabase.auth.exchangeCodeForSession).not.toHaveBeenCalled()
+        expect(router.replace).not.toHaveBeenCalled()
+    })
 });

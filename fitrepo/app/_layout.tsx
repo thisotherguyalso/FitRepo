@@ -5,6 +5,7 @@ import { recoverInvalidSession } from '@/lib/auth-session'
 
 export default function RootLayout() {
   useEffect(() => {
+    // local auth storage can get stale after provider logins/logouts, so sweep bad refresh tokens on boot
     void recoverInvalidSession()
   }, [])
 

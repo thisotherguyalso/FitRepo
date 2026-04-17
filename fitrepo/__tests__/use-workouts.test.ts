@@ -65,13 +65,13 @@ describe('useWorkouts', () => {
         })
     })
 
-    it('should handle createWorkout errors gracefully', async () => {
+    it('should surface createWorkout errors gracefully', async () => {
         (getWorkouts as jest.Mock).mockResolvedValue([])
         const { result } = renderHook(() => useWorkouts())
         await waitForNextTick();
 
         (createWorkout as jest.Mock).mockRejectedValue(
-            new Error('You already have a workout for today!')
+            new Error('Workout creation failed')
         )
 
         let thrownError: any = null
@@ -90,7 +90,7 @@ describe('useWorkouts', () => {
         })
 
         expect(thrownError).not.toBeNull()
-        expect(thrownError.message).toBe('You already have a workout for today!')
+        expect(thrownError.message).toBe('Workout creation failed')
         expect(result.current.loading).toBe(false)
     })
 

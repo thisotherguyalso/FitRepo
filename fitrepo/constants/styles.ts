@@ -1,84 +1,105 @@
 import { StyleSheet, useColorScheme } from 'react-native'
 
 export const LightColors = {
-  primary: '#1e85f7',
-  secondary: '#021327',
-  
-  background: '#f5f5f8',
+  primary: '#0B3D91',
+  secondary: '#153E75',
 
-  surface: '#fff',
-  surfaceAlt: '#e5e5ea',
+  background: '#F5F2EA',
+  backgroundAlt: '#ECE7DB',
+  backgroundStrong: '#D7C6A0',
 
-  panel: '#fff',
-  panelAlt: '#e5e5ea',
+  surface: '#FFFCF6',
+  surfaceAlt: '#F2ECE0',
+  surfaceStrong: '#E5D7BD',
 
-  text: '#273035',
-  textMuted: '#6b6b6b',
-  textSubtle: '#6b7280',
-  textAccent: '#93c5fd',
-  textAccent2: '#fff',
-  textChatbotTitle: '#1e85f7',
-  textChatbot: '#273035',
-  
-  danger: '#f16a6f',
-  warning: '#f59e0b',
+  panel: '#FFFFFF',
+  panelAlt: 'rgba(11, 61, 145, 0.08)',
+  panelStrong: 'rgba(199, 166, 88, 0.18)',
+  border: 'rgba(16, 44, 88, 0.12)',
+  borderStrong: 'rgba(199, 166, 88, 0.34)',
 
-  signOut: '#a81a1a',
+  text: '#10224A',
+  textMuted: '#5F6D85',
+  textSubtle: '#8793A8',
+  textAccent: '#0B3D91',
+  textAccent2: '#FFF6DF',
+  textChatbotTitle: '#0B3D91',
+  textChatbot: '#10224A',
 
-  active: '#3a3a3a',
-  inactive: '#999',
+  danger: '#D14B3E',
+  warning: '#B9861E',
+  success: '#1F9A70',
 
-  accent1: '#5a8b5a',
-  accent1Alt: '#99cc99',
-  accent1Border: '#aad3aa',
+  signOut: '#31415F',
 
-  accent2: '#8b6e5a',
-  accent2Alt: '#ccc099',
-  accent2Border: '#d3c0aa',
+  active: '#0B3D91',
+  inactive: '#7987A0',
 
-  mode: 'light'
+  accent1: '#DDF2E6',
+  accent1Alt: '#ECF8F0',
+  accent1Border: '#7BC69A',
+
+  accent2: '#F4E7BE',
+  accent2Alt: '#FBF4DB',
+  accent2Border: '#C7A658',
+
+  tabBar: 'rgba(255, 252, 246, 0.94)',
+  shadow: 'rgba(14, 32, 64, 0.16)',
+  overlay: 'rgba(11, 61, 145, 0.05)',
+
+  mode: 'light',
 } as const
 
 export const DarkColors = {
-  primary: '#020975fb',
-  secondary: '#1e85f7',
+  primary: '#1E5CC6',
+  secondary: '#0F274F',
 
-  background: '#0d0d12',
+  background: '#071122',
+  backgroundAlt: '#0C1B35',
+  backgroundStrong: '#17356A',
 
-  surface: '#1a1a1a',
-  surfaceAlt: '#2c2c2c',
+  surface: '#0F1B31',
+  surfaceAlt: '#152542',
+  surfaceStrong: '#1A325E',
 
-  panel: '#1c1c1f',
-  panelAlt: 'rgba(255, 255, 255, 0.1)',
+  panel: '#0B162A',
+  panelAlt: 'rgba(255, 255, 255, 0.08)',
+  panelStrong: 'rgba(199, 166, 88, 0.22)',
+  border: 'rgba(221, 231, 255, 0.1)',
+  borderStrong: 'rgba(199, 166, 88, 0.42)',
 
-  text: '#fff',
-  textMuted: '#888',
-  textSubtle: '#9ca3af',
-  textAccent: '#93c5fd',
-  textAccent2: '#93c5fd',
-  textChatbotTitle: '#1e85f7',
-  textChatbot: '#fff',
+  text: '#F7F6F1',
+  textMuted: '#A5B3C8',
+  textSubtle: '#7487A7',
+  textAccent: '#D6BB77',
+  textAccent2: '#FFF4D6',
+  textChatbotTitle: '#D6BB77',
+  textChatbot: '#F7F6F1',
 
-  danger: 'rgb(241,106,111)',
-  warning: '#f59e0b',
-  
-  signOut: '#7f1d1d',
-  
-  active: '#fff',
-  inactive: '#6b6b6b',
-  
-  accent1: '#1a2e1a',
-  accent1Alt: '#2d4a2d',
-  accent1Border: '#507750',
+  danger: '#F06A5B',
+  warning: '#F2B544',
+  success: '#49C58A',
 
-  accent2: '#493020',
-  accent2Alt: '#684e27',
-  accent2Border: '#8f6e49',
+  signOut: '#3B2C33',
 
-  mode: 'dark'
+  active: '#F7F6F1',
+  inactive: '#6E84A8',
+
+  accent1: '#173126',
+  accent1Alt: '#1E4132',
+  accent1Border: '#45B37A',
+
+  accent2: '#3E3218',
+  accent2Alt: '#53431E',
+  accent2Border: '#C7A658',
+
+  tabBar: 'rgba(8, 18, 35, 0.9)',
+  shadow: 'rgba(0, 0, 0, 0.38)',
+  overlay: 'rgba(214, 187, 119, 0.06)',
+
+  mode: 'dark',
 } as const
 
-// Keep AppColors as dark for static styles (StyleSheet.create)
 export const AppColors = DarkColors
 
 export function useAppColors() {
@@ -87,14 +108,20 @@ export function useAppColors() {
 }
 
 export const AppRadius = {
-  md: 12,
-  lg: 16,
+  sm: 12,
+  md: 18,
+  lg: 24,
+  xl: 32,
+  pill: 999,
 } as const
 
 export const AppSpacing = {
+  xs: 8,
+  sm: 12,
   md: 16,
-  lg: 18,
-  xl: 20,
+  lg: 20,
+  xl: 24,
+  xxl: 32,
   page: 24,
 } as const
 
@@ -112,39 +139,54 @@ export const sharedStyles = StyleSheet.create({
     backgroundColor: AppColors.surface,
     padding: AppSpacing.xl,
     borderRadius: AppRadius.lg,
+    borderWidth: 1,
+    borderColor: AppColors.border,
   },
   input: {
-    backgroundColor: AppColors.surface,
+    backgroundColor: AppColors.surfaceAlt,
     color: AppColors.text,
     borderRadius: AppRadius.md,
-    padding: AppSpacing.md,
+    borderWidth: 1,
+    borderColor: AppColors.border,
+    paddingHorizontal: AppSpacing.md,
+    paddingVertical: 15,
     fontSize: 16,
   },
   background: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 200,
+    left: -40,
+    right: -40,
+    top: -10,
+    height: 260,
+    borderBottomLeftRadius: 44,
+    borderBottomRightRadius: 44,
   },
   button: {
     borderRadius: AppRadius.md,
-    padding: AppSpacing.md,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: AppColors.primary,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   buttonText: {
-    color: AppColors.text,
+    color: '#FFF8F1',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   title: {
     color: AppColors.text,
-    fontWeight: '700',
+    fontWeight: '800',
     textAlign: 'center',
+    letterSpacing: -0.6,
   },
   sectionTitle: {
     color: AppColors.text,
     fontWeight: '700',
+    letterSpacing: -0.3,
   },
   mutedText: {
     color: AppColors.textMuted,

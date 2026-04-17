@@ -24,6 +24,16 @@ EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 npm start
 ```
 
+## Google auth setup
+
+Add the app redirect URI to Supabase Auth redirect URLs:
+
+```text
+fitrepo://auth/callback
+```
+
+The app now uses its native deep link callback for Google sign-in instead of the hosted Supabase callback page.
+
 ## Chat via Supabase Edge Functions
 
 The chat tab calls the `chat` edge function through `supabase.functions.invoke(...)`.

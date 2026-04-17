@@ -13,6 +13,7 @@ import { router } from 'expo-router'
 import ParallaxScrollView from '@/components/parallax-scroll-view'
 import {
   sendChatMessage,
+  normalizeReply,
   type ChatResult,
   type ChatMessage,
   type PendingWorkoutEdit,
@@ -20,6 +21,7 @@ import {
 import { clearChatHistory, loadChatHistory, saveChatHistory } from '@/lib/chat-history'
 import { useAppColors, AppColors, sharedStyles } from '@/constants/styles'
 import { LinearGradient } from 'expo-linear-gradient'
+import { supabase } from '@/lib/supabase'
 
 type LocalMessage = ChatMessage & {
   id: string
@@ -28,6 +30,7 @@ type LocalMessage = ChatMessage & {
 
 function buildMessage(role: 'user' | 'assistant', content: string, pending = false): LocalMessage {
   return {
+    // local ids only exist for rendering. persisted chat history stores the clean payload without these.
     id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     role,
     content,
@@ -35,12 +38,22 @@ function buildMessage(role: 'user' | 'assistant', content: string, pending = fal
   }
 }
 
+function normalizeStoredMessage(message: ChatMessage) {
+  if (message.role !== 'assistant') {
+    return message.content
+  }
+
+  return normalizeReply(message.content)
+}
+
 let activeChatRequest: Promise<ChatResult> | null = null
 let activeChatBaseMessages: LocalMessage[] | null = null
+// these module-level refs keep the pending request alive even if the tab remounts mid-response
 
 export default function ChatScreen() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [userId, setUserId] = useState<string | null>(null)
   const [createdWorkoutId, setCreatedWorkoutId] = useState<string | null>(null)
   const [pendingAction, setPendingAction] = useState<PendingWorkoutEdit | null>(null)
   const [historyReady, setHistoryReady] = useState(false)
@@ -54,6 +67,7 @@ export default function ChatScreen() {
 
   function toApiMessages(nextMessages: LocalMessage[]): ChatMessage[] {
     return nextMessages
+      // the fake "thinking..." bubble is UI-only, so never send it back to the model
       .filter((message) => !message.pending)
       .map(({ role, content }) => ({ role, content }))
   }
@@ -61,21 +75,37 @@ export default function ChatScreen() {
   useEffect(() => {
     isMounted.current = true
 
-    const stored = loadChatHistory()
-    if (!stored) {
-      setHistoryReady(true)
-      return
-    }
+    void (async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    // rebuild local ids here since storage only keeps the real message payload
-    setMessages(
-      stored.messages
-        .filter((message) => message.role !== 'system')
-        .map((message) => buildMessage(message.role as 'user' | 'assistant', message.content))
-    )
-    setPendingAction(stored.pendingAction)
-    setCreatedWorkoutId(stored.createdWorkoutId)
-    setHistoryReady(true)
+      if (!isMounted.current) return
+
+      const nextUserId = user?.id ?? 'guest'
+      setUserId(nextUserId)
+
+      const stored = loadChatHistory(nextUserId)
+      if (!stored) {
+        setHistoryReady(true)
+        return
+      }
+
+      // rebuild local ids here since storage only keeps the real message payload
+      setMessages(
+        stored.messages
+          .filter((message) => message.role !== 'system')
+          .map((message) =>
+            buildMessage(
+              message.role as 'user' | 'assistant',
+              normalizeStoredMessage(message)
+            )
+          )
+      )
+      setPendingAction(stored.pendingAction)
+      setCreatedWorkoutId(stored.createdWorkoutId)
+      setHistoryReady(true)
+    })()
 
     return () => {
       isMounted.current = false
@@ -83,14 +113,14 @@ export default function ChatScreen() {
   }, [])
 
   useEffect(() => {
-    if (!historyReady) return
+    if (!historyReady || !userId) return
 
-    saveChatHistory({
+    saveChatHistory(userId, {
       messages: toApiMessages(messages),
       pendingAction,
       createdWorkoutId,
     })
-  }, [messages, pendingAction, createdWorkoutId, historyReady])
+  }, [messages, pendingAction, createdWorkoutId, historyReady, userId])
 
   useEffect(() => {
     if (!historyReady) return
@@ -121,11 +151,12 @@ export default function ChatScreen() {
         Alert.alert('Chat error', error.message ?? 'Failed to send message.')
       })
       .finally(() => {
+        activeChatRequest = null
+        activeChatBaseMessages = null
+
         if (!isMounted.current) return
 
         setLoading(false)
-        activeChatRequest = null
-        activeChatBaseMessages = null
       })
   }, [historyReady])
 
@@ -161,9 +192,10 @@ export default function ChatScreen() {
       setMessages(nextMessages)
       Alert.alert('Chat error', error.message ?? 'Failed to send message.')
     } finally {
-      setLoading(false)
       activeChatRequest = null
       activeChatBaseMessages = null
+
+      setLoading(false)
     }
   }
 
@@ -241,7 +273,7 @@ export default function ChatScreen() {
 
         {pendingAction ? (
           <View style={[sharedStyles.card, styles.confirmCard]}>
-            <Text style={[styles.confirmTitle, {color: '#fff'}]}>Confirm workout edit?</Text>s
+            <Text style={[styles.confirmTitle, {color: '#fff'}]}>Confirm workout edit?</Text>
             <Text style={styles.confirmText}>
               This will update your workout for {pendingAction.performed_at}. Want me to do it?
             </Text>
@@ -279,7 +311,7 @@ export default function ChatScreen() {
               }>
               <LinearGradient
                 colors={[colors.accent1Alt, colors.accent1]}
-                style={[sharedStyles.background, {height: 60, alignItems: 'center'}]}
+                style={styles.workoutLinkGradient}
               >
                 <Text style={[sharedStyles.buttonText, {color: '#fff', margin:15}]}>View Workout?</Text>
               </LinearGradient>
@@ -323,9 +355,17 @@ export default function ChatScreen() {
         </View>
         
         <TouchableOpacity
-          style={[sharedStyles.button, styles.clearButton, styles.actionButton, {backgroundColor: colors.signOut}]}
+          style={[
+            sharedStyles.button,
+            styles.clearButton,
+            styles.actionButton,
+            { backgroundColor: colors.signOut },
+            loading && styles.sendButtonDisabled,
+          ]}
           onPress={() => {
-            clearChatHistory()
+            if (userId) {
+              clearChatHistory(userId)
+            }
             setCreatedWorkoutId(null)
             setPendingAction(null)
             setMessages([
@@ -334,7 +374,8 @@ export default function ChatScreen() {
                 'Clean slate. Ask for advice, create a workout, or tell me to edit one.'
               ),
             ])
-          }}>
+          }}
+          disabled={loading}>
           <Text style={sharedStyles.buttonText}>Clear Chat</Text>
         </TouchableOpacity>
       </View>
@@ -367,12 +408,6 @@ const styles = StyleSheet.create({
   messageBubble: {
     paddingVertical: 14,
   },
-  assistantBubble: {
-    backgroundColor: AppColors.surface,
-  },
-  userBubble: {
-    backgroundColor: AppColors.primary,
-  },
   pendingBubble: {
     opacity: 0.8,
   },
@@ -380,12 +415,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 6,
-  },
-  assistantRole: {
-    color: AppColors.secondary,
-  },
-  userRole: {
-    color: AppColors.textAccent,
   },
   messageText: {
     color: AppColors.text,
@@ -429,13 +458,16 @@ const styles = StyleSheet.create({
   openWorkoutButton: {
     marginBottom: 24,
   },
+  workoutLinkGradient: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   clearButton: {
     backgroundColor: AppColors.danger,
     marginBottom: 24,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 10,
   },
   actionButton: {
     flex: 1,

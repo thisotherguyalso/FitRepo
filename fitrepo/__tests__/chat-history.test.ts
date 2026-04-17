@@ -23,13 +23,13 @@ describe('chat history storage', () => {
   })
 
   it('saves and loads chat history', () => {
-    saveChatHistory({
+    saveChatHistory('user-1', {
       messages: [{ role: 'assistant', content: 'yo' }],
       pendingAction: null,
       createdWorkoutId: 'workout-123',
     })
 
-    expect(loadChatHistory()).toEqual({
+    expect(loadChatHistory('user-1')).toEqual({
       messages: [{ role: 'assistant', content: 'yo' }],
       pendingAction: null,
       createdWorkoutId: 'workout-123',
@@ -37,14 +37,31 @@ describe('chat history storage', () => {
   })
 
   it('clears chat history', () => {
-    saveChatHistory({
+    saveChatHistory('user-1', {
       messages: [{ role: 'user', content: 'hi' }],
       pendingAction: null,
       createdWorkoutId: null,
     })
 
-    clearChatHistory()
+    clearChatHistory('user-1')
 
-    expect(loadChatHistory()).toBeNull()
+    expect(loadChatHistory('user-1')).toBeNull()
+  })
+
+  it('keeps different users isolated', () => {
+    saveChatHistory('user-1', {
+      messages: [{ role: 'assistant', content: 'first account' }],
+      pendingAction: null,
+      createdWorkoutId: null,
+    })
+
+    saveChatHistory('user-2', {
+      messages: [{ role: 'assistant', content: 'second account' }],
+      pendingAction: null,
+      createdWorkoutId: null,
+    })
+
+    expect(loadChatHistory('user-1')?.messages[0]?.content).toBe('first account')
+    expect(loadChatHistory('user-2')?.messages[0]?.content).toBe('second account')
   })
 })

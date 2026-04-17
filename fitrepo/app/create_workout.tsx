@@ -12,6 +12,7 @@ export default function CreateWorkout() {
 
   const colors = useAppColors();
 
+  // date comes from the workouts calendar route, so if this blows up upstream nav was wrong
   const readableDate = new Date(date as string).toLocaleDateString(undefined, {
     month: 'long',
     day: 'numeric',
@@ -24,7 +25,8 @@ export default function CreateWorkout() {
       if (!workoutName.trim()) throw new Error('Please enter a workout name.');
 
       router.push({
-        pathname: '/exercise_selection',
+        // typed routes hasn't picked this screen up cleanly yet, so keep the cast unless routing gets cleaned up
+        pathname: '/exercise_selection' as any,
         params: {
           date: date as string,
           name: workoutName.trim(),
