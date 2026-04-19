@@ -102,7 +102,7 @@ export default function ProfileScreen() {
 
         <Animated.View
           entering={FadeInDown.duration(240)}
-          style={[sharedStyles.card, styles.heroCard, { backgroundColor: colors.tabBar, borderColor: colors.borderStrong }]}
+          style={[sharedStyles.card, styles.heroCard, { backgroundColor: colors.shadow, borderColor: colors.borderStrong }]}
         >
           <Text style={[styles.eyebrow, { color: colors.textAccent2 }]}>PROFILE</Text>
           <Text style={[styles.title, { color: '#fff' }]}>Tune your profile</Text>
