@@ -439,7 +439,7 @@ export default function ViewWorkout() {
                   {!collapsedExercises[exercise.exercise_id] ? renderExerciseSets(exercise) : (
                     <View style={[styles.collapsedHint, { backgroundColor: colors.overlay, borderColor: colors.border }]}>
                       <Text style={[styles.collapsedHintText, { color: colors.textMuted }]}>
-                        {exercise.sets.length} sets hidden for now. Tap the header if you want the full block.
+                        {exercise.sets.length} {exercise.sets.length === 1 ? 'set' : 'sets'} hidden for now. Tap the header if you want the full block.
                       </Text>
                     </View>
                   )}

@@ -23,7 +23,7 @@ export const LightColors = {
   textSubtle: '#8793A8',
   textAccent: '#0B3D91',
   textAccent2: '#FFF6DF',
-  textAccent3: '#B8864E',
+  textAccent3: '#b49a6a',
   textChatbotTitle: '#0B3D91',
   textChatbot: '#10224A',
 
