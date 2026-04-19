@@ -2,12 +2,10 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { HapticTab } from '@/components/haptic-tab';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { LightColors, DarkColors } from '@/constants/styles';
+import { useAppColors } from '@/constants/styles';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme() ?? 'dark';
-  const colors = colorScheme === 'dark' ? DarkColors : LightColors;
+  const colors = useAppColors();
 
   return (
     <Tabs
@@ -16,6 +14,7 @@ export default function TabLayout() {
         tabBarButton: HapticTab,
 
         tabBarStyle: {
+          //position: 'absolute',
           backgroundColor: colors.surface,
           borderTopColor: colors.surfaceAlt,
         },
@@ -27,7 +26,7 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen
+    <Tabs.Screen
       name="home"
       options={{
         title: 'Home',

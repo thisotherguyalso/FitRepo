@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ButtonComponent } from '@/components/button-component';
 import { useWorkoutHistory } from '@/hooks/use-history-entry';
-import { AppColors, AppSpacing } from '@/constants/styles';
+import { AppColors, AppSpacing, useAppColors } from '@/constants/styles';
 
 export default function Summary() {
   const { total, workout_id } = useLocalSearchParams<{ total: string; workout_id: string }>();
@@ -13,9 +13,11 @@ export default function Summary() {
   const totalReps = history.reduce((sum, e) => sum + (e.reps ?? 0), 0);
   const totalTime = history.reduce((sum, e) => sum + (e.time_seconds ?? 0), 0);
 
+  const colors = useAppColors();
+
   return (
     <LinearGradient
-      colors={['#854d0e', '#151718']}
+      colors={[colors.complete, colors.background]}
       style={styles.container}
     >
       <Text style={styles.header}>Complete</Text>
@@ -59,7 +61,7 @@ export default function Summary() {
         />
       </View>
 
-      <Text style={styles.hint}>Great work! 💪</Text>
+      <Text style={[styles.hint, { color: colors.textMuted }]}>Great work! 💪</Text>
     </LinearGradient>
   );
 }

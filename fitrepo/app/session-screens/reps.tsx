@@ -6,9 +6,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SessionExercise } from '@/hooks/use-today-session';
 import { goToNextExercise } from '@/utils/session-navigation';
 import { createHistoryEntry } from '@/lib/api/historyEntries';
-import { AppColors, AppRadius, AppSpacing } from '@/constants/styles';
+import { AppColors, AppRadius, AppSpacing, useAppColors } from '@/constants/styles';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import { getCurrentUserBodyWeightKg, resolveEffectiveWeight } from '@/lib/bodyweight';
+import { Colors } from '@/constants/theme';
 
 export default function Reps() {
   const {
@@ -72,24 +73,19 @@ export default function Reps() {
     }
   }
 
-  const doubleTap = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => goToNextExercise(exercises, currentIndex, workout_id, user_id))
-    .runOnJS(true);
-
-  const singleTap = Gesture.Tap()
+  const repGesture = Gesture.Tap()
     .maxDuration(250)
     .onEnd(() => setRepAmount((r) => r + 1))
     .runOnJS(true);
 
-  const repGesture = Gesture.Exclusive(doubleTap, singleTap);
-
   const isLastSet = currentSet >= totalSets;
+
+  const colors = useAppColors();
 
   return (
     <GestureHandlerRootView style={styles.root}>
       <LinearGradient
-        colors={['#7c2d12', '#151718']}
+        colors={[colors.reps, colors.background]}
         style={styles.container}
       >
         {/* Header */}
@@ -116,14 +112,14 @@ export default function Reps() {
               <Text style={styles.adjustButtonText}>−1</Text>
             </TouchableOpacity>
 
-            {/* Tap to add rep, double tap to skip */}
+            {/* Tap to add rep*/}
             <GestureDetector gesture={repGesture}>
               <View style={{ justifyContent: 'center', alignItems: 'center' }}>
                 <AnimatedCircularProgress
                   size={220}
                   width={14}
                   fill={((repAmount / (currentSetConfig?.reps || exercise?.reps || 1)) * 100)}
-                  tintColor='#3b82f6'
+                  tintColor={colors.reps + '90'}
                   backgroundColor="rgba(255,255,255,0.1)"
                   rotation={0}
                   lineCap="round"
@@ -162,7 +158,7 @@ export default function Reps() {
         </TouchableOpacity>
 
         {/* Skip Hint */}
-        <Text style={styles.skipHint}>Tap counter to add rep • Double-tap to skip</Text>
+        <Text style={[styles.skipHint, { color: colors.textMuted }]}>Tap counter to add rep</Text>
       </LinearGradient>
     </GestureHandlerRootView>
   );

@@ -44,9 +44,17 @@ export const LightColors = {
   accent2Alt: '#FBF4DB',
   accent2Border: '#C7A658',
 
-  tabBar: 'rgba(255, 252, 246, 0.94)',
+  tabBar: 'rgba(255, 252, 246, 0.9)',
   shadow: 'rgba(14, 32, 64, 0.16)',
   overlay: 'rgba(11, 61, 145, 0.05)',
+
+  reps: '#dd4c1c',
+  timed: '#2E6DB4',
+  rest: '#2E8B57',
+  complete: '#C47F17',
+
+  restBar: '#128b57',
+  exerciseBar: '#346dca',
 
   mode: 'light',
 } as const
@@ -98,6 +106,14 @@ export const DarkColors = {
   tabBar: 'rgba(8, 18, 35, 0.9)',
   shadow: 'rgba(0, 0, 0, 0.38)',
   overlay: 'rgba(214, 187, 119, 0.06)',
+
+  reps: '#7c2d12',
+  timed: '#1E5CC6',
+  rest: '#0a4a2e',
+  complete: '#854d0e',
+
+  restBar: '#22c55e',
+  exerciseBar: '#3b82f6',
 
   mode: 'dark',
 } as const
