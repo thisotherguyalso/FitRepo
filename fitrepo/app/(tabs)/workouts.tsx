@@ -182,20 +182,20 @@ export default function WorkoutsTab() {
                   style={StyleSheet.absoluteFillObject}
                 />
                 <View style={styles.workoutCardContent}>
-                  <Text style={styles.workoutName}>{workout.name}</Text>
-                  <Text style={styles.workoutStatus}>
+                  <Text style={[styles.workoutName, { color: colors.text }]}>{workout.name}</Text>
+                  <Text style={[styles.workoutStatus, { color: colors.textMuted }]}>
                     {workout.is_finished ? 'Completed' : 'Planned'}
                   </Text>
                   <View style={styles.metricsRow}>
                     <View style={[styles.metricChip, { backgroundColor: colors.overlay }]}>
                       <Ionicons name="layers-outline" size={13} color={colors.text} />
-                      <Text style={styles.metricText}>
+                      <Text style={[styles.metricText, { color: colors.text }]}>
                         {workoutSummaries[workout.id]?.totalSets ?? 0} sets
                       </Text>
                     </View>
                     <View style={[styles.metricChip, { backgroundColor: colors.overlay }]}>
                       <Ionicons name="barbell-outline" size={13} color={colors.text} />
-                      <Text style={styles.metricText}>
+                      <Text style={[styles.metricText, { color: colors.text }]}>
                         {formatVolume(workoutSummaries[workout.id]?.totalVolume ?? 0)}
                       </Text>
                     </View>

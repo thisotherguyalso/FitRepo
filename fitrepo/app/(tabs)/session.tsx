@@ -85,24 +85,24 @@ export default function SessionTab() {
         </View>
       ) : !session ? (
         <View style={styles.emptyContainer}>
-          <Text style={[styles.emptyTitle, {color: colors.text}]}>Rest Day</Text>
-          <Text style={[styles.emptyText, {color: colors.text}]}>No workout planned for today.</Text>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>Rest Day</Text>
+          <Text style={[styles.emptyText, { color: colors.text }]}>No workout planned for today.</Text>
         </View>
       ) : session.completed ? (
         <View style={styles.emptyContainer}>
-          <Text style={[{color: colors.text}, styles.emptyTitle]}>Great work! 💪</Text>
-          <Text style={[{color: colors.textMuted}, styles.emptyText]}>
+          <Text style={[{ color: colors.text }, styles.emptyTitle]}>Great work! 💪</Text>
+          <Text style={[{ color: colors.textMuted }, styles.emptyText]}>
             You&apos;ve completed today&apos;s workout,
-            <Text style={styles.emptyWorkoutName}> {session.workout_name}</Text>.
+            <Text style={[styles.emptyWorkoutName, { color: colors.textAccent3 }]}> {session.workout_name}</Text>.
           </Text>
         </View>
       ) : (
         <>
           {/* Workout Name Card */}
-          <View style={[styles.workoutCard, {backgroundColor: colors.surface}]}>
-            <Text style={[styles.workoutLabel, {color: colors.text}]}>WORKOUT</Text>
+          <View style={[styles.workoutCard, { backgroundColor: colors.panel }]}>
+            <Text style={[styles.workoutLabel, { color: colors.text }]}>WORKOUT</Text>
             <Text style={styles.workoutName}>{session.workout_name}</Text>
-            <Text style={[styles.exerciseCount, {color: colors.text}]}>
+            <Text style={[styles.exerciseCount, { color: colors.text }]}>
               {session.exercises.length} exercise{session.exercises.length !== 1 ? 's' : ''}
             </Text>
           </View>
@@ -110,18 +110,18 @@ export default function SessionTab() {
           {/* Exercise List */}
           <View style={styles.exerciseList}>
             {session.exercises.map((ex, i) => (
-              <View key={ex.workout_exercise_id} style={[{backgroundColor: colors.panel}, styles.exerciseRow]}>
-                <View style={[{backgroundColor: colors.panelAlt}, styles.indexBadge]}>
-                  <Text style={[{color: colors.text}, styles.exerciseIndex]}>{i + 1}</Text>
+              <View key={ex.workout_exercise_id} style={[{ backgroundColor: colors.panel }, styles.exerciseRow]}>
+                <View style={[{ backgroundColor: colors.panelAlt }, styles.indexBadge]}>
+                  <Text style={[{ color: colors.text }, styles.exerciseIndex]}>{i + 1}</Text>
                 </View>
                 <View style={styles.exerciseInfo}>
-                  <Text style={[{color: colors.text}, styles.exerciseName]}>{ex.name}</Text>
-                  <Text style={[{color: colors.text}, styles.exerciseMeta]}>
+                  <Text style={[{ color: colors.text }, styles.exerciseName]}>{ex.name}</Text>
+                  <Text style={[{ color: colors.text }, styles.exerciseMeta]}>
                     {buildExerciseSummary(ex)}
                   </Text>
                 </View>
-                <View style={[{backgroundColor: colors.panelAlt}, styles.typeBadge]}>
-                  <Text style={[{color: colors.text}, styles.typeText]}>
+                <View style={[{ backgroundColor: colors.panelAlt }, styles.typeBadge]}>
+                  <Text style={[{ color: colors.text }, styles.typeText]}>
                     {ex.type === 'timed' ? 'Timed' : 'Reps'}
                   </Text>
                 </View>
@@ -164,7 +164,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   emptyWorkoutName: {
-    color: '#93c5fd',
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',

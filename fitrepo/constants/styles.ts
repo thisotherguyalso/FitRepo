@@ -2,7 +2,7 @@ import { StyleSheet, useColorScheme } from 'react-native'
 
 export const LightColors = {
   primary: '#0B3D91',
-  secondary: '#153E75',
+  secondary: '#6698da',
 
   background: '#F5F2EA',
   backgroundAlt: '#ECE7DB',
@@ -23,6 +23,7 @@ export const LightColors = {
   textSubtle: '#8793A8',
   textAccent: '#0B3D91',
   textAccent2: '#FFF6DF',
+  textAccent3: '#B8864E',
   textChatbotTitle: '#0B3D91',
   textChatbot: '#10224A',
 
@@ -73,6 +74,7 @@ export const DarkColors = {
   textSubtle: '#7487A7',
   textAccent: '#D6BB77',
   textAccent2: '#FFF4D6',
+  textAccent3: '#93c5fd',
   textChatbotTitle: '#D6BB77',
   textChatbot: '#F7F6F1',
 

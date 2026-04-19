@@ -242,7 +242,7 @@ export default function ChatScreen() {
       />
       <View style={styles.container}>
         <Text style={[sharedStyles.title, styles.title]}>FitRepo Chat</Text>
-        <Text style={[styles.subtitle, {color: colors.textMuted}]}>
+        <Text style={[styles.subtitle, { color: sharedStyles.title.color }]}>
           Ask for advice, create workouts, or say things like &quot;Edit my workout for tomorrow.&quot;
         </Text>
 
@@ -323,17 +323,18 @@ export default function ChatScreen() {
           alignContent: 'center',
           display: 'flex',
           flexDirection: 'row',
-          justifyContent: 'space-evenly',
+          justifyContent: 'space-between',
           alignItems: "stretch",          
 
           backgroundColor: colors.surface, 
           borderRadius: 16,
+          padding: 8,
+          gap: 8
         }]}>
           <TextInput
             style={[sharedStyles.input, styles.input, {
-              minWidth: 250,
-              maxWidth: 250,
-              borderRadius: 16,
+              borderRadius: 10,
+              flex: 1,
 
               backgroundColor: colors.panelAlt,
               color: colors.text
@@ -347,10 +348,38 @@ export default function ChatScreen() {
             editable={!loading}
           />
           <TouchableOpacity
-            style={[sharedStyles.button, loading && styles.sendButtonDisabled, {width: 80}]}
+            style={[sharedStyles.button, loading && styles.sendButtonDisabled,
+              {
+                width: 80,
+                overflow: 'hidden',
+                alignItems: 'center',
+                borderRadius: 10,
+                backgroundColor: ''
+              }]}
             onPress={() => void handleSend()}
             disabled={loading}>
-            <Text style={[sharedStyles.buttonText, {color: colors.text, textAlignVertical: 'center', textAlign: 'center'}]}>Send ➤</Text>
+            <LinearGradient
+              colors={[ colors.primary, colors.secondary ]}
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
+
+                flex: 1,
+                alignItems: 'center',     
+                justifyContent: 'center', 
+              }}
+            >
+              <Text style={[sharedStyles.buttonText,
+                {
+                  color: sharedStyles.title.color,
+                  textAlign: 'center',
+                  textAlignVertical: 'center'
+
+                }]}>Send ➤</Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
         
