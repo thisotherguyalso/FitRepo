@@ -7,10 +7,10 @@ import { getCurrentUserBodyWeightKg, resolveEffectiveWeight } from '@/lib/bodywe
 // for planned exercises
 type PlannedExercise = {
   exercise_id: string
-  sets: number | null
   reps: number | null
   time_seconds: number | null
   weight: number | null
+  set_notes?: string | null
   order_index: number
 }
 
@@ -27,8 +27,7 @@ export function useWorkouts() {
   const [workoutSummaries, setWorkoutSummaries] = useState<Record<string, { totalSets: number; totalVolume: number }>>({})
   const [loading, setLoading] = useState(false)
 
-  // useCallback keeps the function stable so it can be safely used
-  // inside useEffect / useFocusEffect without recreating it every render
+  // keep this stable so screens can call reload without kicking useEffect in the shins
   const loadWorkouts = useCallback(async () => {
     setLoading(true)
     try {
@@ -49,7 +48,7 @@ export function useWorkouts() {
           }, {} as Record<string, { totalSets: number; totalVolume: number }>)
         )
       } catch (summaryError: any) {
-        // don't blank the whole workouts screen just because the extra summary query died
+        // summary numbers are nice to have, not worth nuking the whole screen over
         console.warn(summaryError?.message ?? 'Failed to load workout summaries')
       }
     } catch (error: any) {
@@ -91,20 +90,21 @@ export function useWorkouts() {
           createdWorkout.id,
           exercise.exercise_id,
           {
-            sets: exercise.sets,
             reps: exercise.reps,
             time_seconds: exercise.time_seconds,
             weight: exercise.weight,
+            set_notes: exercise.set_notes ?? null,
             order_index: exercise.order_index,
           }
         )
       }
 
       setWorkouts((prev) => [...prev, createdWorkout])
-      const totalSets = workout.exercises.reduce((sum, exercise) => sum + (exercise.sets ?? 1), 0)
+      const totalSets = workout.exercises.length
+      // bodyweight stuff still counts toward volume, so resolve it the same way the workout list does
       const totalVolume = workout.exercises.reduce(
         (sum, exercise) =>
-          sum + ((exercise.reps ?? 0) * (resolveEffectiveWeight(exercise.weight, bodyWeightKg) ?? 0) * (exercise.sets ?? 1)),
+          sum + ((exercise.reps ?? 0) * (resolveEffectiveWeight(exercise.weight, bodyWeightKg) ?? 0)),
         0
       )
       setWorkoutSummaries((prev) => ({

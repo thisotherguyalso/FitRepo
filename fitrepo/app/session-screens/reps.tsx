@@ -9,7 +9,6 @@ import { createHistoryEntry } from '@/lib/api/historyEntries';
 import { AppColors, AppRadius, AppSpacing, useAppColors } from '@/constants/styles';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import { getCurrentUserBodyWeightKg, resolveEffectiveWeight } from '@/lib/bodyweight';
-import { Colors } from '@/constants/theme';
 
 export default function Reps() {
   const {
@@ -61,7 +60,7 @@ export default function Reps() {
       }
     } catch (error) {
       console.error('Failed to save set:', error);
-      // Still advance even if save fails - could show toast here
+      // kinda harsh, but getting the user stuck on a broken save is worse than letting them keep moving
       if (currentSet < totalSets) {
         setCurrentSet((s) => s + 1);
         setRepAmount(0);
@@ -118,6 +117,7 @@ export default function Reps() {
                 <AnimatedCircularProgress
                   size={220}
                   width={14}
+                  // guard the divisor so a weird/null target doesn't explode the ring math
                   fill={((repAmount / (currentSetConfig?.reps || exercise?.reps || 1)) * 100)}
                   tintColor={"rgb(255, 42, 0)"}
                   backgroundColor="rgba(255,255,255,0.1)"

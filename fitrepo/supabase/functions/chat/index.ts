@@ -11,6 +11,12 @@ type ExerciseRow = {
   type: 'timed' | 'reps'
 }
 
+type ExerciseCatalogEntry = {
+  name: string
+  type: 'timed' | 'reps'
+  muscles: string[]
+}
+
 type WorkoutRow = {
   id: string
   name: string
@@ -94,6 +100,8 @@ function parseJsonValue(content: string): unknown | null {
 
   for (let depth = 0; depth < 3 && typeof current === 'string'; depth += 1) {
     try {
+      // some models love returning json wrapped inside a json string inside another json string.
+      // not ideal, but unwrapping a couple times is cheaper than making the user retry.
       current = JSON.parse(current)
     } catch {
       return null
@@ -185,7 +193,33 @@ function buildExerciseCatalog(exercises: ExerciseRow[]) {
   return exercises.map((exercise) => ({
     name: exercise.name,
     type: exercise.type,
+    muscles: inferExerciseTags(exercise.name),
   }))
+}
+
+function normalizeTagText(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
+}
+
+function inferExerciseTags(name: string) {
+  const text = normalizeTagText(name)
+  const tags = new Set<string>()
+
+  if (text.includes('bench press') || text.includes('bench') || text.includes('chest fly') || text.includes('push up')) tags.add('Chest')
+  if (text.includes('dip') || text.includes('tricep') || text.includes('pushdown') || text.includes('skull crusher') || text.includes('close grip')) tags.add('Triceps')
+  if (text.includes('overhead press') || text.includes('lateral raise') || text.includes('front raise') || text.includes('push jerk') || text.includes('pike push up')) tags.add('Shoulders')
+  if (text.includes('row') || text.includes('pull up') || text.includes('pulldown') || text.includes('lat pulldown') || text.includes('face pull') || text.includes('dead hang') || text.includes('t bar')) tags.add('Back')
+  if (text.includes('bicep curl') || text.includes('hammer curl') || text.includes('preacher curl') || text.includes('chin up')) tags.add('Biceps')
+  if (text.includes('squat') || text.includes('lunge') || text.includes('leg press') || text.includes('leg extension') || text.includes('split squat')) tags.add('Quads')
+  if (text.includes('deadlift') || text.includes('romanian deadlift') || text.includes('rdl') || text.includes('leg curl')) tags.add('Hamstrings')
+  if (text.includes('hip thrust') || text.includes('hip abductor') || text.includes('bridge') || text.includes('bulgarian split squat')) tags.add('Glutes')
+  if (text.includes('calf raise')) tags.add('Calves')
+  if (text.includes('plank') || text.includes('crunch') || text.includes('leg raise') || text.includes('russian twist') || text.includes('v sit') || text.includes('mountain climber')) tags.add('Core')
+  if (text.includes('wrist curl') || text.includes('farmer hold')) tags.add('Forearms')
+  if (text.includes('burpee') || text.includes('battle ropes') || text.includes('jump rope') || text.includes('running') || text.includes('cycling')) tags.add('Conditioning')
+  if (tags.size === 0) tags.add('General')
+
+  return Array.from(tags).slice(0, 3)
 }
 
 function getTodayDate() {
@@ -239,6 +273,7 @@ function parseRequestedDate(value: string | null | undefined) {
 
   const parsed = new Date(raw)
   if (!Number.isNaN(parsed.getTime())) {
+    // force midnight before slicing so timezone drift doesn't shove the date backward
     parsed.setHours(0, 0, 0, 0)
     return toIsoDate(parsed)
   }
@@ -255,7 +290,7 @@ function sanitizeWorkoutExercises(
   exercises: WorkoutPlanExercise[],
   exerciseByName: Map<string, ExerciseRow>
 ) {
-  // keep the plan tight so the bot doesn't dump a 14-exercise monstrosity in one go
+  // keep the plan tight so the bot doesn't dump a 14-exercise monster into the app
   return exercises.slice(0, 8).map((exercise, index) => ({
     source: exercise,
     exercise: exerciseByName.get(normalizeName(exercise.exercise_name)),
@@ -272,11 +307,11 @@ function buildWorkoutExercisesPayload(
     const rawSets = Array.isArray(entry.source.sets) ? entry.source.sets : []
     const normalizedSets = rawSets.length > 0 ? rawSets : Array.from({ length: fallbackSetCount }, () => ({}))
 
-    // chat plans are grouped by exercise now, but workout_exercises is still one row per set
+    // chat plans are grouped by exercise, db rows are still one row per set.
+    // also spacing order_index by 100 makes later reordering/debugging way less annoying.
     return normalizedSets.map((set, setIndex) => ({
       workout_id: workoutId,
       exercise_id: entry.exercise!.id,
-      sets: 1,
       reps:
         entry.exercise!.type === 'reps'
           ? toNullableNumber(set.reps) ?? 10
@@ -290,6 +325,10 @@ function buildWorkoutExercisesPayload(
       order_index: entry.order_index * 100 + setIndex,
     }))
   })
+}
+
+function resolveWorkoutName(rawName: string, resolvedExercises: ReturnType<typeof sanitizeWorkoutExercises>) {
+  return rawName.trim() || resolvedExercises[0]?.exercise?.name || resolvedExercises[0]?.source.exercise_name.trim() || 'Workout'
 }
 
 Deno.serve(async (req) => {
@@ -394,7 +433,7 @@ Deno.serve(async (req) => {
 
         const { error: workoutUpdateError } = await supabase
           .from('workouts')
-          .update({ name: pending_action.workout_name.trim() || 'Updated Workout' })
+          .update({ name: resolveWorkoutName(pending_action.workout_name, resolvedExercises) })
           .eq('id', pending_action.workout_id)
           .eq('user_id', user.id)
 
@@ -446,7 +485,8 @@ Deno.serve(async (req) => {
       return json({ error: workoutsError.message }, { status: 500 })
     }
 
-    const workoutSummary = ((workouts ?? []) as WorkoutRow[]).slice(-12).map((workout) => ({
+    const workoutRows = (workouts ?? []) as WorkoutRow[]
+    const workoutSummary = workoutRows.slice(-8).map((workout) => ({
       id: workout.id,
       name: workout.name,
       performed_at: workout.performed_at,
@@ -459,16 +499,17 @@ Deno.serve(async (req) => {
       .eq('id', user.id)
       .maybeSingle()
 
+    const profileRow = profile as ProfileRow | null
     const profileSummary = {
-      username: (profile as ProfileRow | null)?.username ?? null,
-      goal: (profile as ProfileRow | null)?.goal ?? null,
-      current_streak: (profile as ProfileRow | null)?.current_streak ?? null,
-      height_cm: (profile as ProfileRow | null)?.height_cm ?? null,
-      body_weight_kg: (profile as ProfileRow | null)?.body_weight_kg ?? null,
+      username: profileRow?.username ?? null,
+      goal: profileRow?.goal ?? null,
+      current_streak: profileRow?.current_streak ?? null,
+      height_cm: profileRow?.height_cm ?? null,
+      body_weight_kg: profileRow?.body_weight_kg ?? null,
     }
 
-    const recentMessages = sanitizedMessages.slice(-10)
-    const exerciseCatalog = buildExerciseCatalog(exerciseRows)
+    const recentMessages = sanitizedMessages.slice(-8)
+    const exerciseCatalog = buildExerciseCatalog(exerciseRows) satisfies ExerciseCatalogEntry[]
 
     const upstreamMessages = [
       {
@@ -487,9 +528,15 @@ Rules:
 - Make sure to stick to the FitRepo context, when the user asks something off-topic, use banter to switch back to FitRepo related topics.
 - Keep replies personable and useful when the user goes off-script.
 - Sound conversational and direct. A little playful is fine. Don't be stiff.
+- Treat the saved User profile below as the default source of truth for the user's goal, current streak, height, and body weight.
+- If the user asks what their goal, streak, height, or body weight is, answer from the saved User profile unless the user clearly gives a newer value in this conversation.
+- When creating or editing workouts, tailor the plan to the saved User profile by default, especially the user's goal and available body metrics.
+- If the user explicitly says to ignore, change, or override a saved profile value in this conversation, follow the user's latest instruction instead of the saved value.
+- If a relevant profile field is missing or null, do not invent it. Briefly say it is not set yet when needed.
 - Use "create_workout" only when the user clearly wants a new workout created in the app.
 - Use "edit_workout" only when the user clearly wants an existing workout changed in the app.
 - For create/edit actions, choose only exercise names from the provided catalog.
+- Use the exercise catalog's muscle tags when the user asks for something like shoulder, chest, back, leg, arm, or core focused.
 - If the user says a relative date like tomorrow or next Monday, preserve that intent in performed_at.
 - Return 4 to 8 exercises for created or edited workouts unless the user asks otherwise.
 - Each exercise must include a "sets" array.
@@ -583,8 +630,8 @@ ${JSON.stringify(workoutSummary)}`,
 
     if (action.type === 'edit_workout') {
       const targetWorkout =
-        ((workouts ?? []) as WorkoutRow[]).find((workout) => workout.performed_at === performedAt) ??
-        ((workouts ?? []) as WorkoutRow[]).find((workout) => !workout.is_finished)
+        workoutRows.find((workout) => workout.performed_at === performedAt) ??
+        workoutRows.find((workout) => !workout.is_finished)
 
       if (!targetWorkout) {
         return json({
@@ -598,7 +645,7 @@ ${JSON.stringify(workoutSummary)}`,
         pending_action: {
           kind: 'edit_workout',
           workout_id: targetWorkout.id,
-          workout_name: action.workout_name.trim() || targetWorkout.name,
+          workout_name: resolveWorkoutName(action.workout_name, resolvedExercises),
           performed_at: targetWorkout.performed_at,
           message: action.message.trim(),
           exercises: action.exercises,
@@ -610,7 +657,7 @@ ${JSON.stringify(workoutSummary)}`,
       .from('workouts')
       .insert({
         user_id: user.id,
-        name: action.workout_name.trim() || 'AI Workout',
+        name: resolveWorkoutName(action.workout_name, resolvedExercises),
         performed_at: performedAt,
         is_finished: false,
       })

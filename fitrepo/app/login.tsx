@@ -1,11 +1,7 @@
 import { useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
-import * as WebBrowser from 'expo-web-browser'
 import { useAuth } from '@/hooks/use-auth'
 import { useAppColors, sharedStyles } from '@/constants/styles'
-
-// this closes the auth browser tab on web once oauth bounces back
-WebBrowser.maybeCompleteAuthSession()
 
 
 export default function Login() {
@@ -15,7 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
 
-  const { loading, signUp, signIn, googleSignIn } = useAuth()
+  const { loading, signUp, signIn } = useAuth()
 
   return (
     <View style={[sharedStyles.screen, sharedStyles.screenContent, styles.container]}>
@@ -44,10 +40,6 @@ export default function Login() {
         <Text style={sharedStyles.buttonText}>{loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[sharedStyles.button, styles.googleButton, {backgroundColor : colors.text}]} onPress={googleSignIn}>
-        <Text style={styles.googleButtonText}>Continue with Google</Text>
-      </TouchableOpacity>
-
       <TouchableOpacity onPress={() => setIsSignUp(!isSignUp)}>
         <Text style={styles.toggle}>
           {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
@@ -69,14 +61,6 @@ const styles = StyleSheet.create({
   },
   button: {
     marginBottom: 16,
-  },
-  googleButton: {
-    marginBottom: 16,
-  },
-  googleButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '600',
   },
   toggle: {
     color: '#888',

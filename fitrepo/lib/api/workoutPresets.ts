@@ -4,11 +4,9 @@ import { getAuthenticatedUser } from './auth'
 
 // Gets all workout presets
 export async function getWorkoutPresets() {
-    const user = await getAuthenticatedUser()
     const { data, error } = await supabase
         .from('workout_presets')
         .select('*')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
     if (error) throw error
     return data
@@ -16,12 +14,10 @@ export async function getWorkoutPresets() {
 
 // Gets a specific workout preset based on id
 export async function getWorkoutPreset(id: string) {
-    const user = await getAuthenticatedUser()
     const { data, error } = await supabase
         .from('workout_presets')
         .select('*')
         .eq('id', id)
-        .eq('user_id', user.id)
         .single()
     if (error) throw error
     return data

@@ -3,6 +3,7 @@ export type EditableSet = {
   reps: string
   time_seconds: string
   weight: string
+  set_notes: string
 }
 
 export type EditableExerciseGroup = {
@@ -11,6 +12,8 @@ export type EditableExerciseGroup = {
   exercise_id: string
   name: string
   type: 'reps' | 'timed'
+  image_url?: string
+  description?: string
   sets: EditableSet[]
 }
 
@@ -19,6 +22,7 @@ function toEditableValue(value: number | null | undefined) {
 }
 
 function buildSetId(prefix: string, index: number) {
+  // draft rows need a stable-ish key before supabase gives us a real id
   return `${prefix}-set-${index}-${Math.random().toString(36).slice(2, 8)}`
 }
 
@@ -29,11 +33,12 @@ export function createEditableSet(
   index = 0
 ): EditableSet {
   return {
-    // draft sets need their own key before they exist in the db
+    // same deal here. react gets grumpy fast if draft rows don't have their own ids.
     id: overrides.id ?? buildSetId(prefix, index),
     reps: type === 'reps' ? overrides.reps ?? '' : '',
     time_seconds: type === 'timed' ? overrides.time_seconds ?? '' : '',
     weight: overrides.weight ?? '',
+    set_notes: overrides.set_notes ?? '',
   }
 }
 
@@ -42,9 +47,10 @@ export function createEditableExerciseGroup(exercise: {
   name: string
   type: string
   workout_id?: string
+  image_url?: string
+  description?: string
 }) {
   const type = exercise.type === 'timed' ? 'timed' : 'reps'
-  const defaultSetCount = type === 'timed' ? 1 : 3
 
   return {
     id: `group-${exercise.id}-${Math.random().toString(36).slice(2, 8)}`,
@@ -52,9 +58,9 @@ export function createEditableExerciseGroup(exercise: {
     exercise_id: exercise.id,
     name: exercise.name,
     type,
-    sets: Array.from({ length: defaultSetCount }, (_, index) =>
-      createEditableSet(type, {}, exercise.id, index)
-    ),
+    image_url: exercise.image_url,
+    description: exercise.description,
+    sets: [],
   } satisfies EditableExerciseGroup
 }
 
@@ -72,13 +78,16 @@ export function mapWorkoutExercisesToEditableGroups(exercises: any[]): EditableE
         exercise_id: exercise.exercise_id,
         name: exercise.exercises?.name ?? 'Unnamed Exercise',
         type: exercise.exercises?.type === 'timed' ? 'timed' : 'reps',
+        image_url: exercise.exercises?.image_url,
+        description: exercise.exercises?.description,
         sets: [],
       })
       order.push(key)
     }
 
     const group = groups.get(key)!
-    // the table is flat now, so rebuild the grouped editor shape here before the UI touches it
+    // workout_exercises is one row per set now, but the editor still wants a grouped shape.
+    // rebuild it here so the screens don't have to care how the table is laid out.
     group.sets.push(
       createEditableSet(
         group.type,
@@ -87,6 +96,7 @@ export function mapWorkoutExercisesToEditableGroups(exercises: any[]): EditableE
           reps: toEditableValue(exercise.reps),
           time_seconds: toEditableValue(exercise.time_seconds),
           weight: toEditableValue(exercise.weight),
+          set_notes: exercise.set_notes ?? '',
         },
         exercise.exercise_id,
         group.sets.length
@@ -103,15 +113,16 @@ export function flattenEditableExercises(
 ) {
   let orderIndex = 0
 
-  // grouped editor in, flat workout_exercises rows out
+  // editor works as grouped exercises -> sets, db works as one row per set.
+  // flatten it once here so every caller doesn't reinvent the same mapping.
   return exercises.flatMap((exercise) =>
     exercise.sets.map((set) => ({
       workout_id: workoutId,
       exercise_id: exercise.exercise_id,
-      sets: 1,
       reps: exercise.type === 'reps' ? toNullableNumber(set.reps) : null,
       time_seconds: exercise.type === 'timed' ? toNullableNumber(set.time_seconds) : null,
       weight: toNullableNumber(set.weight),
+      set_notes: set.set_notes.trim() || null,
       order_index: orderIndex++,
     }))
   )

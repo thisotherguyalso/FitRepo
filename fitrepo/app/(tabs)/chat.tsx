@@ -233,6 +233,7 @@ export default function ChatScreen() {
   }
 
   const colors = useAppColors();
+  const subtitleColor = colors.textMuted
 
   return (
     <ParallaxScrollView>
@@ -242,7 +243,7 @@ export default function ChatScreen() {
       />
       <View style={styles.container}>
         <Text style={[sharedStyles.title, styles.title]}>FitRepo Chat</Text>
-        <Text style={[styles.subtitle, { color: sharedStyles.title.color }]}>
+        <Text style={[styles.subtitle, { color: subtitleColor }]}>
           Ask for advice, create workouts, or say things like &quot;Edit my workout for tomorrow.&quot;
         </Text>
 
@@ -292,17 +293,16 @@ export default function ChatScreen() {
           </View>
         ) : null}
 
-      {createdWorkoutId ? (
-          <View style={[{
-              overflow: 'hidden',
-              borderRadius: 16,
-              borderWidth: 1,
-              borderColor: colors.accent1Border,
-              height: 60
-            }]}>
+        {createdWorkoutId ? (
+          <View
+            style={[
+              styles.workoutLinkShell,
+              {
+                borderColor: colors.accent1Border,
+              },
+            ]}>
             <TouchableOpacity
-              style={[sharedStyles.button, styles.openWorkoutButton, styles.actionButton,
-              ]}
+              style={[sharedStyles.button, styles.openWorkoutButton, styles.actionButton]}
               onPress={() =>
                 router.push({
                   pathname: '/view_workout',
@@ -313,24 +313,19 @@ export default function ChatScreen() {
                 colors={[colors.accent1Alt, colors.accent1]}
                 style={styles.workoutLinkGradient}
               >
-                <Text style={[sharedStyles.buttonText, {color: '#fff', margin:15}]}>View Workout?</Text>
+                <Text style={[sharedStyles.buttonText, styles.workoutLinkText]}>View Workout</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
         ) : null}
 
-        <View style={[{
-          alignContent: 'center',
-          display: 'flex',
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-          alignItems: "stretch",          
-
-          backgroundColor: colors.surface, 
-          borderRadius: 16,
-          padding: 8,
-          gap: 8
-        }]}>
+        <View
+          style={[
+            styles.inputShell,
+            {
+              backgroundColor: colors.surface,
+            },
+          ]}>
           <TextInput
             style={[sharedStyles.input, styles.input, {
               borderRadius: 10,
@@ -354,7 +349,6 @@ export default function ChatScreen() {
                 overflow: 'hidden',
                 alignItems: 'center',
                 borderRadius: 10,
-                backgroundColor: ''
               }]}
             onPress={() => void handleSend()}
             disabled={loading}>
@@ -374,7 +368,7 @@ export default function ChatScreen() {
             >
               <Text style={[sharedStyles.buttonText,
                 {
-                  color: sharedStyles.title.color,
+                  color: '#fff',
                   textAlign: 'center',
                   textAlignVertical: 'center'
 
@@ -487,12 +481,31 @@ const styles = StyleSheet.create({
   openWorkoutButton: {
     marginBottom: 24,
   },
+  workoutLinkShell: {
+    overflow: 'hidden',
+    borderRadius: 16,
+    borderWidth: 1,
+    height: 60,
+  },
   workoutLinkGradient: {
     flex: 1,
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  workoutLinkText: {
+    color: '#fff',
+    margin: 15,
+  },
+  inputShell: {
+    alignContent: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'stretch',
+    borderRadius: 16,
+    padding: 8,
+    gap: 8,
   },
   clearButton: {
     backgroundColor: AppColors.danger,

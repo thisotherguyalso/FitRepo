@@ -3,8 +3,6 @@ import { Alert } from 'react-native'
 import { supabase } from '@/lib/supabase'
 import { router } from 'expo-router'
 import { createProfile, getProfile } from '@/lib/api/profiles'
-import * as WebBrowser from 'expo-web-browser'
-import * as AuthSession from 'expo-auth-session'
 import { recoverInvalidSession } from '@/lib/auth-session'
 
 export function useAuth() {
@@ -51,7 +49,7 @@ export function useAuth() {
                     }
                 )
             }
-            Alert.alert('Success', 'Check your email to confirm your account!')
+            Alert.alert('Success', 'Login to your account now!')
         } catch (error: any) {
             Alert.alert('Error', error.message)
         } finally {
@@ -84,75 +82,10 @@ export function useAuth() {
         }
     }
 
-    // Signs in with Google Authentication
-    async function googleSignIn() {
-        setLoading(true)
-
-        try {
-            await recoverInvalidSession()
-
-            const redirectTo = AuthSession.makeRedirectUri({
-                scheme: 'fitrepo',
-                path: 'auth/callback',
-            })
-
-            const { data, error } = await supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo,
-                    skipBrowserRedirect: true,
-                },
-            })
-
-            if (error) throw error
-            if (!data?.url) {
-                throw new Error('Google sign-in did not return an authorization URL.')
-            }
-
-            const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo)
-
-            if (result.type !== 'success' || !('url' in result) || !result.url) {
-                return
-            }
-
-            const callbackUrl = new URL(result.url)
-            const code = callbackUrl.searchParams.get('code')
-            const authErrorDescription =
-                callbackUrl.searchParams.get('error_description') ??
-                callbackUrl.searchParams.get('error')
-
-            if (authErrorDescription) {
-                throw new Error(authErrorDescription)
-            }
-
-            if (!code) {
-                throw new Error('Google sign-in did not return an authorization code.')
-            }
-
-            const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
-
-            if (exchangeError) throw exchangeError
-
-            const {
-                data: { user },
-            } = await supabase.auth.getUser()
-
-            if (!user) {
-                throw new Error('No signed-in user found after Google sign-in.')
-            }
-
-            await routeAfterAuth(user.id)
-        } catch (error: any) {
-            Alert.alert('Error', error.message ?? 'Google sign-in failed.')
-        } finally {
-            setLoading(false)
-        }
-    }
-    
     async function signOut() {
         await supabase.auth.signOut({ scope: 'local' });
         router.replace('/login');
     }
 
-    return { loading, signIn, signUp, googleSignIn, signOut}
+    return { loading, signIn, signUp, signOut}
 }

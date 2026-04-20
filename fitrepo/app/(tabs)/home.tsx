@@ -26,7 +26,6 @@ export default function Home() {
         onPress={() => router.push('/profile' as any)}
         style={({ pressed }) => [styles.hero, { borderColor: colors.borderStrong, opacity: pressed ? 0.94 : 1 }]}
       >
-        <Text style={[styles.kicker, { color: colors.textAccent2 }]}>BLUE EAGLE MODE</Text>
         <Text style={[styles.greeting, { color: '#fff' }]}>Hello, {userName || 'athlete'}.</Text>
         <Text style={[styles.heroText, { color: 'rgba(255,255,255,0.82)' }]}>
           Quick pulse check before you train.
@@ -102,12 +101,6 @@ const styles = StyleSheet.create({
   hero: {
     paddingTop: 12,
     marginBottom: 24,
-  },
-  kicker: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 2.2,
-    marginBottom: 8,
   },
   greeting: {
     fontSize: 34,

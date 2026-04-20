@@ -11,24 +11,26 @@ export default function CreateWorkout() {
   const [workoutName, setWorkoutName] = useState('');
 
   const colors = useAppColors();
+  const selectedDate = typeof date === 'string' ? date : '';
 
-  // date comes from the workouts calendar route, so if this blows up upstream nav was wrong
-  const readableDate = new Date(date as string).toLocaleDateString(undefined, {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  // parse the db date manually so local timezone offsets don't turn april 21 into april 20
+  const readableDate = selectedDate
+    ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : 'Choose a date';
 
   function handleContinue() {
     try {
-      if (!date) throw new Error('No workout date was provided.');
-      if (!workoutName.trim()) throw new Error('Please enter a workout name.');
+      if (!selectedDate) throw new Error('No workout date was provided.');
 
       router.push({
         // typed routes hasn't picked this screen up cleanly yet, so keep the cast unless routing gets cleaned up
         pathname: '/exercise_selection' as any,
         params: {
-          date: date as string,
+          date: selectedDate,
           name: workoutName.trim(),
         },
       });
@@ -39,12 +41,12 @@ export default function CreateWorkout() {
 
   function handleLoadPreset() {
     try {
-      if (!date) throw new Error('No workout date was provided.');
+      if (!selectedDate) throw new Error('No workout date was provided.');
 
       router.push({
         pathname: '/preset_list',
         params: {
-          date: date as string,
+          date: selectedDate,
         },
       });
     } catch (error: any) {
@@ -98,7 +100,6 @@ export default function CreateWorkout() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#0d0d12',
   },
   header: {
     color: AppColors.text,

@@ -13,7 +13,7 @@ This is the full chat stack for FitRepo.
 ## How it works
 
 1. The app sends chat messages from the chat tab.
-2. The client sends those messages to the deployed Supabase Edge Function.
+2. The client sends those messages to the Supabase Edge Function.
 3. The edge function checks the signed-in Supabase user.
 4. The edge function calls OpenRouter.
 5. The model returns one of three action shapes:

@@ -9,6 +9,11 @@ export type WorkoutSummary = {
     totalVolume: number
 }
 
+function isMissingColumnError(message: string | undefined) {
+    const normalized = message?.toLowerCase() ?? ''
+    return normalized.includes('column') && normalized.includes('does not exist')
+}
+
 // Gets all exercises in a specific workout
 export async function getExercisesInWorkout(
     workout_id: string
@@ -35,23 +40,37 @@ export async function getExerciseInWorkout(
     return data
 }
 
-// Adds an exercise to a workout with sets, reps, or time
+// Adds one set row to a workout
 export async function addExerciseToWorkout(
     workout_id: string,
     exercise_id: string,
     workout_exercise: Omit<WorkoutExercise, 'id' | 'workout_id' | 'exercise_id'>
 ) {
-    const { data, error } = await supabase.from('workout_exercises')
+    let { data, error } = await supabase.from('workout_exercises')
         .insert({
             ...workout_exercise,
             workout_id,
             exercise_id,
         }).select().single()
+
+    // older dbs may not have set_notes yet. don't block the whole workout save over that.
+    if (error && isMissingColumnError(error.message)) {
+        const { set_notes, ...fallbackExercise } = workout_exercise
+        ;({ data, error } = await supabase.from('workout_exercises')
+            .insert({
+                ...fallbackExercise,
+                workout_id,
+                exercise_id,
+            })
+            .select()
+            .single())
+    }
+
     if (error) throw error
     return data
 }
 
-// Updates the sets, reps, or time of an exercise in a workout
+// Updates one or more set rows for an exercise in a workout
 export async function updateWorkoutExercise(
     workout_id: string,
     exercise_id: string,
@@ -107,7 +126,7 @@ export async function getWorkoutSummaries(workoutIds: string[], bodyWeightKg: nu
 
     const { data, error } = await supabase
         .from('workout_exercises')
-        .select('workout_id, sets, reps, weight')
+        .select('workout_id, reps, weight')
         .in('workout_id', workoutIds)
 
     if (error) throw error
@@ -121,11 +140,11 @@ export async function getWorkoutSummaries(workoutIds: string[], bodyWeightKg: nu
             totalVolume: 0,
         }
 
-        const setCount = row.sets ?? 1
+        // volume is per set row now, so counting rows gives us total sets for free
         const effectiveWeight = resolveEffectiveWeight(row.weight, bodyWeightKg) ?? 0
-        const volume = (row.reps ?? 0) * effectiveWeight * setCount
+        const volume = (row.reps ?? 0) * effectiveWeight
 
-        current.totalSets += setCount
+        current.totalSets += 1
         current.totalVolume += volume
         summaries.set(row.workout_id, current)
     }

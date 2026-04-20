@@ -38,7 +38,8 @@ function groupExercises(rows: any[]): SessionExercise[] {
     const key = row.exercise_id
 
     if (!grouped.has(key)) {
-      // the db now stores one row per set, but the session UI still wants one exercise with a set list
+      // session screen still thinks in "one exercise card with a bunch of sets"
+      // even though workout_exercises is flat now.
       grouped.set(key, {
         id: row.exercises.id ?? row.id,
         workout_exercise_id: row.id,
@@ -99,8 +100,8 @@ export function useTodaySession() {
       return
     }
 
-    // if there are multiple workouts today, always surface the first unfinished one.
-    // otherwise the session tab gets stuck saying "completed" after you finish only the first workout.
+    // if they planned multiple workouts today, don't dump them into a "day is done" state
+    // just because the first one happened to be finished already.
     const workout =
       workouts.find((entry) => !entry.is_finished) ??
       workouts[0]
@@ -117,7 +118,6 @@ export function useTodaySession() {
         `
         id,
         exercise_id,
-        sets,
         reps,
         time_seconds,
         weight,

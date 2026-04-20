@@ -11,14 +11,14 @@ export type PendingWorkoutEdit = {
   workout_name: string
   performed_at: string
   message: string
-  exercises: Array<{
+  exercises: {
     exercise_name: string
-    sets: Array<{
+    sets: {
       reps: number | null
       time_seconds: number | null
       weight: number | null
-    }>
-  }>
+    }[]
+  }[]
 }
 
 type ChatFunctionResponse = {

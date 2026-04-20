@@ -5,13 +5,18 @@ import { Ionicons } from '@expo/vector-icons'
 
 import ParallaxScrollView from '@/components/parallax-scroll-view'
 import { ButtonComponent } from '@/components/button-component'
+import { ExerciseInfoPanel } from '@/components/exercise-info-panel'
+import { SetComposerSheet } from '@/components/set-composer-sheet'
+import { WorkoutSetEditor } from '@/components/workout-set-editor'
 import { useWorkoutExercises } from '@/hooks/use-workout-exercises'
 import { useExercises } from '@/hooks/use-exercises'
 import { useWorkoutHistory } from '@/hooks/use-history-entry'
+import { inferExerciseTags } from '@/lib/exercise-tags'
 import { getWorkout, updateWorkout } from '@/lib/api/workouts'
 import { addExerciseToWorkout, clearWorkoutExercises } from '@/lib/api/workoutExercises'
 import { createWorkoutPreset } from '@/lib/api/workoutPresets'
 import { addExerciseToPreset } from '@/lib/api/presetExercises'
+import { getCurrentUserBodyWeightKg, resolveEffectiveWeight } from '@/lib/bodyweight'
 import {
   createEditableExerciseGroup,
   createEditableSet,
@@ -22,9 +27,12 @@ import {
 import { Workout, type HistoryEntry } from '@/types/database'
 import { AppColors, AppRadius, sharedStyles, useAppColors } from '@/constants/styles'
 
+const MUSCLE_FILTERS = ['All', 'Chest', 'Back', 'Shoulders', 'Triceps', 'Biceps', 'Quads', 'Hamstrings', 'Glutes', 'Core'] as const
+
 export default function ViewWorkout() {
-  const params = useLocalSearchParams<{ workout_id?: string | string[] }>()
+  const params = useLocalSearchParams<{ workout_id?: string | string[]; return_to?: string | string[] }>()
   const workoutId = Array.isArray(params.workout_id) ? params.workout_id[0] : params.workout_id
+  const returnTo = Array.isArray(params.return_to) ? params.return_to[0] : params.return_to
   const colors = useAppColors()
 
   const [workout, setWorkout] = useState<Workout | null>(null)
@@ -34,9 +42,15 @@ export default function ViewWorkout() {
   const [draftWorkoutName, setDraftWorkoutName] = useState('')
   const [editedExercises, setEditedExercises] = useState<EditableExerciseGroup[]>([])
   const [collapsedExercises, setCollapsedExercises] = useState<Record<string, boolean>>({})
+  const [showExerciseInfo, setShowExerciseInfo] = useState<Record<string, boolean>>({})
+  const [showExerciseLibrary, setShowExerciseLibrary] = useState(false)
   const [search, setSearch] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState<(typeof MUSCLE_FILTERS)[number]>('All')
   const [showPresetSave, setShowPresetSave] = useState(false)
   const [presetName, setPresetName] = useState('')
+  const [presetIsPublic, setPresetIsPublic] = useState(false)
+  const [bodyWeightKg, setBodyWeightKg] = useState<number | null>(null)
+  const [activeComposer, setActiveComposer] = useState<{ exerciseId: string; setId?: string } | null>(null)
 
   const { exercises, loading: loadingExercises, loadExercises } = useWorkoutExercises(workoutId ?? '')
   const { exercises: allExercises, loading: loadingAllExercises } = useExercises()
@@ -70,6 +84,10 @@ export default function ViewWorkout() {
     if (!workout) return
     setDraftWorkoutName(workout.name)
   }, [workout])
+
+  useEffect(() => {
+    void getCurrentUserBodyWeightKg().then(setBodyWeightKg)
+  }, [])
 
   useEffect(() => {
     // workout_exercises comes back as flat rows, so regroup it here before the editor touches it
@@ -112,10 +130,17 @@ export default function ViewWorkout() {
 
     return allExercises.filter((exercise) => {
       if (existingIds.has(exercise.id)) return false
-      if (!trimmed) return true
-      return exercise.name.toLowerCase().includes(trimmed)
+      const tags = inferExerciseTags(exercise.name, exercise.description)
+      const matchesFilter = selectedFilter === 'All' || tags.includes(selectedFilter)
+      const matchesSearch =
+        !trimmed ||
+        exercise.name.toLowerCase().includes(trimmed) ||
+        (exercise.description ?? '').toLowerCase().includes(trimmed) ||
+        tags.some((tag) => tag.toLowerCase().includes(trimmed))
+
+      return matchesFilter && matchesSearch
     })
-  }, [allExercises, editedExercises, search])
+  }, [allExercises, editedExercises, search, selectedFilter])
 
   const readableDate = workout?.performed_at
     ? new Date(`${workout.performed_at}T00:00:00`).toLocaleDateString(undefined, {
@@ -125,6 +150,27 @@ export default function ViewWorkout() {
       })
     : ''
 
+  const workoutSummary = useMemo(() => {
+    return exercises.reduce(
+      (summary, exercise: any) => {
+        const effectiveWeight = resolveEffectiveWeight(exercise.weight, bodyWeightKg) ?? 0
+
+        summary.totalSets += 1
+        summary.totalVolume += (exercise.reps ?? 0) * effectiveWeight
+        return summary
+      },
+      { totalSets: 0, totalVolume: 0 }
+    )
+  }, [bodyWeightKg, exercises])
+
+  function formatVolume(volume: number) {
+    if (volume >= 1000) {
+      return `${(volume / 1000).toFixed(volume >= 10000 ? 0 : 1)}k kg`
+    }
+
+    return `${volume} kg`
+  }
+
   function handleCancelEdit() {
     setIsEditing(false)
     setDraftWorkoutName(workout?.name ?? '')
@@ -132,7 +178,7 @@ export default function ViewWorkout() {
     setEditedExercises(mapWorkoutExercisesToEditableGroups(exercises))
   }
 
-  function addExercise(exercise: { id: string; name: string; type: string }) {
+  function addExercise(exercise: { id: string; name: string; type: string; image_url?: string; description?: string }) {
     if (!workout) return
 
     setEditedExercises((prev) => [
@@ -143,12 +189,21 @@ export default function ViewWorkout() {
       }),
     ])
     setCollapsedExercises((prev) => ({ ...prev, [exercise.id]: false }))
+    setShowExerciseInfo((prev) => ({ ...prev, [exercise.id]: false }))
+    setShowExerciseLibrary(false)
     setSearch('')
+    // same deal as create flow. adding an exercise with no sets feels broken because nothing persists.
+    setActiveComposer({ exerciseId: exercise.id })
   }
 
   function removeExercise(exerciseId: string) {
     setEditedExercises((prev) => prev.filter((exercise) => exercise.exercise_id !== exerciseId))
     setCollapsedExercises((prev) => {
+      const next = { ...prev }
+      delete next[exerciseId]
+      return next
+    })
+    setShowExerciseInfo((prev) => {
       const next = { ...prev }
       delete next[exerciseId]
       return next
@@ -161,21 +216,9 @@ export default function ViewWorkout() {
     setCollapsedExercises((prev) => ({ ...prev, [exerciseId]: !prev[exerciseId] }))
   }
 
-  function addSet(exerciseId: string) {
-    setEditedExercises((prev) =>
-      prev.map((exercise) =>
-        exercise.exercise_id === exerciseId
-          ? {
-              ...exercise,
-              sets: [
-                ...exercise.sets,
-                // same deal as create flow: every set is its own row under the hood, so make a fresh draft slot
-                createEditableSet(exercise.type, {}, exercise.exercise_id, exercise.sets.length),
-              ],
-            }
-          : exercise
-      )
-    )
+  function toggleExerciseInfo(exerciseId: string) {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setShowExerciseInfo((prev) => ({ ...prev, [exerciseId]: !prev[exerciseId] }))
   }
 
   function removeSet(exerciseId: string, setId: string) {
@@ -192,43 +235,70 @@ export default function ViewWorkout() {
     )
   }
 
-  function updateSetField(
-    exerciseId: string,
-    setId: string,
-    field: 'reps' | 'time_seconds' | 'weight',
-    value: string
-  ) {
+  function openAddSet(exerciseId: string) {
+    setActiveComposer({ exerciseId })
+  }
+
+  function openEditSet(exerciseId: string, setId: string) {
+    setActiveComposer({ exerciseId, setId })
+  }
+
+  function handleSaveSet(values: { reps: string; time_seconds: string; weight: string; set_notes: string }) {
+    if (!activeComposer) return
+
     setEditedExercises((prev) =>
-      prev.map((exercise) =>
-        exercise.exercise_id === exerciseId
-          ? {
-              ...exercise,
-              sets: exercise.sets.map((set) => (set.id === setId ? { ...set, [field]: value } : set)),
-            }
-          : exercise
-      )
+      prev.map((exercise) => {
+        if (exercise.exercise_id !== activeComposer.exerciseId) return exercise
+
+        if (activeComposer.setId) {
+          return {
+            ...exercise,
+            sets: exercise.sets.map((set) => (set.id === activeComposer.setId ? { ...set, ...values } : set)),
+          }
+        }
+
+        return {
+          ...exercise,
+          sets: [
+            ...exercise.sets,
+            createEditableSet(exercise.type, values, exercise.exercise_id, exercise.sets.length),
+          ],
+        }
+      })
     )
+
+    setActiveComposer(null)
   }
 
   async function handleSaveChanges() {
     try {
       if (!workout) throw new Error('Workout not found.')
-      if (!draftWorkoutName.trim()) throw new Error('Workout name cannot be empty.')
+
+      const fallbackWorkoutName = editedExercises[0]?.name?.trim()
+      const finalWorkoutName = draftWorkoutName.trim() || fallbackWorkoutName
+
+      if (!finalWorkoutName) {
+        throw new Error('Workout needs at least one exercise so it has something to be named after.')
+      }
 
       setSaving(true)
 
-      await updateWorkout(workout.id, { name: draftWorkoutName.trim() })
+      await updateWorkout(workout.id, { name: finalWorkoutName })
       // diffing per-set rows here gets ugly fast once the same exercise shows up multiple times, so we just rebuild it clean
       await clearWorkoutExercises(workout.id)
 
       const flattened = flattenEditableExercises(workout.id, editedExercises)
 
+      if (flattened.length === 0) {
+        throw new Error('Add at least one set before saving the workout.')
+      }
+
       for (const exercise of flattened) {
         await addExerciseToWorkout(workout.id, exercise.exercise_id, {
-          sets: exercise.sets,
           reps: exercise.reps,
           time_seconds: exercise.time_seconds,
           weight: exercise.weight,
+          set_notes: exercise.set_notes,
           order_index: exercise.order_index,
         })
       }
@@ -236,6 +306,7 @@ export default function ViewWorkout() {
       await loadWorkout()
       await loadExercises()
       setIsEditing(false)
+      setDraftWorkoutName(finalWorkoutName)
       Alert.alert('Success', 'Workout updated successfully.')
     } catch (error: any) {
       Alert.alert('Error', error.message)
@@ -265,16 +336,20 @@ export default function ViewWorkout() {
       if (!finalPresetName) throw new Error('Preset name cannot be empty.')
 
       setSaving(true)
-      const preset = await createWorkoutPreset({ name: finalPresetName })
+      const preset = await createWorkoutPreset({
+        name: finalPresetName,
+        is_public: presetIsPublic,
+      })
 
       // using the raw workout rows here on purpose so presets keep the exact per-set structure
       await Promise.all(
         exercises.map((exercise: any, index: number) =>
           addExerciseToPreset(preset.id, exercise.exercise_id, {
-          sets: exercise.sets ?? null,
+          sets: 1,
           reps: exercise.reps ?? null,
           time_seconds: exercise.time_seconds ?? null,
-          weight: exercise.weight ?? null,
+          // don't bake the last used load into presets. let presets stay reusable templates.
+          weight: null,
           order_index: index,
           })
         )
@@ -283,6 +358,7 @@ export default function ViewWorkout() {
       Alert.alert('Success', 'Preset saved successfully.')
       setShowPresetSave(false)
       setPresetName('')
+      setPresetIsPublic(false)
     } catch (error: any) {
       Alert.alert('Error', error.message)
     } finally {
@@ -291,70 +367,24 @@ export default function ViewWorkout() {
   }
 
   function renderExerciseSets(exercise: EditableExerciseGroup) {
-    return exercise.sets.map((set, index) => (
-      <View
-        key={set.id}
-        style={[styles.setCard, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
-      >
-        <View style={styles.setHeader}>
-          <Text style={[styles.setLabel, { color: colors.textAccent }]}>Set {index + 1}</Text>
-          {isEditing && exercise.sets.length > 1 ? (
-            <Pressable onPress={() => removeSet(exercise.exercise_id, set.id)}>
-              <Text style={[styles.removeSetText, { color: colors.danger }]}>Delete</Text>
-            </Pressable>
-          ) : (
-            <View />
-          )}
-        </View>
+    return (
+      <WorkoutSetEditor
+        exercise={exercise}
+        editable={isEditing}
+        onAddSet={() => openAddSet(exercise.exercise_id)}
+        onEditSet={(setId) => openEditSet(exercise.exercise_id, setId)}
+        onRemoveSet={(setId) => removeSet(exercise.exercise_id, setId)}
+      />
+    )
+  }
 
-        {isEditing ? (
-          <View style={styles.setInputRow}>
-            {exercise.type === 'reps' ? (
-              <TextInput
-                style={[styles.setInput, { backgroundColor: colors.panel, color: colors.text, borderColor: colors.border }]}
-                placeholder="Reps"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-                value={set.reps}
-                onChangeText={(value) => updateSetField(exercise.exercise_id, set.id, 'reps', value)}
-              />
-            ) : (
-              <TextInput
-                style={[styles.setInput, { backgroundColor: colors.panel, color: colors.text, borderColor: colors.border }]}
-                placeholder="Seconds"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="numeric"
-                value={set.time_seconds}
-                onChangeText={(value) => updateSetField(exercise.exercise_id, set.id, 'time_seconds', value)}
-              />
-            )}
-            <TextInput
-              style={[styles.setInput, { backgroundColor: colors.panel, color: colors.text, borderColor: colors.border }]}
-              placeholder="Weight"
-              placeholderTextColor={colors.textMuted}
-              keyboardType="numeric"
-              value={set.weight}
-              onChangeText={(value) => updateSetField(exercise.exercise_id, set.id, 'weight', value)}
-            />
-          </View>
-        ) : (
-          <View style={styles.readOnlySetMeta}>
-            {exercise.type === 'reps' ? (
-              <Text style={[styles.metaText, { color: colors.textMuted }]}>
-                {set.reps ? `${set.reps} reps` : 'Open reps'}
-              </Text>
-            ) : (
-              <Text style={[styles.metaText, { color: colors.textMuted }]}>
-                {set.time_seconds ? `${set.time_seconds}s` : 'Open time'}
-              </Text>
-            )}
-            <Text style={[styles.metaText, { color: colors.textMuted }]}>
-              {set.weight ? `${set.weight}kg` : 'Bodyweight'}
-            </Text>
-          </View>
-        )}
-      </View>
-    ))
+  function handleBack() {
+    if (returnTo === 'workouts') {
+      router.replace('/(tabs)/workouts')
+      return
+    }
+
+    router.back()
   }
 
   return (
@@ -366,6 +396,11 @@ export default function ViewWorkout() {
           <Text style={[styles.emptyText, { color: colors.textSubtle }]}>Workout not found.</Text>
         ) : (
           <>
+            <Pressable style={styles.topBackButton} onPress={handleBack}>
+              <Ionicons name="chevron-back" size={16} color={colors.text} />
+              <Text style={[styles.topBackText, { color: colors.text }]}>Back</Text>
+            </Pressable>
+
             <View style={[sharedStyles.card, styles.heroCard, { backgroundColor: colors.tabBar, borderColor: colors.border }]}>
               {isEditing ? (
                 <TextInput
@@ -383,6 +418,16 @@ export default function ViewWorkout() {
                 <View style={[styles.heroChip, { backgroundColor: colors.panelStrong }]}>
                   <Text style={[styles.heroChipText, { color: colors.text }]}>
                     {editedExercises.length} exercises
+                  </Text>
+                </View>
+                <View style={[styles.heroChip, { backgroundColor: colors.overlay }]}>
+                  <Text style={[styles.heroChipText, { color: colors.text }]}>
+                    {workoutSummary.totalSets} sets
+                  </Text>
+                </View>
+                <View style={[styles.heroChip, { backgroundColor: colors.overlay }]}>
+                  <Text style={[styles.heroChipText, { color: colors.text }]}>
+                    {formatVolume(workoutSummary.totalVolume)} volume
                   </Text>
                 </View>
                 <View style={[styles.heroChip, { backgroundColor: workout.is_finished ? colors.accent1Alt : colors.accent2Alt }]}>
@@ -414,15 +459,21 @@ export default function ViewWorkout() {
                           color={colors.textMuted}
                         />
                       </View>
-                      <Text style={[styles.exerciseSubtitle, { color: colors.textMuted }]}>
-                        {exercise.type === 'timed' ? 'Interval block' : 'Strength block'} • {exercise.sets.length} sets
-                      </Text>
+                  <Text style={[styles.exerciseSubtitle, { color: colors.textMuted }]}>
+                    {exercise.type === 'timed' ? 'Interval block' : 'Strength block'} • {exercise.sets.length} sets
+                  </Text>
+                </Pressable>
+                {isEditing ? (
+                  <View style={styles.exerciseHeaderActions}>
+                    <Pressable
+                      style={[styles.infoButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+                      onPress={() => toggleExerciseInfo(exercise.exercise_id)}
+                    >
+                      <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
                     </Pressable>
-                    {isEditing ? (
-                      <View style={styles.exerciseHeaderActions}>
-                        <Pressable
-                          style={[styles.smallAction, { backgroundColor: colors.panelStrong }]}
-                          onPress={() => addSet(exercise.exercise_id)}
+                    <Pressable
+                      style={[styles.smallAction, { backgroundColor: colors.panelStrong }]}
+                      onPress={() => openAddSet(exercise.exercise_id)}
                         >
                           <Text style={[styles.smallActionText, { color: colors.text }]}>+ Set</Text>
                         </Pressable>
@@ -433,8 +484,24 @@ export default function ViewWorkout() {
                           <Text style={[styles.smallActionText, { color: colors.textMuted }]}>Remove</Text>
                         </Pressable>
                       </View>
-                    ) : null}
+                    ) : (
+                      <Pressable
+                        style={[styles.infoButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+                        onPress={() => toggleExerciseInfo(exercise.exercise_id)}
+                      >
+                        <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+                      </Pressable>
+                    )}
                   </View>
+
+                  {showExerciseInfo[exercise.exercise_id] ? (
+                    <ExerciseInfoPanel
+                      name={exercise.name}
+                      type={exercise.type}
+                      description={exercise.description}
+                      imageUrl={exercise.image_url}
+                    />
+                  ) : null}
 
                   {!collapsedExercises[exercise.exercise_id] ? renderExerciseSets(exercise) : (
                     <View style={[styles.collapsedHint, { backgroundColor: colors.overlay, borderColor: colors.border }]}>
@@ -466,43 +533,101 @@ export default function ViewWorkout() {
 
             {isEditing ? (
               <>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Add another exercise</Text>
-                <TextInput
-                  style={[sharedStyles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="Search exercises"
-                  placeholderTextColor={colors.textMuted}
-                  value={search}
-                  onChangeText={setSearch}
-                />
-                <View style={[sharedStyles.card, styles.libraryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                  {loadingAllExercises ? (
-                    <Text style={[styles.emptyText, { color: colors.textSubtle }]}>Loading...</Text>
-                  ) : filteredExercisesToAdd.length === 0 ? (
-                    <Text style={[styles.emptyText, { color: colors.textSubtle }]}>No exercises found.</Text>
-                  ) : (
-                    <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled>
-                      {filteredExercisesToAdd.map((exercise) => (
-                        <Pressable
-                          key={exercise.id}
-                          style={({ pressed }) => [
-                            styles.libraryRow,
-                            {
-                              backgroundColor: colors.surfaceAlt,
-                              borderColor: colors.border,
-                              opacity: pressed ? 0.92 : 1,
-                            },
-                          ]}
-                          onPress={() => addExercise(exercise)}
-                        >
-                          <Text style={[styles.libraryTitle, { color: colors.text }]}>{exercise.name}</Text>
-                          <Text style={[styles.libraryAddText, { color: colors.textAccent }]}>Add</Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-                  )}
+                <View style={styles.addMoreRow}>
+                  <ButtonComponent
+                    onPress={() => setShowExerciseLibrary((prev) => !prev)}
+                    text={showExerciseLibrary ? 'Hide exercise library' : 'Add another exercise'}
+                    style={styles.compactButton}
+                    textStyle={styles.compactButtonText}
+                  />
                 </View>
+                {showExerciseLibrary ? (
+                  <>
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Exercise library</Text>
+                    <TextInput
+                      style={[sharedStyles.input, styles.searchInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
+                      placeholder="Search exercises"
+                      placeholderTextColor={colors.textMuted}
+                      value={search}
+                      onChangeText={setSearch}
+                    />
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={styles.filterRow}
+                    >
+                      {MUSCLE_FILTERS.map((filter) => {
+                        const active = selectedFilter === filter
+
+                        return (
+                          <Pressable
+                            key={filter}
+                            style={[
+                              styles.filterChip,
+                              {
+                                backgroundColor: active ? colors.primary : colors.surfaceAlt,
+                                borderColor: active ? colors.primary : colors.border,
+                              },
+                            ]}
+                            onPress={() => setSelectedFilter(filter)}
+                          >
+                            <Text style={[styles.filterChipText, { color: active ? '#fff' : colors.text }]}>
+                              {filter}
+                            </Text>
+                          </Pressable>
+                        )
+                      })}
+                    </ScrollView>
+                    <View style={[sharedStyles.card, styles.libraryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                      {loadingAllExercises ? (
+                        <Text style={[styles.emptyText, { color: colors.textSubtle }]}>Loading...</Text>
+                      ) : filteredExercisesToAdd.length === 0 ? (
+                        <Text style={[styles.emptyText, { color: colors.textSubtle }]}>No exercises found.</Text>
+                      ) : (
+                        <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled>
+                          {filteredExercisesToAdd.map((exercise) => (
+                            <Pressable
+                              key={exercise.id}
+                              style={({ pressed }) => [
+                                styles.libraryRow,
+                                {
+                                  backgroundColor: colors.surfaceAlt,
+                                  borderColor: colors.border,
+                                  opacity: pressed ? 0.92 : 1,
+                                },
+                              ]}
+                              onPress={() => addExercise(exercise)}
+                            >
+                              <Text style={[styles.libraryTitle, { color: colors.text }]}>{exercise.name}</Text>
+                              <Text style={[styles.libraryAddText, { color: colors.textAccent }]}>Add</Text>
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      )}
+                    </View>
+                  </>
+                ) : null}
               </>
             ) : null}
+
+            <SetComposerSheet
+              visible={Boolean(activeComposer)}
+              exerciseName={
+                editedExercises.find((exercise) => exercise.exercise_id === activeComposer?.exerciseId)?.name ?? 'Exercise'
+              }
+              type={
+                editedExercises.find((exercise) => exercise.exercise_id === activeComposer?.exerciseId)?.type ?? 'reps'
+              }
+              initialSet={
+                activeComposer?.setId
+                  ? editedExercises
+                      .find((exercise) => exercise.exercise_id === activeComposer.exerciseId)
+                      ?.sets.find((set) => set.id === activeComposer.setId) ?? null
+                  : null
+              }
+              onClose={() => setActiveComposer(null)}
+              onSave={handleSaveSet}
+            />
 
             <View style={styles.actions}>
               {isEditing ? (
@@ -520,6 +645,7 @@ export default function ViewWorkout() {
                   <ButtonComponent
                     onPress={() => {
                       setPresetName(workout.name)
+                      setPresetIsPublic(false)
                       setShowPresetSave((prev) => !prev)
                     }}
                     text="Save as preset"
@@ -535,6 +661,37 @@ export default function ViewWorkout() {
                         value={presetName}
                         onChangeText={setPresetName}
                       />
+                      <Pressable
+                        style={[
+                          styles.visibilityToggle,
+                          {
+                            backgroundColor: colors.surfaceAlt,
+                            borderColor: colors.border,
+                          },
+                        ]}
+                        onPress={() => setPresetIsPublic((prev) => !prev)}
+                      >
+                        <View style={styles.visibilityCopy}>
+                          <Text style={[styles.visibilityTitle, { color: colors.text }]}>
+                            {presetIsPublic ? 'Public preset' : 'Private preset'}
+                          </Text>
+                          <Text style={[styles.visibilitySubtitle, { color: colors.textMuted }]}>
+                            {presetIsPublic
+                              ? 'Anyone signed in can use this preset.'
+                              : 'Only you can see and use this preset.'}
+                          </Text>
+                        </View>
+                        <View
+                          style={[
+                            styles.visibilityBadge,
+                            { backgroundColor: presetIsPublic ? colors.primary : colors.overlay },
+                          ]}
+                        >
+                          <Text style={[styles.visibilityBadgeText, { color: '#fff' }]}>
+                            {presetIsPublic ? 'Public' : 'Private'}
+                          </Text>
+                        </View>
+                      </Pressable>
                       <View style={{ height: 12 }} />
                       <ButtonComponent
                         onPress={handleSaveAsPreset}
@@ -551,7 +708,7 @@ export default function ViewWorkout() {
                 </>
               )}
 
-              <ButtonComponent onPress={() => router.back()} text="Back" style={{ backgroundColor: colors.secondary }} />
+              <ButtonComponent onPress={handleBack} text="Back" style={{ backgroundColor: colors.secondary }} />
             </View>
           </>
         )}
@@ -567,6 +724,19 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     gap: 10,
+  },
+  topBackButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
+  topBackText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   titleInput: {
     fontSize: 28,
@@ -596,22 +766,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: '800',
     letterSpacing: -0.4,
-    marginTop: 8,
+    marginTop: 4,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: 14,
     textAlign: 'center',
   },
   exerciseCard: {
-    gap: 14,
+    gap: 10,
+    padding: 16,
   },
   exerciseHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
   },
   exerciseHeaderCopy: {
     flex: 1,
@@ -623,66 +794,33 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   exerciseHeaderActions: {
-    gap: 8,
+    gap: 6,
     alignItems: 'flex-end',
   },
   exerciseTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
   },
   exerciseSubtitle: {
-    fontSize: 13,
-    marginTop: 4,
+    fontSize: 12,
+    marginTop: 3,
+  },
+  infoButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   smallAction: {
     borderRadius: AppRadius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
   },
   smallActionText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
-  },
-  setCard: {
-    borderRadius: AppRadius.md,
-    borderWidth: 1,
-    padding: 14,
-    gap: 10,
-  },
-  setHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  setLabel: {
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 1.1,
-    textTransform: 'uppercase',
-  },
-  removeSetText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  setInputRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  setInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: AppRadius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-  },
-  readOnlySetMeta: {
-    flexDirection: 'row',
-    gap: 12,
-    flexWrap: 'wrap',
-  },
-  metaText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   historyStack: {
     gap: 8,
@@ -712,29 +850,88 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   libraryCard: {
-    maxHeight: 260,
-    padding: 10,
+    maxHeight: 230,
+    padding: 8,
   },
   libraryRow: {
     borderWidth: 1,
-    borderRadius: AppRadius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    marginBottom: 10,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    marginBottom: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   libraryTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   libraryAddText: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  searchInput: {
+    paddingVertical: 12,
+  },
+  filterRow: {
+    gap: 8,
+    paddingBottom: 4,
+  },
+  filterChip: {
+    borderWidth: 1,
+    borderRadius: AppRadius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  filterChipText: {
+    fontSize: 12,
     fontWeight: '700',
   },
   actions: {
     gap: 12,
     marginBottom: 24,
+  },
+  addMoreRow: {
+    marginTop: -2,
+    marginBottom: 2,
+  },
+  compactButton: {
+    paddingVertical: 12,
+  },
+  compactButtonText: {
+    fontSize: 14,
+  },
+  visibilityToggle: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderRadius: AppRadius.lg,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  visibilityCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  visibilityTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  visibilitySubtitle: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  visibilityBadge: {
+    borderRadius: AppRadius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  visibilityBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
 })
