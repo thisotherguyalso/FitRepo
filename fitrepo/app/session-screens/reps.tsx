@@ -119,7 +119,7 @@ export default function Reps() {
                   size={220}
                   width={14}
                   fill={((repAmount / (currentSetConfig?.reps || exercise?.reps || 1)) * 100)}
-                  tintColor={colors.reps + '90'}
+                  tintColor={"rgb(255, 42, 0)"}
                   backgroundColor="rgba(255,255,255,0.1)"
                   rotation={0}
                   lineCap="round"
