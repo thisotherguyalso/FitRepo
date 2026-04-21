@@ -2,7 +2,8 @@ import { renderHook, act, render } from '@testing-library/react-native';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/lib/supabase';
 import { Alert } from 'react-native'
-import { createProfile } from '@/lib/api/profiles';
+import { createProfile, getProfile } from '@/lib/api/profiles';
+import { router } from 'expo-router'
 
 jest.mock('expo-router', () => ({
     router: {
@@ -10,14 +11,11 @@ jest.mock('expo-router', () => ({
     }
 }))
 
-jest.mock('expo-web-browser', () => ({
-    openAuthSessionAsync: jest.fn()
-}))
-
 jest.mock('@/lib/supabase', () => ({
     supabase: {
         auth: {
             getSession: jest.fn(),
+            getUser: jest.fn(),
             signInWithPassword: jest.fn(),
             signUp: jest.fn(),
             signOut: jest.fn(),
@@ -26,7 +24,8 @@ jest.mock('@/lib/supabase', () => ({
 }))
 
 jest.mock('@/lib/api/profiles', () => ({
-    createProfile: jest.fn()
+    createProfile: jest.fn(),
+    getProfile: jest.fn()
 }))
 
 jest.mock('react-native', () => ({
@@ -45,8 +44,20 @@ describe('useAuth', () => {
             error: null,
         })
 
+        ;(supabase.auth.getUser as jest.Mock).mockResolvedValue({
+            data: { user: { id: '123' } },
+            error: null,
+        })
+
         ;(supabase.auth.signOut as jest.Mock).mockResolvedValue({
             error: null,
+        })
+        ;(getProfile as jest.Mock).mockResolvedValue({
+            username: 'testuser',
+            goal: '',
+            current_streak: 0,
+            height_cm: null,
+            body_weight_kg: null,
         })
     })
 
@@ -164,4 +175,5 @@ describe('useAuth', () => {
 
         expect(result.current.loading).toBe(true);
     });
+
 });

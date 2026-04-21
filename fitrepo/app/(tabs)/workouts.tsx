@@ -1,26 +1,26 @@
-import { StyleSheet, TouchableOpacity, Text, View, Dimensions } from 'react-native';
+import { LayoutChangeEvent, StyleSheet, TouchableOpacity, Text, View } from 'react-native';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { CalendarList } from 'react-native-calendars';
 import { useWorkouts } from '@/hooks/use-workouts';
-import BottomSheet from '@gorhom/bottom-sheet';
-import { router } from 'expo-router';
-import { useRef, useState, useEffect } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppColors, AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
 import { ButtonComponent } from '@/components/button-component';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 export default function WorkoutsTab() {
-  const { workouts, markedDates, loadWorkouts } = useWorkouts();
-  const screenWidth = Dimensions.get('window').width;
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const { workouts, workoutSummaries, markedDates, loadWorkouts } = useWorkouts();
+  const [calendarWidth, setCalendarWidth] = useState(0);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
+  const colors = useAppColors();
+
+  useFocusEffect(
+    useCallback(() => {
       void loadWorkouts();
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [loadWorkouts]);
+    }, [loadWorkouts])
+  );
 
   const today = new Date();
   const formatted =
@@ -37,56 +37,112 @@ export default function WorkoutsTab() {
     undefined,
     { month: 'long', day: 'numeric', year: 'numeric' }
   );
+  const monthLabel = new Date(selected as string).toLocaleDateString(
+    undefined,
+    { month: 'long', year: 'numeric' }
+  );
 
   const hasWorkouts = selectedDateWorkouts.length > 0;
 
+  function formatVolume(volume: number) {
+    if (volume >= 1000) {
+      return `${(volume / 1000).toFixed(volume >= 10000 ? 0 : 1)}k kg`
+    }
+
+    return `${volume} kg`
+  }
+
+  function handleCalendarLayout(event: LayoutChangeEvent) {
+    const nextWidth = Math.round(event.nativeEvent.layout.width)
+
+    // calendar paging gets weird fast if this width is even a little off, so always use the real measured width
+    if (nextWidth > 0 && nextWidth !== calendarWidth) {
+      setCalendarWidth(nextWidth)
+    }
+  }
+
   return (
     <View style={styles.container}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
-      >
+      <ParallaxScrollView>
         <LinearGradient
-          colors={['#020975', '#0d0d12']}
+          colors={[colors.primary, colors.background]}
           style={sharedStyles.background}
         />
 
         {/* Header */}
-        <Text style={styles.header}>My Workouts</Text>
+        <Text style={[styles.header, {color: '#fff'}]}>My Workouts</Text>
 
         {/* Calendar */}
-        <View style={styles.calendarContainer}>
-          <CalendarList
-            horizontal={true}
-            pagingEnabled={true}
-            calendarWidth={screenWidth}
-            current={formatted}
-            theme={{
-              calendarBackground: 'transparent',
-              dayTextColor: '#FFFFFF',
-              monthTextColor: '#FFFFFF',
-              textDisabledColor: '#444',
-              textMonthFontSize: 20,
-              todayBackgroundColor: '#202025',
-              todayTextColor: '#fff',
-            }}
-            onDayPress={(day) => {
-              setSelected(day.dateString);
-              bottomSheetRef.current?.expand();
-            }}
-            markedDates={{
-              [selected]: { selected: true, disableTouchEvent: true, selectedColor: '#3b82f6' },
-              ...markedDates,
-            }}
-          />
+        <View
+          style={[
+            sharedStyles.card,
+            styles.calendarShell,
+            { backgroundColor: colors.tabBar, borderColor: colors.borderStrong },
+          ]}
+        >
+          <View style={styles.calendarTopRow}>
+            <View>
+              <Text style={[styles.calendarEyebrow, { color: colors.textAccent }]}>TRAINING CALENDAR</Text>
+              <Text style={[styles.calendarMonth, { color: colors.text }]}>{monthLabel}</Text>
+            </View>
+            <View style={[styles.calendarPill, { backgroundColor: colors.panelStrong }]}>
+              <Ionicons name="swap-horizontal" size={14} color={colors.textAccent} />
+              <Text style={[styles.calendarPillText, { color: colors.text }]}>Swipe months</Text>
+            </View>
+          </View>
+
+          <View style={styles.calendarContainer} onLayout={handleCalendarLayout}>
+            {calendarWidth > 0 ? (
+              <CalendarList
+                horizontal={true}
+                pagingEnabled={true}
+                calendarWidth={calendarWidth}
+                current={formatted}
+                key={`${colors.mode}-${calendarWidth}`}
+                pastScrollRange={12}
+                futureScrollRange={12}
+                hideExtraDays={false}
+                firstDay={1}
+                theme={{
+                  calendarBackground: 'transparent',
+                  dayTextColor: colors.text,
+                  monthTextColor: colors.text,
+                  textDisabledColor: colors.textMuted,
+                  textMonthFontSize: 20,
+                  textMonthFontWeight: '800',
+                  textDayFontWeight: '700',
+                  textDayHeaderFontWeight: '700',
+                  todayBackgroundColor: colors.panelAlt,
+                  todayTextColor: colors.text,
+                  textSectionTitleColor: colors.textMuted,
+                  arrowColor: colors.textAccent,
+                }}
+                style={styles.calendar}
+                onDayPress={(day) => {
+                  setSelected(day.dateString);
+                }}
+                markedDates={{
+                  ...markedDates,
+                  [selected]: {
+                    ...(markedDates[selected] ?? {}),
+                    selected: true,
+                    disableTouchEvent: true,
+                    selectedColor: colors.primary,
+                    selectedTextColor: '#fff',
+                  },
+                }}
+              />
+            ) : null}
+          </View>
         </View>
 
         {/* Section Title */}
-        <Text style={styles.sectionTitle}>{readableDate}</Text>
+        <Text style={[{color: colors.text}, styles.sectionTitle]}>{readableDate}</Text>
 
         {/* Show button OR workouts based on whether workouts exist */}
         {!hasWorkouts ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No workouts planned</Text>
+          <View style={[{backgroundColor: colors.surface}, styles.emptyState]}>
+            <Text style={[{color: colors.text}, styles.emptyText]}>No workouts planned</Text>
             <ButtonComponent
               onPress={() => {
                 router.push({
@@ -99,28 +155,59 @@ export default function WorkoutsTab() {
           </View>
         ) : (
           selectedDateWorkouts.map((workout) => (
-            <TouchableOpacity
+            <Animated.View
               key={workout.id}
-              style={[styles.workoutCard, workout.is_finished && styles.finishedCard]}
-              onPress={() => {
-                router.push({
-                  pathname: '/view_workout',
-                  params: { workout_id: workout.id },
-                });
-              }}
+              entering={FadeInDown.duration(240).springify().damping(18)}
             >
-              <View style={styles.workoutCardContent}>
-                <Text style={styles.workoutName}>{workout.name}</Text>
-                <Text style={styles.workoutStatus}>
-                  {workout.is_finished ? 'Completed' : 'Planned'}
-                </Text>
-              </View>
-              <View style={[styles.statusBadge, workout.is_finished && styles.statusBadgeFinished]}>
-                <Text style={styles.statusBadgeText}>
-                  {workout.is_finished ? '✓' : '→'}
-                </Text>
-              </View>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.workoutCard,
+                  { borderColor: workout.is_finished ? colors.accent1Border : colors.accent2Border },
+                ]}
+                onPress={() => {
+                  router.push({
+                    pathname: '/view_workout',
+                    params: { workout_id: workout.id },
+                  });
+                }}
+                activeOpacity={0.88}
+              >
+                <LinearGradient
+                  colors={[
+                    workout.is_finished ? colors.accent1Alt : colors.accent2Alt,
+                    workout.is_finished ? colors.accent1 : colors.accent2,
+                  ]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <View style={styles.workoutCardContent}>
+                  <Text style={[styles.workoutName, { color: colors.text }]}>{workout.name}</Text>
+                  <Text style={[styles.workoutStatus, { color: colors.textMuted }]}>
+                    {workout.is_finished ? 'Completed' : 'Planned'}
+                  </Text>
+                  <View style={styles.metricsRow}>
+                    <View style={[styles.metricChip, { backgroundColor: colors.overlay }]}>
+                      <Ionicons name="layers-outline" size={13} color={colors.text} />
+                      <Text style={[styles.metricText, { color: colors.text }]}>
+                        {workoutSummaries[workout.id]?.totalSets ?? 0} sets
+                      </Text>
+                    </View>
+                    <View style={[styles.metricChip, { backgroundColor: colors.overlay }]}>
+                      <Ionicons name="barbell-outline" size={13} color={colors.text} />
+                      <Text style={[styles.metricText, { color: colors.text }]}>
+                        {formatVolume(workoutSummaries[workout.id]?.totalVolume ?? 0)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={[styles.statusBadge, {backgroundColor: workout.is_finished ? colors.accent1Border : colors.accent2Border}]}>
+                  <Text style={styles.statusBadgeText}>
+                    {workout.is_finished ? '✓' : '➤'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
           ))
         )}
       </ParallaxScrollView>
@@ -134,45 +221,74 @@ const styles = StyleSheet.create({
     backgroundColor: '#0d0d12',
   },
   header: {
-    color: AppColors.text,
     fontSize: 28,
     fontWeight: '700',
     marginBottom: 16,
   },
-  calendarContainer: {
-    marginHorizontal: -32,
+  calendarShell: {
+    padding: AppSpacing.lg,
     marginBottom: 24,
+    gap: 14,
+  },
+  calendarTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  calendarEyebrow: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2.1,
+    marginBottom: 6,
+  },
+  calendarMonth: {
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.6,
+  },
+  calendarPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: AppRadius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  calendarPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  calendarContainer: {
+    alignSelf: 'center',
+    width: '100%',
+  },
+  calendar: {
+    alignSelf: 'center',
   },
   sectionTitle: {
-    color: AppColors.text,
     fontSize: 18,
     fontWeight: '600',
     marginBottom: 16,
   },
   emptyState: {
-    backgroundColor: '#202025',
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     alignItems: 'center',
     gap: 16,
   },
   emptyText: {
-    color: AppColors.text,
     fontSize: 15,
     opacity: 0.5,
   },
   workoutCard: {
-    backgroundColor: '#202025',
+    overflow: 'hidden',
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  finishedCard: {
-    backgroundColor: '#1a2e1a',
     borderWidth: 1,
-    borderColor: '#2d4a2d',
   },
   workoutCardContent: {
     flex: 1,
@@ -187,17 +303,32 @@ const styles = StyleSheet.create({
     color: AppColors.text,
     fontSize: 14,
     opacity: 0.5,
+    marginBottom: 8,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  metricChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: AppRadius.pill,
+  },
+  metricText: {
+    color: AppColors.text,
+    fontSize: 12,
+    fontWeight: '700',
   },
   statusBadge: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#2a2a2f',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  statusBadgeFinished: {
-    backgroundColor: '#2d4a2d',
   },
   statusBadgeText: {
     color: AppColors.text,

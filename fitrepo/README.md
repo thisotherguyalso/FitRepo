@@ -49,7 +49,7 @@ supabase secrets set OPENROUTER_MODEL=openrouter/free
 
 `OPENROUTER_MODEL` is optional. If omitted, the function defaults to `openrouter/free`.
 
-### Deploy the function
+### Run the function when needed
 
 ```bash
 supabase functions deploy chat

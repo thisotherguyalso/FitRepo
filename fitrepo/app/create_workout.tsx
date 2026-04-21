@@ -3,28 +3,34 @@ import { useState } from 'react';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ButtonComponent } from '@/components/button-component';
 import { useLocalSearchParams, router } from 'expo-router';
-import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
+import { useAppColors, AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function CreateWorkout() {
   const { date } = useLocalSearchParams();
   const [workoutName, setWorkoutName] = useState('');
 
-  const readableDate = new Date(date as string).toLocaleDateString(undefined, {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
+  const colors = useAppColors();
+  const selectedDate = typeof date === 'string' ? date : '';
+
+  // parse the db date manually so local timezone offsets don't turn april 21 into april 20
+  const readableDate = selectedDate
+    ? new Date(`${selectedDate}T12:00:00`).toLocaleDateString(undefined, {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : 'Choose a date';
 
   function handleContinue() {
     try {
-      if (!date) throw new Error('No workout date was provided.');
-      if (!workoutName.trim()) throw new Error('Please enter a workout name.');
+      if (!selectedDate) throw new Error('No workout date was provided.');
 
       router.push({
-        pathname: '/exercise_selection',
+        // typed routes hasn't picked this screen up cleanly yet, so keep the cast unless routing gets cleaned up
+        pathname: '/exercise_selection' as any,
         params: {
-          date: date as string,
+          date: selectedDate,
           name: workoutName.trim(),
         },
       });
@@ -35,12 +41,12 @@ export default function CreateWorkout() {
 
   function handleLoadPreset() {
     try {
-      if (!date) throw new Error('No workout date was provided.');
+      if (!selectedDate) throw new Error('No workout date was provided.');
 
       router.push({
         pathname: '/preset_list',
         params: {
-          date: date as string,
+          date: selectedDate,
         },
       });
     } catch (error: any) {
@@ -50,25 +56,23 @@ export default function CreateWorkout() {
 
   return (
     <View style={styles.wrapper}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
-      >
+      <ParallaxScrollView>
         <LinearGradient
-          colors={['#020975', '#0d0d12']}
+          colors={[colors.primary, colors.background]}
           style={sharedStyles.background}
         />
 
         {/* Header */}
         <Text style={styles.header}>Create Workout</Text>
-        <Text style={styles.subheader}>{readableDate}</Text>
+        <Text style={[styles.subheader, {color: colors.textAccent2}]}>{readableDate}</Text>
 
         {/* Workout Name Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardLabel}>WORKOUT NAME</Text>
+        <View style={[{backgroundColor: colors.surface}, styles.card]}>
+          <Text style={[styles.cardLabel, {color: colors.textMuted}]}>WORKOUT NAME</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, {backgroundColor: colors.surfaceAlt, color: colors.text} ]}
             placeholder="Enter workout name"
-            placeholderTextColor="#666"
+            placeholderTextColor={colors.textMuted}
             value={workoutName}
             onChangeText={setWorkoutName}
           />
@@ -96,7 +100,6 @@ export default function CreateWorkout() {
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#0d0d12',
   },
   header: {
     color: AppColors.text,
@@ -106,19 +109,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subheader: {
-    color: '#93c5fd',
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 24,
   },
   card: {
-    backgroundColor: '#1c1c1f',
     padding: AppSpacing.lg,
     borderRadius: AppRadius.lg,
     marginBottom: 24,
   },
   cardLabel: {
-    color: AppColors.text,
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 2,

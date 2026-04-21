@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native'
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler'
 import { LinearGradient } from 'expo-linear-gradient'
-
-import { AppColors, AppRadius, AppSpacing } from '@/constants/styles'
+import { AnimatedCircularProgress } from 'react-native-circular-progress'
+import { AppColors, AppRadius, AppSpacing, useAppColors } from '@/constants/styles'
 
 type SessionCountdownScreenProps = {
   mode: 'rest' | 'exercise'
@@ -81,10 +81,12 @@ export function SessionCountdownScreen({
   const headerText = mode === 'rest' ? 'Breathe' : title
   const showUpNext = mode === 'rest'
 
+  const colors = useAppColors();
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <LinearGradient
-        colors={mode === 'rest' ? ['#0a4a2e', '#151718'] : ['#020975', '#151718']}
+        colors={mode === 'rest' ? [colors.rest, colors.background] : [colors.timed, colors.background]}
         style={styles.container}
       >
         {/* Header */}
@@ -102,8 +104,20 @@ export function SessionCountdownScreen({
             </TouchableOpacity>
 
             <GestureDetector gesture={singleTap}>
-              <View>
-                <Text style={styles.timer}>{timeRemaining}</Text>
+              <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+                <AnimatedCircularProgress
+                  size={220}
+                  width={14}
+                  fill={(timeRemaining / duration) * 100}
+                  tintColor={mode === 'rest' ? colors.restBar : colors.exerciseBar}
+                  backgroundColor="rgba(255,255,255,0.1)"
+                  rotation={0}
+                  lineCap="round"
+                  duration={800}
+                />
+                <View style={{ position: 'absolute' }}>
+                  <Text style={styles.timer}>{timeRemaining}</Text>
+                </View>
               </View>
             </GestureDetector>
 
@@ -130,7 +144,7 @@ export function SessionCountdownScreen({
         {/* Up Next Card (rest mode) */}
         {showUpNext && (
           <TouchableOpacity
-            style={styles.upNextCard}
+            style={[styles.upNextCard, {backgroundColor: colors.surface + '80'}]}
             onPress={handleSkip}
             activeOpacity={0.7}
           >
@@ -179,6 +193,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 20,
   },
   timerRow: {
     flexDirection: 'row',

@@ -7,6 +7,7 @@ export async function getAuthenticatedUser() {
   } = await supabase.auth.getUser()
 
   if (error) throw error
+  // a bunch of api helpers assume a user exists, so fail loud here instead of returning null everywhere
   if (!user) throw new Error('No authenticated user found.')
 
   return user

@@ -1,417 +1,617 @@
-import { TouchableOpacity, Text, StyleSheet, TextInput, Alert, View, ScrollView } from 'react-native';
-import { useState, useMemo } from 'react';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ButtonComponent } from '@/components/button-component';
-import { useLocalSearchParams, router } from 'expo-router';
-import { useWorkouts } from '@/hooks/use-workouts';
-import { useExercises } from '@/hooks/use-exercises';
-import { AppColors, AppRadius, AppSpacing, sharedStyles } from '@/constants/styles';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Alert, LayoutAnimation, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, UIManager, View } from 'react-native'
+import { useEffect, useMemo, useState } from 'react'
+import { router, useLocalSearchParams } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 
-type SelectedExercise = {
-  exercise_id: string;
-  name: string;
-  type: 'reps' | 'timed';
-  sets: string;
-  reps: string;
-  time_seconds: string;
-  weight: string;
-  order_index: number;
-};
+import ParallaxScrollView from '@/components/parallax-scroll-view'
+import { ButtonComponent } from '@/components/button-component'
+import { ExerciseInfoPanel } from '@/components/exercise-info-panel'
+import { SetComposerSheet } from '@/components/set-composer-sheet'
+import { WorkoutSetEditor } from '@/components/workout-set-editor'
+import { useWorkouts } from '@/hooks/use-workouts'
+import { useExercises } from '@/hooks/use-exercises'
+import { inferExerciseTags } from '@/lib/exercise-tags'
+import {
+  createEditableExerciseGroup,
+  createEditableSet,
+  flattenEditableExercises,
+  type EditableExerciseGroup,
+} from '@/lib/workout-editor'
+import { AppColors, AppRadius, sharedStyles, useAppColors } from '@/constants/styles'
+
+const MUSCLE_FILTERS = ['All', 'Chest', 'Back', 'Shoulders', 'Triceps', 'Biceps', 'Quads', 'Hamstrings', 'Glutes', 'Core'] as const
 
 export default function ExerciseSelection() {
-  const { date, name } = useLocalSearchParams<{
-    date?: string;
-    name?: string;
-  }>();
+  const { date, name } = useLocalSearchParams<{ date?: string; name?: string }>()
+  const { exercises, loading: exercisesLoading } = useExercises()
+  const { planWorkout, loading } = useWorkouts()
+  const [selectedExercises, setSelectedExercises] = useState<EditableExerciseGroup[]>([])
+  const [collapsedExercises, setCollapsedExercises] = useState<Record<string, boolean>>({})
+  const [showExerciseLibrary, setShowExerciseLibrary] = useState(false)
+  const [showExerciseInfo, setShowExerciseInfo] = useState<Record<string, boolean>>({})
+  const [search, setSearch] = useState('')
+  const [selectedFilter, setSelectedFilter] = useState<(typeof MUSCLE_FILTERS)[number]>('All')
+  const [activeComposer, setActiveComposer] = useState<{ exerciseId: string; setId?: string } | null>(null)
 
-  const { exercises, loading: exercisesLoading } = useExercises();
-  const { planWorkout, loading } = useWorkouts();
-  const [selectedExercises, setSelectedExercises] = useState<SelectedExercise[]>([]);
-  const [search, setSearch] = useState('');
+  const colors = useAppColors()
+  const readableDate = date
+    ? new Date(date).toLocaleDateString(undefined, { month: 'long', day: 'numeric' })
+    : 'Selected day'
 
-  const readableDate = new Date(date as string).toLocaleDateString(undefined, {
-    month: 'long',
-    day: 'numeric',
-  });
+  useEffect(() => {
+    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true)
+    }
+  }, [])
 
   const filteredExercises = useMemo(() => {
-    const trimmed = search.trim().toLowerCase();
-    if (!trimmed) return exercises;
-    return exercises.filter((exercise) =>
-      exercise.name.toLowerCase().includes(trimmed)
-    );
-  }, [search, exercises]);
+    // keep the library list clean by hiding stuff already in the plan
+    const existingIds = new Set(selectedExercises.map((item) => item.exercise_id))
+    const trimmed = search.trim().toLowerCase()
 
-  function addExercise(exercise: { id: string; name: string; type: string }) {
-    const exists = selectedExercises.some((item) => item.exercise_id === exercise.id);
-    if (exists) {
-      Alert.alert('Error', 'That exercise is already in the workout.');
-      return;
-    }
+    return exercises.filter((exercise) => {
+      if (existingIds.has(exercise.id)) return false
+      const tags = inferExerciseTags(exercise.name, exercise.description)
+      const matchesFilter = selectedFilter === 'All' || tags.includes(selectedFilter)
+      const matchesSearch =
+        !trimmed ||
+        exercise.name.toLowerCase().includes(trimmed) ||
+        (exercise.description ?? '').toLowerCase().includes(trimmed) ||
+        tags.some((tag) => tag.toLowerCase().includes(trimmed))
 
-    setSelectedExercises((prev) => [
-      ...prev,
-      {
-        exercise_id: exercise.id,
-        name: exercise.name,
-        type: exercise.type === 'timed' ? 'timed' : 'reps',
-        sets: '',
-        reps: '',
-        time_seconds: '',
-        weight: '',
-        order_index: prev.length,
-      },
-    ]);
+      return matchesFilter && matchesSearch
+    })
+  }, [exercises, search, selectedExercises, selectedFilter])
+
+  function addExercise(exercise: { id: string; name: string; type: string; image_url?: string; description?: string }) {
+    setSelectedExercises((prev) => [...prev, createEditableExerciseGroup(exercise)])
+    setCollapsedExercises((prev) => ({ ...prev, [exercise.id]: false }))
+    setShowExerciseInfo((prev) => ({ ...prev, [exercise.id]: false }))
+    setShowExerciseLibrary(false)
+    setSearch('')
+    // dropping an exercise in with zero sets looks like it saved, then vanishes on persist.
+    // open the first-set sheet right away so the flow matches what the user expects.
+    setActiveComposer({ exerciseId: exercise.id })
   }
 
-  function removeExercise(exercise_id: string) {
+  function removeExercise(exerciseId: string) {
+    setSelectedExercises((prev) => prev.filter((item) => item.exercise_id !== exerciseId))
+    setCollapsedExercises((prev) => {
+      const next = { ...prev }
+      delete next[exerciseId]
+      return next
+    })
+    setShowExerciseInfo((prev) => {
+      const next = { ...prev }
+      delete next[exerciseId]
+      return next
+    })
+  }
+
+  function toggleExerciseCollapse(exerciseId: string) {
+    // this makes the fold feel way less janky than a hard mount/unmount snap
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setCollapsedExercises((prev) => ({ ...prev, [exerciseId]: !prev[exerciseId] }))
+  }
+
+  function toggleExerciseInfo(exerciseId: string) {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setShowExerciseInfo((prev) => ({ ...prev, [exerciseId]: !prev[exerciseId] }))
+  }
+
+  function removeSet(exerciseId: string, setId: string) {
     setSelectedExercises((prev) =>
       prev
-        .filter((item) => item.exercise_id !== exercise_id)
-        .map((item, index) => ({ ...item, order_index: index }))
-    );
+        .map((exercise) => {
+          if (exercise.exercise_id !== exerciseId) return exercise
+
+          const nextSets = exercise.sets.filter((set) => set.id !== setId)
+          return { ...exercise, sets: nextSets }
+        })
+        .filter((exercise) => exercise.sets.length > 0)
+    )
   }
 
-  function updateExerciseField(
-    exercise_id: string,
-    field: keyof SelectedExercise,
-    value: string
-  ) {
+  function openAddSet(exerciseId: string) {
+    setActiveComposer({ exerciseId })
+  }
+
+  function openEditSet(exerciseId: string, setId: string) {
+    setActiveComposer({ exerciseId, setId })
+  }
+
+  function handleSaveSet(values: { reps: string; time_seconds: string; weight: string; set_notes: string }) {
+    if (!activeComposer) return
+
     setSelectedExercises((prev) =>
-      prev.map((item) =>
-        item.exercise_id === exercise_id ? { ...item, [field]: value } : item
-      )
-    );
+      prev.map((exercise) => {
+        if (exercise.exercise_id !== activeComposer.exerciseId) return exercise
+
+        if (activeComposer.setId) {
+          return {
+            ...exercise,
+            sets: exercise.sets.map((set) => (set.id === activeComposer.setId ? { ...set, ...values } : set)),
+          }
+        }
+
+        return {
+          ...exercise,
+          sets: [
+            ...exercise.sets,
+            createEditableSet(exercise.type, values, exercise.exercise_id, exercise.sets.length),
+          ],
+        }
+      })
+    )
+
+    setActiveComposer(null)
   }
 
   async function handleSaveWorkout() {
     try {
-      if (!date) throw new Error('No workout date was provided.');
-      if (!name) throw new Error('No workout name was provided.');
-      if (selectedExercises.length === 0) {
-        throw new Error('Please choose at least one exercise.');
+      if (!date) throw new Error('No workout date was provided.')
+      if (selectedExercises.length === 0) throw new Error('Please choose at least one exercise.')
+
+      const fallbackWorkoutName = selectedExercises[0]?.name?.trim()
+      const finalWorkoutName = (typeof name === 'string' ? name.trim() : '') || fallbackWorkoutName
+
+      if (!finalWorkoutName) {
+        throw new Error('Workout needs at least one exercise so it has something to be named after.')
       }
 
+      const flattenedExercises = flattenEditableExercises('', selectedExercises).map((exercise) => ({
+        exercise_id: exercise.exercise_id,
+        reps: exercise.reps,
+        time_seconds: exercise.time_seconds,
+        weight: exercise.weight,
+        set_notes: exercise.set_notes,
+        order_index: exercise.order_index,
+      }))
+
+      if (flattenedExercises.length === 0) {
+        throw new Error('Add at least one set before saving the workout.')
+      }
+
+      // flatten the grouped UI back into db rows since the table still stores one row per planned set
       await planWorkout({
-        name: name,
+        name: finalWorkoutName,
         performed_at: date,
         is_finished: false,
-        exercises: selectedExercises.map((exercise, index) => ({
-          exercise_id: exercise.exercise_id,
-          sets: exercise.type === 'reps' ? Number(exercise.sets) || null : null,
-          reps: exercise.type === 'reps' ? Number(exercise.reps) || null : null,
-          time_seconds: exercise.type === 'timed' ? Number(exercise.time_seconds) || null : null,
-          weight: Number(exercise.weight) || null,
-          order_index: index,
-        })),
-      });
+        exercises: flattenedExercises,
+      })
 
-      Alert.alert('Success', 'Workout created successfully!');
-      router.replace('/(tabs)/workouts');
+      Alert.alert('Success', 'Workout created successfully.')
+      router.replace('/(tabs)/workouts')
     } catch (error: any) {
-      Alert.alert('Error', error.message);
+      Alert.alert('Error', error.message)
     }
   }
 
   return (
-    <View style={styles.wrapper}>
-      <ParallaxScrollView
-        headerBackgroundColor={{ light: '#00adccfa', dark: '#020975' }}
-      >
-        <LinearGradient
-          colors={['#020975', '#0d0d12']}
-          style={sharedStyles.background}
-        />
+    <View style={[styles.wrapper, { backgroundColor: colors.background }]}>
+      <ParallaxScrollView>
+        <Pressable style={styles.topBackButton} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={16} color={colors.text} />
+          <Text style={[styles.topBackText, { color: colors.text }]}>Back</Text>
+        </Pressable>
 
-        {/* Header */}
-        <Text style={styles.header}>{name}</Text>
-        <Text style={styles.subheader}>{readableDate}</Text>
-
-        {/* Search */}
-        <Text style={styles.sectionTitle}>Find Exercises</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search exercises..."
-          placeholderTextColor="#666"
-          value={search}
-          onChangeText={setSearch}
-        />
-
-        {/* Available Exercises */}
-        <Text style={styles.sectionTitle}>Available Exercises</Text>
-        <View style={styles.listContainer}>
-          {exercisesLoading ? (
-            <Text style={styles.emptyText}>Loading exercises...</Text>
-          ) : filteredExercises.length === 0 ? (
-            <Text style={styles.emptyText}>No matching exercises found.</Text>
-          ) : (
-            <ScrollView showsVerticalScrollIndicator nestedScrollEnabled>
-              {filteredExercises.map((exercise) => {
-                const alreadySelected = selectedExercises.some(
-                  (item) => item.exercise_id === exercise.id
-                );
-
-                return (
-                  <TouchableOpacity
-                    key={exercise.id}
-                    style={[styles.listRow, alreadySelected && styles.listRowSelected]}
-                    onPress={() => addExercise(exercise)}
-                    disabled={alreadySelected}
-                  >
-                    <View style={styles.listRowContent}>
-                      <Text style={styles.listRowTitle}>{exercise.name}</Text>
-                      <Text style={styles.listRowType}>
-                        {exercise.type === 'timed' ? 'Timed' : 'Reps'}
-                      </Text>
-                    </View>
-                    <Text style={styles.addText}>
-                      {alreadySelected ? 'Added' : 'Add'}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          )}
+        <View style={[sharedStyles.card, styles.heroCard, { backgroundColor: colors.tabBar, borderColor: colors.border }]}>
+          <Text style={[styles.eyebrow, { color: colors.textAccent }]}>BUILD YOUR SESSION</Text>
+          <Text style={[styles.header, { color: colors.text }]}>{name}</Text>
+          <Text style={[styles.subheader, { color: colors.textMuted }]}>
+            Group exercises cleanly, then tune each set like a real training plan.
+          </Text>
+          <View style={styles.heroMetaRow}>
+            <View style={[styles.heroChip, { backgroundColor: colors.panelStrong }]}>
+              <Text style={[styles.heroChipText, { color: colors.text }]}>{readableDate}</Text>
+            </View>
+            <View style={[styles.heroChip, { backgroundColor: colors.overlay }]}>
+              <Text style={[styles.heroChipText, { color: colors.text }]}>
+                {selectedExercises.reduce((sum, exercise) => sum + exercise.sets.length, 0)} planned sets
+              </Text>
+            </View>
+          </View>
         </View>
 
-        {/* Selected Exercises */}
-        <Text style={styles.sectionTitle}>Selected Exercises</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Workout plan</Text>
         {selectedExercises.length === 0 ? (
-          <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No exercises selected yet.</Text>
+          <View style={[sharedStyles.card, styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.emptyText, { color: colors.textSubtle }]}>
+              Start by adding an exercise. Each one opens into individual sets you can tune.
+            </Text>
+            <View style={styles.emptyCardAction}>
+              <ButtonComponent
+                onPress={() => setShowExerciseLibrary(true)}
+                text="Add exercise"
+                style={styles.compactButton}
+                textStyle={styles.compactButtonText}
+              />
+            </View>
           </View>
         ) : (
           selectedExercises.map((exercise) => (
-            <View key={exercise.exercise_id} style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.cardTitle}>{exercise.name}</Text>
-                <View style={[styles.typeBadge, exercise.type === 'timed' && styles.typeBadgeTimed]}>
-                  <Text style={styles.typeBadgeText}>
-                    {exercise.type === 'timed' ? 'Timed' : 'Reps'}
+            <View
+              key={exercise.id}
+              style={[sharedStyles.card, styles.exerciseCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            >
+              <View style={styles.exerciseHeader}>
+                <Pressable style={styles.exerciseHeaderCopy} onPress={() => toggleExerciseCollapse(exercise.exercise_id)}>
+                  <View style={styles.exerciseTitleRow}>
+                    <Text style={[styles.exerciseTitle, { color: colors.text }]}>{exercise.name}</Text>
+                    <Ionicons
+                      name={collapsedExercises[exercise.exercise_id] ? 'chevron-down' : 'chevron-up'}
+                      size={20}
+                      color={colors.textMuted}
+                    />
+                  </View>
+                  <Text style={[styles.exerciseSubtitle, { color: colors.textMuted }]}>
+                    {exercise.type === 'timed' ? 'Interval block' : 'Strength block'} • {exercise.sets.length} sets
                   </Text>
+                </Pressable>
+                <View style={styles.exerciseHeaderActions}>
+                  <Pressable
+                    style={[styles.infoButton, { backgroundColor: colors.surfaceAlt, borderColor: colors.border }]}
+                    onPress={() => toggleExerciseInfo(exercise.exercise_id)}
+                  >
+                    <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
+                  </Pressable>
+                  <Pressable
+                    style={[styles.iconButton, { backgroundColor: colors.panelStrong }]}
+                    onPress={() => openAddSet(exercise.exercise_id)}
+                  >
+                    <Text style={[styles.iconButtonText, { color: colors.text }]}>+ Set</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.iconButton, { backgroundColor: colors.overlay }]}
+                    onPress={() => removeExercise(exercise.exercise_id)}
+                  >
+                    <Text style={[styles.iconButtonText, { color: colors.textMuted }]}>Remove</Text>
+                  </Pressable>
                 </View>
               </View>
 
-              {exercise.type === 'reps' ? (
-                <>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Sets"
-                    placeholderTextColor="#666"
-                    keyboardType="numeric"
-                    value={exercise.sets}
-                    onChangeText={(value) =>
-                      updateExerciseField(exercise.exercise_id, 'sets', value)
-                    }
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Reps"
-                    placeholderTextColor="#666"
-                    keyboardType="numeric"
-                    value={exercise.reps}
-                    onChangeText={(value) =>
-                      updateExerciseField(exercise.exercise_id, 'reps', value)
-                    }
-                  />
-                </>
-              ) : (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Time in seconds"
-                  placeholderTextColor="#666"
-                  keyboardType="numeric"
-                  value={exercise.time_seconds}
-                  onChangeText={(value) =>
-                    updateExerciseField(exercise.exercise_id, 'time_seconds', value)
-                  }
+              {showExerciseInfo[exercise.exercise_id] ? (
+                <ExerciseInfoPanel
+                  name={exercise.name}
+                  type={exercise.type}
+                  description={exercise.description}
+                  imageUrl={exercise.image_url}
                 />
-              )}
+              ) : null}
 
-              <TextInput
-                style={styles.input}
-                placeholder="Weight (optional)"
-                placeholderTextColor="#666"
-                keyboardType="numeric"
-                value={exercise.weight}
-                onChangeText={(value) =>
-                  updateExerciseField(exercise.exercise_id, 'weight', value)
-                }
-              />
-
-              <ButtonComponent
-                onPress={() => removeExercise(exercise.exercise_id)}
-                text="Remove"
-                style={styles.removeButton}
-              />
+              {!collapsedExercises[exercise.exercise_id]
+                ? (
+                    <WorkoutSetEditor
+                      exercise={exercise}
+                      editable
+                      onAddSet={() => openAddSet(exercise.exercise_id)}
+                      onEditSet={(setId) => openEditSet(exercise.exercise_id, setId)}
+                      onRemoveSet={(setId) => removeSet(exercise.exercise_id, setId)}
+                    />
+                  )
+                : (
+                    <View style={[styles.collapsedHint, { backgroundColor: colors.overlay, borderColor: colors.border }]}>
+                      <Text style={[styles.collapsedHintText, { color: colors.textMuted }]}>
+                        {exercise.sets.length} sets tucked away. Tap the header to expand.
+                      </Text>
+                    </View>
+                  )}
             </View>
           ))
         )}
 
-        {/* Actions */}
+        {selectedExercises.length > 0 ? (
+          <View style={styles.addMoreRow}>
+            <ButtonComponent
+              onPress={() => setShowExerciseLibrary((prev) => !prev)}
+              text={showExerciseLibrary ? 'Hide exercise library' : 'Add another exercise'}
+              style={styles.compactButton}
+              textStyle={styles.compactButtonText}
+            />
+          </View>
+        ) : null}
+
+        {showExerciseLibrary ? (
+          <>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Exercise library</Text>
+            <TextInput
+              style={[
+                sharedStyles.input,
+                styles.searchInput,
+                { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border },
+              ]}
+              placeholder="Search exercises"
+              placeholderTextColor={colors.textMuted}
+              value={search}
+              onChangeText={setSearch}
+            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterRow}
+            >
+              {MUSCLE_FILTERS.map((filter) => {
+                const active = selectedFilter === filter
+
+                return (
+                  <Pressable
+                    key={filter}
+                    style={[
+                      styles.filterChip,
+                      {
+                        backgroundColor: active ? colors.primary : colors.surfaceAlt,
+                        borderColor: active ? colors.primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => setSelectedFilter(filter)}
+                  >
+                    <Text style={[styles.filterChipText, { color: active ? '#fff' : colors.text }]}>
+                      {filter}
+                    </Text>
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+
+            <View style={[sharedStyles.card, styles.libraryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              {exercisesLoading ? (
+                <Text style={[styles.emptyText, { color: colors.textSubtle }]}>Loading exercises...</Text>
+              ) : filteredExercises.length === 0 ? (
+                <Text style={[styles.emptyText, { color: colors.textSubtle }]}>No matching exercises found.</Text>
+              ) : (
+                <ScrollView showsVerticalScrollIndicator={false} nestedScrollEnabled>
+                  {filteredExercises.map((exercise) => (
+                    <Pressable
+                      key={exercise.id}
+                      style={({ pressed }) => [
+                        styles.libraryRow,
+                        {
+                          backgroundColor: colors.surfaceAlt,
+                          borderColor: colors.border,
+                          opacity: pressed ? 0.92 : 1,
+                        },
+                      ]}
+                      onPress={() => addExercise(exercise)}
+                    >
+                      <View style={styles.libraryCopy}>
+                        <Text style={[styles.libraryTitle, { color: colors.text }]}>{exercise.name}</Text>
+                        <Text style={[styles.librarySubtitle, { color: colors.textMuted }]}>
+                          {exercise.type === 'timed' ? 'Timed intervals' : 'Strength / reps'}
+                        </Text>
+                      </View>
+                      <View style={[styles.addPill, { backgroundColor: colors.panelStrong }]}>
+                        <Text style={[styles.addPillText, { color: colors.text }]}>Add</Text>
+                      </View>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          </>
+        ) : null}
+
+        <SetComposerSheet
+          visible={Boolean(activeComposer)}
+          exerciseName={
+            selectedExercises.find((exercise) => exercise.exercise_id === activeComposer?.exerciseId)?.name ?? 'Exercise'
+          }
+          type={
+            selectedExercises.find((exercise) => exercise.exercise_id === activeComposer?.exerciseId)?.type ?? 'reps'
+          }
+          initialSet={
+            activeComposer?.setId
+              ? selectedExercises
+                  .find((exercise) => exercise.exercise_id === activeComposer.exerciseId)
+                  ?.sets.find((set) => set.id === activeComposer.setId) ?? null
+              : null
+          }
+          onClose={() => setActiveComposer(null)}
+          onSave={handleSaveSet}
+        />
+
         <View style={styles.actions}>
-          <ButtonComponent
-            onPress={handleSaveWorkout}
-            text={loading ? 'Saving Workout...' : 'Save Workout'}
-            style={styles.saveButton}
-          />
+          <ButtonComponent onPress={handleSaveWorkout} text={loading ? 'Saving workout...' : 'Save workout'} />
           <ButtonComponent
             onPress={() => router.back()}
             text="Back"
-            style={styles.backButton}
+            style={{ backgroundColor: colors.secondary }}
           />
         </View>
       </ParallaxScrollView>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
-    backgroundColor: '#0d0d12',
+    backgroundColor: AppColors.background,
   },
-  header: {
-    color: AppColors.text,
-    fontSize: 28,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 8,
+  heroCard: {
+    gap: 14,
   },
-  subheader: {
-    color: '#93c5fd',
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    color: AppColors.text,
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-    marginTop: 8,
-  },
-  searchInput: {
-    backgroundColor: '#1c1c1f',
-    color: AppColors.text,
-    padding: 14,
-    borderRadius: AppRadius.md,
-    marginBottom: 16,
-    fontSize: 16,
-  },
-  listContainer: {
-    maxHeight: 280,
-    backgroundColor: '#141417',
-    borderRadius: AppRadius.lg,
-    padding: 8,
-    marginBottom: 16,
-  },
-  listRow: {
-    backgroundColor: '#1c1c1f',
-    borderRadius: AppRadius.md,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 8,
+  topBackButton: {
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 4,
+    marginBottom: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
   },
-  listRowSelected: {
-    opacity: 0.5,
-  },
-  listRowContent: {
-    flex: 1,
-  },
-  listRowTitle: {
-    color: AppColors.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  listRowType: {
-    color: '#93c5fd',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  addText: {
-    color: '#3b82f6',
+  topBackText: {
     fontSize: 14,
     fontWeight: '700',
   },
-  emptyCard: {
-    backgroundColor: '#1c1c1f',
-    padding: AppSpacing.lg,
-    borderRadius: AppRadius.lg,
-    alignItems: 'center',
-    marginBottom: 16,
+  eyebrow: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 2.4,
   },
-  emptyText: {
-    color: AppColors.text,
+  header: {
+    fontSize: 30,
+    fontWeight: '800',
+    letterSpacing: -0.7,
+  },
+  subheader: {
     fontSize: 15,
-    opacity: 0.5,
+    lineHeight: 22,
   },
-  card: {
-    backgroundColor: '#1c1c1f',
-    padding: AppSpacing.lg,
-    borderRadius: AppRadius.lg,
-    marginBottom: 12,
+  heroMetaRow: {
+    flexDirection: 'row',
+    gap: 10,
+    flexWrap: 'wrap',
   },
-  cardHeader: {
+  heroChip: {
+    borderRadius: AppRadius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  heroChipText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    marginTop: 4,
+  },
+  searchInput: {
+    marginBottom: 4,
+    paddingVertical: 12,
+  },
+  filterRow: {
+    gap: 8,
+    paddingBottom: 4,
+  },
+  filterChip: {
+    borderWidth: 1,
+    borderRadius: AppRadius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  libraryCard: {
+    maxHeight: 250,
+    padding: 8,
+  },
+  libraryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 8,
   },
-  cardTitle: {
-    color: AppColors.text,
-    fontSize: 18,
+  libraryCopy: {
+    flex: 1,
+    paddingRight: 10,
+  },
+  libraryTitle: {
+    fontSize: 15,
     fontWeight: '700',
+  },
+  librarySubtitle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  addPill: {
+    borderRadius: AppRadius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  addPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  emptyCard: {
+    alignItems: 'center',
+  },
+  emptyCardAction: {
+    marginTop: 12,
+    width: '100%',
+  },
+  emptyText: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  exerciseCard: {
+    gap: 10,
+    padding: 16,
+  },
+  exerciseHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  exerciseHeaderCopy: {
     flex: 1,
   },
-  typeBadge: {
-    backgroundColor: '#3b82f6',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: AppRadius.md,
-  },
-  typeBadgeTimed: {
-    backgroundColor: '#166534',
-  },
-  typeBadgeText: {
-    color: AppColors.text,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  input: {
-    backgroundColor: '#141417',
-    color: AppColors.text,
-    padding: 14,
-    borderRadius: AppRadius.md,
-    marginBottom: 10,
-    fontSize: 16,
-  },
-  removeButton: {
-    backgroundColor: '#7f1d1d',
-    padding: 14,
-    borderRadius: AppRadius.md,
+  exerciseTitleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  exerciseHeaderActions: {
+    gap: 6,
+    alignItems: 'flex-end',
+  },
+  exerciseTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.4,
+  },
+  exerciseSubtitle: {
+    fontSize: 12,
+    marginTop: 3,
+  },
+  infoButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconButton: {
+    borderRadius: AppRadius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  iconButtonText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  collapsedHint: {
+    borderWidth: 1,
+    borderRadius: AppRadius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  collapsedHintText: {
+    fontSize: 14,
+    lineHeight: 20,
   },
   actions: {
     gap: 12,
-    marginTop: 8,
     marginBottom: 24,
   },
-  saveButton: {
-    backgroundColor: '#166534',
-    padding: 16,
-    borderRadius: AppRadius.lg,
-    alignItems: 'center',
+  addMoreRow: {
+    marginTop: -2,
+    marginBottom: 2,
   },
-  backButton: {
-    backgroundColor: '#7f1d1d',
-    padding: 16,
-    borderRadius: AppRadius.lg,
-    alignItems: 'center',
+  compactButton: {
+    paddingVertical: 12,
   },
-});
+  compactButtonText: {
+    fontSize: 14,
+  },
+})

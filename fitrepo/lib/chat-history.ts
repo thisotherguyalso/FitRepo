@@ -2,7 +2,7 @@ import 'expo-sqlite/localStorage/install'
 
 import type { ChatMessage, PendingWorkoutEdit } from '@/lib/api/chat'
 
-const CHAT_HISTORY_KEY = 'fitrepo.chat.history'
+const CHAT_HISTORY_KEY_PREFIX = 'fitrepo.chat.history'
 const MAX_CHAT_HISTORY = 50
 
 export type StoredChatState = {
@@ -15,15 +15,19 @@ function hasStorage() {
   return typeof globalThis.localStorage !== 'undefined'
 }
 
+function getChatHistoryKey(userId: string) {
+  return `${CHAT_HISTORY_KEY_PREFIX}.${userId}`
+}
+
 // keep the newest chunk only so history doesn't get stupidly big
 function trimMessages(messages: ChatMessage[]) {
   return messages.slice(-MAX_CHAT_HISTORY)
 }
 
-export function loadChatHistory(): StoredChatState | null {
+export function loadChatHistory(userId: string): StoredChatState | null {
   if (!hasStorage()) return null
 
-  const raw = globalThis.localStorage.getItem(CHAT_HISTORY_KEY)
+  const raw = globalThis.localStorage.getItem(getChatHistoryKey(userId))
   if (!raw) return null
 
   try {
@@ -45,12 +49,12 @@ export function loadChatHistory(): StoredChatState | null {
   }
 }
 
-export function saveChatHistory(state: StoredChatState) {
+export function saveChatHistory(userId: string, state: StoredChatState) {
   if (!hasStorage()) return
 
   // only store the real chat state, not temporary loading bubbles
   globalThis.localStorage.setItem(
-    CHAT_HISTORY_KEY,
+    getChatHistoryKey(userId),
     JSON.stringify({
       messages: trimMessages(state.messages),
       pendingAction: state.pendingAction,
@@ -59,7 +63,7 @@ export function saveChatHistory(state: StoredChatState) {
   )
 }
 
-export function clearChatHistory() {
+export function clearChatHistory(userId: string) {
   if (!hasStorage()) return
-  globalThis.localStorage.removeItem(CHAT_HISTORY_KEY)
+  globalThis.localStorage.removeItem(getChatHistoryKey(userId))
 }

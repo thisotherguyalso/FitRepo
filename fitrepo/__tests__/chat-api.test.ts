@@ -74,4 +74,47 @@ describe('sendChatMessage', () => {
       sendChatMessage([{ role: 'user', content: 'hey' }])
     ).rejects.toThrow('Unauthorized.')
   })
+
+  it('unwraps a leaked JSON reply before returning it', async () => {
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        reply: '{"type":"reply","message":"Here is your plan."}',
+      }),
+    })
+
+    const result = await sendChatMessage([{ role: 'user', content: 'hey' }])
+
+    expect(result).toEqual({
+      reply: 'Here is your plan.',
+      workoutId: undefined,
+      pendingAction: undefined,
+    })
+  })
+
+  it('unwraps a fenced JSON reply before returning it', async () => {
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        reply: '```json\n{"type":"reply","message":"Try upper body tomorrow."}\n```',
+      }),
+    })
+
+    const result = await sendChatMessage([{ role: 'user', content: 'what should I do?' }])
+
+    expect(result.reply).toBe('Try upper body tomorrow.')
+  })
+
+  it('unwraps a leaked JSON reply that uses reply instead of message', async () => {
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        reply: '{"reply":"Use your saved lower body split."}',
+      }),
+    })
+
+    const result = await sendChatMessage([{ role: 'user', content: 'what now?' }])
+
+    expect(result.reply).toBe('Use your saved lower body split.')
+  })
 })

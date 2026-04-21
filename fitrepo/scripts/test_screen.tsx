@@ -193,9 +193,15 @@ export default function TestScreen() {
     'addExerciseToWorkout()': async () => {
       loading('Workout Exercises', 'addExerciseToWorkout()')
       try {
-        const data = await addExerciseToWorkout(TEST_WORKOUT_ID, TEST_EXERCISE_ID, { sets: 3, reps: 10, time_seconds: null, order_index: 1, weight: 20 })
+        const data = await addExerciseToWorkout(TEST_WORKOUT_ID, TEST_EXERCISE_ID, {
+          reps: 10,
+          time_seconds: null,
+          order_index: 1,
+          weight: 20,
+          set_notes: null,
+        })
         setAddedExerciseWorkoutId(data?.id)
-        success('Workout Exercises', 'addExerciseToWorkout()', `Added exercise — 3 sets x 10 reps`)
+        success('Workout Exercises', 'addExerciseToWorkout()', `Added one workout set row`)
       } catch (e) { fail('Workout Exercises', 'addExerciseToWorkout()', e) }
     },
 
@@ -203,8 +209,8 @@ export default function TestScreen() {
       loading('Workout Exercises', 'updateWorkoutExercise()')
       if (!addedExerciseWorkoutId) { fail('Workout Exercises', 'updateWorkoutExercise()', { message: 'Run addExerciseToWorkout() first' }); return }
       try {
-        await updateWorkoutExercise(TEST_WORKOUT_ID, TEST_EXERCISE_ID, { sets: 4, reps: 12 })
-        success('Workout Exercises', 'updateWorkoutExercise()', `Updated to 4 sets x 12 reps`)
+        await updateWorkoutExercise(TEST_WORKOUT_ID, TEST_EXERCISE_ID, { reps: 12, weight: 25 })
+        success('Workout Exercises', 'updateWorkoutExercise()', `Updated matching workout rows`)
       } catch (e) { fail('Workout Exercises', 'updateWorkoutExercise()', e) }
     },
 
@@ -238,7 +244,7 @@ export default function TestScreen() {
     'createWorkoutPreset()': async () => {
       loading('Workout Presets', 'createWorkoutPreset()')
       try {
-        const data = await createWorkoutPreset({ name: 'Test Preset' })
+        const data = await createWorkoutPreset({ name: 'Test Preset', is_public: false })
         setCreatedPresetId(data?.id)
         success('Workout Presets', 'createWorkoutPreset()', `Created: "${data?.name}"`)
       } catch (e) { fail('Workout Presets', 'createWorkoutPreset()', e) }

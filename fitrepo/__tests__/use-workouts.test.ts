@@ -2,6 +2,7 @@ import { renderHook, act } from '@testing-library/react-native';
 import { useWorkouts } from '@/hooks/use-workouts';
 import { createWorkout, getWorkouts } from '@/lib/api/workouts';
 import { addExerciseToWorkout } from '@/lib/api/workoutExercises';
+import { getCurrentUserBodyWeightKg, resolveEffectiveWeight } from '@/lib/bodyweight';
 
 jest.mock('@/lib/api/workouts', () => ({
     getWorkouts: jest.fn(),
@@ -9,7 +10,13 @@ jest.mock('@/lib/api/workouts', () => ({
 }))
 
 jest.mock('@/lib/api/workoutExercises', () => ({
-    addExerciseToWorkout: jest.fn()
+    addExerciseToWorkout: jest.fn(),
+    getWorkoutSummaries: jest.fn().mockResolvedValue([]),
+}))
+
+jest.mock('@/lib/bodyweight', () => ({
+    getCurrentUserBodyWeightKg: jest.fn(),
+    resolveEffectiveWeight: jest.fn((weight: number | null) => weight ?? 0),
 }))
 
 const waitForNextTick = async () => {
@@ -19,8 +26,17 @@ const waitForNextTick = async () => {
 }
 
 describe('useWorkouts', () => {
+    let warnSpy: jest.SpyInstance
+
     beforeEach(() => {
         jest.clearAllMocks()
+        warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {})
+        ;(getCurrentUserBodyWeightKg as jest.Mock).mockResolvedValue(null)
+        ;(resolveEffectiveWeight as jest.Mock).mockImplementation((weight: number | null) => weight ?? 0)
+    })
+
+    afterEach(() => {
+        warnSpy.mockRestore()
     })
 
     it('should initialize as not loading yet', async () => {
@@ -65,13 +81,13 @@ describe('useWorkouts', () => {
         })
     })
 
-    it('should handle createWorkout errors gracefully', async () => {
+    it('should surface createWorkout errors gracefully', async () => {
         (getWorkouts as jest.Mock).mockResolvedValue([])
         const { result } = renderHook(() => useWorkouts())
         await waitForNextTick();
 
         (createWorkout as jest.Mock).mockRejectedValue(
-            new Error('You already have a workout for today!')
+            new Error('Workout creation failed')
         )
 
         let thrownError: any = null
@@ -90,7 +106,7 @@ describe('useWorkouts', () => {
         })
 
         expect(thrownError).not.toBeNull()
-        expect(thrownError.message).toBe('You already have a workout for today!')
+        expect(thrownError.message).toBe('Workout creation failed')
         expect(result.current.loading).toBe(false)
     })
 

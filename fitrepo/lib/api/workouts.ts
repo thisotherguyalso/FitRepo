@@ -49,16 +49,6 @@ export async function createWorkout(
     workout: Omit<Workout, 'id' | 'user_id' | 'created_at'>
 ) {
     const user = await getAuthenticatedUser()
-    // check if workout already exists for selected day
-    const { data: existing, error: existingError } = await supabase
-        .from('workouts')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('performed_at', workout.performed_at)
-        .maybeSingle()
-
-    if (existingError) throw existingError
-    if (existing) throw new Error(`You already have a workout for ${workout.performed_at}!`)
 
     const { data, error } = await supabase
         .from('workouts')
